@@ -1,0 +1,255 @@
+<div class="usuario-tab-wrapper animate-in">
+
+  <!-- SUB-TABS ESTILIZADAS CON UX SIMILAR A FINCAS -->
+  <div class="form-subtabs">
+    <button 
+      type="button" 
+      class="subtab-btn" 
+      [class.subtab-active]="activeSubTab() === 'generales'"
+      (click)="activeSubTab.set('generales')"
+    >
+      📋 Datos Generales
+    </button>
+    <button 
+      type="button" 
+      class="subtab-btn" 
+      [class.subtab-active]="activeSubTab() === 'roles'"
+      (click)="activeSubTab.set('roles'); (catalogoRoles().length === 0 && cargarDatosRoles())"
+    >
+      🔑 Roles del usuario
+    </button>
+  </div>
+
+  <!-- 1. PESTAÑA: DATOS GENERALES -->
+  <div class="tab-content-container" *ngIf="activeSubTab() === 'generales'">
+    <div class="detail-grid">
+      <!-- Ficha de Datos del Usuario -->
+      <div class="info-block">
+        <h3>Datos Principales</h3>
+        <div class="detail-row"><span class="label">Tipo Persona:</span> <span class="value">{{ user.tipo_persona === 'juridica' ? 'Jurídica' : 'Natural' }}</span></div>
+        <div class="detail-row" *ngIf="user.apellidos"><span class="label">Apellidos:</span> <span class="value">{{ user.apellidos }}</span></div>
+        <div class="detail-row"><span class="label">Email:</span> <span class="value">{{ user.email }}</span></div>
+        <div class="detail-row"><span class="label">Teléfono:</span> <span class="value">{{ user.telefono || 'No registrado' }}</span></div>
+        <div class="detail-row"><span class="label">Rol(es):</span> <span class="value uppercase">{{ user.rol }}</span></div>
+        <div class="detail-row"><span class="label">Estado de Acceso:</span> 
+          <span class="value" [class.active]="user.activo !== false">
+            {{ user.activo !== false ? 'Activo' : 'Inactivo (Solo Registro)' }}
+          </span>
+        </div>
+        <div class="detail-row" *ngIf="user.dni"><span class="label">Cédula/DNI:</span> <span class="value">{{ user.dni }}</span></div>
+        <div class="detail-row" *ngIf="user.ruc"><span class="label">RUC:</span> <span class="value">{{ user.ruc }}</span></div>
+        <div class="detail-row" *ngIf="user.no_aviso_operacion"><span class="label">Aviso Operación:</span> <span class="value">{{ user.no_aviso_operacion }}</span></div>
+        <div class="detail-row" *ngIf="user.fecha_aviso_operacion"><span class="label">Fecha Aviso:</span> <span class="value">{{ user.fecha_aviso_operacion }}</span></div>
+      </div>
+
+      <!-- JUNTA DIRECTIVA (SOLO PERSONAS JURIDICAS) -->
+      <div class="junta-block" *ngIf="user.tipo_persona === 'juridica'">
+        <h3>👥 Junta Directiva de la Empresa</h3>
+
+        <!-- Alertas de la Junta Directiva -->
+        <div *ngIf="errorJuntaMsg" class="alert danger animate-in" style="margin-bottom: 1rem;">
+          {{ errorJuntaMsg }}
+        </div>
+        <div *ngIf="exitoJuntaMsg" class="alert success animate-in" style="margin-bottom: 1rem;">
+          {{ exitoJuntaMsg }}
+        </div>
+
+        <!-- Lista de Miembros en la Junta -->
+        <div *ngIf="juntaDirectiva.length === 0" class="empty-junta-msg">
+          No hay miembros asignados a la junta directiva de esta empresa.
+        </div>
+
+        <table class="junta-table" *ngIf="juntaDirectiva.length > 0">
+          <thead>
+            <tr>
+              <th>Miembro</th>
+              <th>Posición / Rol</th>
+              <th>Fecha Registro</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of juntaDirectiva">
+              <td>
+                <strong>{{ m.nombre_miembro }}</strong> {{ m.apellidos_miembro }}
+                <span class="miembro-email">{{ m.email_miembro }}</span>
+              </td>
+              <td><span class="junta-role-pill">{{ m.nombre_rol | uppercase }}</span></td>
+              <td>{{ m.fecha_nombramiento | date:'dd/MM/yyyy' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. PESTAÑA: ROLES DEL USUARIO -->
+  <div class="tab-content-container" *ngIf="activeSubTab() === 'roles'">
+
+    <!-- ALERTAS LOCALES ROLES -->
+    @if (rolesErrorMsg()) {
+      <div class="alert danger animate-in">
+        {{ rolesErrorMsg() }}
+      </div>
+    }
+    @if (rolesSuccessMsg()) {
+      <div class="alert success animate-in">
+        {{ rolesSuccessMsg() }}
+      </div>
+    }
+
+    <!-- BARRA DE ASIGNACIÓN DE ROLES -->
+    <div class="assign-bar glass-card">
+      <div class="assign-title">
+        <h4>🔑 Asignar Rol al Usuario</h4>
+        <p>Seleccione un rol del catálogo del sistema para otorgar los permisos correspondientes a este usuario.</p>
+      </div>
+
+      <div class="assign-controls">
+        <!-- Capítulo destino: solo el SUPERADMIN elige (acceso global). Para
+             admin/secretaria de capítulo, el backend asigna automáticamente
+             el capítulo de su propia sesión. Va primero: determina qué roles
+             ya están ocupados antes de elegir el rol. -->
+        @if (sessionService.isSuperadmin()) {
+          <div class="assign-field">
+            <label for="selectCapitulo">Capítulo</label>
+            <select
+              id="selectCapitulo"
+              [ngModel]="selectedCapituloId()"
+              (ngModelChange)="selectedCapituloId.set($event ? +$event : null)"
+              name="selectCapitulo"
+              class="custom-select"
+            >
+              <option [ngValue]="null">-- Seleccionar Capítulo --</option>
+              @for (c of capitulos(); track c.id_capitulo) {
+                <option [value]="c.id_capitulo">{{ c.nombre_capitulo }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        <div class="assign-field">
+          <label for="selectRol">Rol</label>
+          <select
+            id="selectRol"
+            [ngModel]="selectedRolId()"
+            (ngModelChange)="selectedRolId.set($event ? +$event : null)"
+            name="selectRol"
+            class="custom-select"
+          >
+            <option [ngValue]="null">-- Seleccionar Rol del Catálogo --</option>
+            @for (item of rolesDisponibles(); track item.idRol) {
+              <option [value]="item.idRol">
+                {{ item.codigo | uppercase }} — {{ item.descripcion }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <button
+          type="button"
+          class="primary-btn assign-btn"
+          [disabled]="!selectedRolId() || rolesLoading() || (sessionService.isSuperadmin() && !selectedCapituloId())"
+          (click)="asignarRol()"
+        >
+          ➕ Asignar Rol
+        </button>
+      </div>
+    </div>
+
+    <!-- TABLA DE ROLES ASIGNADOS -->
+    <div class="glass-card table-card" style="margin-top: 1rem;">
+      <div class="card-subtitle-header">
+        <h4>Roles Asignados al Usuario</h4>
+        <span class="badge-count">{{ rolesAsignados().length }} Asignados</span>
+      </div>
+
+      @if (rolesLoading() && rolesAsignados().length === 0) {
+        <div class="loading-state">
+          Cargando roles del usuario...
+        </div>
+      }
+
+      @if (!rolesLoading() && rolesAsignados().length === 0) {
+        <div class="empty-state">
+          🔑 Este usuario no tiene roles adicionales asignados. Utilice el selector superior para otorgar un nuevo rol.
+        </div>
+      }
+
+      @if (rolesAsignados().length > 0) {
+        <div class="table-scroll-container">
+          <table class="fincas-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Código Rol</th>
+                <th>Descripción / Permisos</th>
+                <th>Capítulo</th>
+                <th class="center-text">Estado</th>
+                <th style="text-align: right;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of rolesAsignados(); track item.idRegistro) {
+                <tr [class.disabled-row]="!item.activo">
+                  <td><strong>#{{ item.idRol }}</strong></td>
+                  <td>
+                    <span class="role-badge-pill">
+                      {{ item.codigo | uppercase }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="role-desc">{{ item.descripcion }}</span>
+                  </td>
+                  <td>{{ item.nombreCapitulo || 'Global (todos los capítulos)' }}</td>
+                  <td class="center-text">
+                    <span class="badge" [class.success-badge]="item.activo" [class.danger-badge]="!item.activo">
+                      {{ item.activo ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td style="text-align: right;">
+                    <button
+                      type="button"
+                      class="kebab-btn"
+                      (click)="toggleMenu(item, $event)"
+                      title="Más acciones"
+                    >
+                      ⋮
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Menú de acciones (⋮): vive fuera del flujo normal del componente
+     (se mueve a document.body en ngAfterViewInit) para no quedar recortado
+     por el overflow de la tabla ni por el backdrop-filter del panel que la
+     contiene. Su posición se calcula en toggleMenu() a partir del botón. -->
+<div #actionsDropdown>
+  @if (openMenuItem(); as item) {
+    <div class="row-actions-backdrop" (click)="closeMenu()"></div>
+    <div
+      class="row-actions-dropdown"
+      [style.top.px]="menuPosition().top"
+      [style.left.px]="menuPosition().left"
+      (click)="$event.stopPropagation()"
+    >
+      <button type="button" (click)="alternarEstadoRol(item); closeMenu()">
+        {{ item.activo ? '⏸️ Desactivar' : '▶️ Activar' }}
+      </button>
+      <button type="button" (click)="enviarInvitacion(item)">
+        ✉️ Enviar invitación
+      </button>
+      <button type="button" class="danger-option" (click)="eliminarRol(item); closeMenu()">
+        🗑️ Quitar
+      </button>
+    </div>
+  }
+</div>

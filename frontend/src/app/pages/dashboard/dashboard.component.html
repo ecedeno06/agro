@@ -1,0 +1,115 @@
+<div class="dashboard-layout">
+  <!-- SIDEBAR -->
+  <app-sidebar
+    [submenuOpenProductos]="submenuOpenProductos()"
+    (submenuOpenProductosChange)="submenuOpenProductos.set($event)"
+    [submenuOpenConfiguracion]="submenuOpenConfiguracion()"
+    (submenuOpenConfiguracionChange)="submenuOpenConfiguracion.set($event)"
+    [isDark]="isDark()"
+    (themeToggle)="toggleTheme()"
+    (logoutRequested)="logout()"
+    (triggerInactivity)="sessionService.triggerDemoInactivity()"
+    [canManageUsers]="canManageUsers()"
+  ></app-sidebar>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div class="main-wrapper">
+    <!-- BARRA SUPERIOR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2 class="topbar-title" style="display: flex; align-items: center; gap: 0.6rem; margin: 0;">
+          @if (seccionActivaInfo(); as info) {
+            <img *ngIf="isUrlIcon(info.icono)" [src]="getIconUrl(info.icono)" style="width: 1.4rem; height: 1.4rem; object-fit: contain; vertical-align: middle;" alt="icon" />
+            <span *ngIf="!isUrlIcon(info.icono)" style="font-size: 1.4rem; display: inline-flex; align-items: center; vertical-align: middle;">{{ info.icono }}</span>
+            <span>{{ info.nombre }}</span>
+          } @else {
+            <span>🌾 AgroAzuero</span>
+          }
+        </h2>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="topbar-btn" type="button" (click)="toggleTheme()" title="Cambiar tema">
+          {{ isDark() ? '☀️' : '🌙' }}
+        </button>
+        <button class="topbar-btn" type="button" title="Notificaciones">
+          🔔
+        </button>
+        @if (user()) {
+          <div class="topbar-user">
+            <div class="user-info">
+              <div class="user-name-wrapper">
+                <span class="user-name">{{ user().nombre }}</span>
+                <span class="session-timer" [class.warning]="sessionService.showExpiryWarning()" title="Tiempo de sesión activa">⏱️ {{ sessionDurationText() }}</span>
+              </div>
+              <span class="user-email">{{ user().email }}</span>
+            </div>
+            <div class="user-avatar-dropdown">
+              <!-- Avatar clickable -->
+              <div class="user-avatar" (click)="toggleUserMenu(); $event.stopPropagation()" title="Mi perfil">
+                <img *ngIf="user().avatar" [src]="user().avatar" alt="Avatar" class="user-avatar-img" />
+                <span *ngIf="!user().avatar" class="user-avatar-placeholder">{{ getUserInitials() }}</span>
+              </div>
+
+              <!-- Menú desplegable -->
+              <div class="user-dropdown-menu" *ngIf="showUserMenu()" (click)="$event.stopPropagation()">
+                <!-- Header con foto grande -->
+                <div class="dropdown-profile-header">
+                  <div class="dropdown-avatar-large" (click)="triggerAvatarUpload()" title="Cambiar foto">
+                    <img *ngIf="user().avatar" [src]="user().avatar" alt="Avatar" />
+                    <span *ngIf="!user().avatar" class="initials-large">{{ getUserInitials() }}</span>
+                    <div class="avatar-overlay">📷</div>
+                  </div>
+                  <div class="dropdown-user-details">
+                    <strong>{{ user().nombre }}</strong>
+                    <small>{{ user().email }}</small>
+                    <span class="role-badge">{{ user().rol }}</span>
+                  </div>
+                </div>
+
+                <div class="dropdown-divider"></div>
+
+                <!-- Acciones de avatar -->
+                <button type="button" class="dropdown-item" (click)="triggerAvatarUpload()">
+                  📷 Cambiar foto de perfil
+                </button>
+                <button type="button" class="dropdown-item remove-avatar-item" *ngIf="user().avatar" (click)="removeAvatar()">
+                  🗑️ Quitar foto de perfil
+                </button>
+
+                <div class="dropdown-divider"></div>
+                <button type="button" class="dropdown-item logout-item" (click)="logout()">
+                  🚪 Cerrar Sesión
+                </button>
+              </div>
+
+              <!-- Backdrop -->
+              <div class="user-dropdown-backdrop" *ngIf="showUserMenu()" (click)="closeUserMenu()"></div>
+            </div>
+          </div>
+
+          <!-- Input de archivo oculto para subir imagen -->
+          <input #avatarFileInput type="file" accept="image/jpeg,image/png,image/webp" style="display:none"
+            (change)="onAvatarFileSelected($event)" id="avatar-file-input" />
+
+          <!-- Toast de feedback -->
+          <div class="avatar-toast" *ngIf="avatarToast()" [class.error]="avatarToastError()">
+            {{ avatarToast() }}
+          </div>
+        }
+      </div>
+    </header>
+
+    <!-- AREA DE CONTENIDO: cada página vive en su propia ruta hija -->
+    <main class="main-content page-shell">
+      @if (user()) {
+        <div class="dashboard-container animate-in">
+          <router-outlet></router-outlet>
+        </div>
+      }
+    </main>
+  </div>
+
+  <!-- MODAL DE ADVERTENCIA DE EXPIRACION DE SESION -->
+  <app-inactividad></app-inactividad>
+</div>

@@ -1,0 +1,257 @@
+<div class="mantenimiento-usuarios-container">
+
+  <!-- CARD 1: LISTADO DE USUARIOS -->
+  <section class="usuarios-list-card glass-card">
+    <div class="card-header flex-header">
+      <div>
+        <h2>Mantenimiento de Usuarios</h2>
+        <p class="subtitle">Administra y registra los perfiles de personas naturales y jurídicas en AgroNet.</p>
+      </div>
+      <button 
+        type="button" 
+        class="action-btn register-user-btn"
+        (click)="mostrarFormularioCreacion.set(!mostrarFormularioCreacion()); selectedUser.set(null)"
+      >
+        {{ mostrarFormularioCreacion() ? '❌ Cerrar Formulario' : '➕ Registrar Usuario' }}
+      </button>
+    </div>
+
+    <!-- Mensajes Generales -->
+    <div *ngIf="mensajeError()" class="alert danger animate-in">
+      {{ mensajeError() }}
+    </div>
+    <div *ngIf="mensajeExito()" class="alert success animate-in">
+      {{ mensajeExito() }}
+    </div>
+
+    <!-- BÚSQUEDA GLOBAL -->
+    <div class="search-container">
+      <div class="search-field">
+        <label for="globalSearch">🔎 Buscar en Usuarios</label>
+        <input 
+          id="globalSearch"
+          type="text" 
+          [ngModel]="filtroTexto()" 
+          (ngModelChange)="filtroTexto.set($event)" 
+          placeholder="Buscar por nombre, correo, cédula, RUC, rol o estado..." 
+        />
+      </div>
+    </div>
+
+    <!-- TABLA DE USUARIOS -->
+    <div class="list-section">
+      <div *ngIf="loading() && usuarios().length === 0" class="loading-state">
+        Cargando perfiles de usuarios...
+      </div>
+      <div *ngIf="!loading() && usuariosFiltrados().length === 0" class="empty-state">
+        No se encontraron usuarios que coincidan con la búsqueda.
+      </div>
+
+      <div class="table-scroll-container" *ngIf="usuariosFiltrados().length > 0">
+        <table class="usuarios-table">
+          <thead>
+            <tr>
+              <th>Nombre Completo</th>
+              <th>Correo Electrónico</th>
+              <th>Tipo</th>
+              <th>Identificación (DNI / RUC)</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              *ngFor="let user of usuariosFiltrados()" 
+              (click)="seleccionarUsuario(user)" 
+              class="clickable-row"
+              [class.row-selected]="selectedUser()?.idUsuario === user.idUsuario"
+            >
+              <td>
+                <strong>{{ user.nombre }}</strong> 
+                <span *ngIf="user.apellidos">{{ user.apellidos }}</span>
+              </td>
+              <td>{{ user.email }}</td>
+              <td>
+                <span class="type-badge" [class.juridica]="user.tipo_persona === 'juridica'">
+                  {{ user.tipo_persona === 'juridica' ? 'Empresa (Jurídica)' : 'Natural' }}
+                </span>
+              </td>
+              <td>{{ user.dni || user.ruc || 'N/A' }}</td>
+              <td><span class="role-badge">{{ user.rol | uppercase }}</span></td>
+              <td>
+                <span class="status-badge" [class.active]="user.activo !== false">
+                  {{ user.activo !== false ? 'Activo' : 'Inactivo (Solo Registro)' }}
+                </span>
+              </td>
+              <td>
+                <button 
+                  class="action-btn edit-btn" 
+                  type="button" 
+                  (click)="seleccionarUsuario(user); $event.stopPropagation();"
+                >
+                  👁️ Ver Detalle
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARD FORMULARIO CREACIÓN -->
+  <section class="user-form-card glass-card animate-in" *ngIf="mostrarFormularioCreacion()">
+    <div class="card-header">
+      <h2>Registrar Nuevo Usuario</h2>
+    </div>
+
+    <form (ngSubmit)="crearUsuarioSubmit()" class="edit-form grid-form">
+      <!-- SELECTOR DE TIPO DE PERSONA -->
+      <div class="form-field full-width-field">
+        <label>Tipo de Persona</label>
+        <select [(ngModel)]="nuevoUsuario.tipo_persona" name="regTipoPersona" required>
+          <option value="natural">Persona Natural (Físico)</option>
+          <option value="juridica">Persona Jurídica (Empresa / Colectivo)</option>
+        </select>
+      </div>
+
+      <!-- CAMPOS COMUNES -->
+      <div class="form-field">
+        <label>{{ nuevoUsuario.tipo_persona === 'juridica' ? 'Nombre de la Empresa' : 'Nombre' }}</label>
+        <input type="text" [(ngModel)]="nuevoUsuario.nombre" name="regNombre" required placeholder="Ej. Juan o Inversiones Azuero" />
+      </div>
+
+      <div class="form-field" *ngIf="nuevoUsuario.tipo_persona === 'natural'">
+        <label>Apellidos</label>
+        <input type="text" [(ngModel)]="nuevoUsuario.apellidos" name="regApellidos" required placeholder="Apellidos completos" />
+      </div>
+
+      <div class="form-field">
+        <label>Correo Electrónico</label>
+        <input type="email" [(ngModel)]="nuevoUsuario.email" name="regEmail" required placeholder="correo@ejemplo.com" />
+      </div>
+
+      <div class="form-field">
+        <label>Teléfono</label>
+        <input type="text" [(ngModel)]="nuevoUsuario.telefono" name="regTelefono" placeholder="Ej. +507 6666-8888" />
+      </div>
+
+      <div class="form-field">
+        <label>Rol en el Sistema</label>
+        <select [(ngModel)]="nuevoUsuario.idRol" name="regRol" required>
+          <option [ngValue]="null" disabled>Seleccione un rol...</option>
+          <option *ngFor="let r of roles()" [ngValue]="r.idRol">
+            {{ r.descripcion || (r.codigo | uppercase) }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Capítulo destino: solo el SUPERADMIN elige (acceso global a todos los
+           capítulos). Para admin/secretaria de capítulo, el backend asigna
+           automáticamente el capítulo de su propia sesión. -->
+      <div class="form-field" *ngIf="sessionService.isSuperadmin()">
+        <label>Capítulo</label>
+        <select [(ngModel)]="nuevoUsuario.idCapitulo" name="regCapitulo" required>
+          <option [ngValue]="null" disabled>Seleccione un capítulo...</option>
+          <option *ngFor="let c of capitulos()" [ngValue]="c.id_capitulo">
+            {{ c.nombre_capitulo }}
+          </option>
+        </select>
+      </div>
+
+      <!-- CONTRASEÑA (OPCIONAL: Si no se llena, es un usuario "Solo Registro" para Junta Directiva) -->
+      <div class="form-field password-generator-field">
+        <label>Contraseña de Acceso (Opcional)</label>
+        <div class="input-with-button-row" style="display: flex; gap: 0.5rem; align-items: center; width: 100%;">
+          <input 
+            type="text" 
+            [(ngModel)]="nuevoUsuario.password" 
+            name="regPassword" 
+            placeholder="Dejar vacío para 'Solo Registro'" 
+            style="flex: 1;"
+          />
+          <button 
+            type="button" 
+            class="action-btn generate-pwd-btn" 
+            (click)="solicitarGenerarPassword()"
+            title="Auto-generar contraseña compleja"
+            style="padding: 0.6rem 0.85rem; height: 38px; font-size: 0.9rem; background: var(--primary-color); color: #020a0d; font-weight: 700; border-radius: 8px; border: none; cursor: pointer;"
+          >
+            ⚡ Generar
+          </button>
+        </div>
+        <span class="field-hint">Si se deja vacío, el usuario quedará inactivo hasta ser invitado por correo.</span>
+      </div>
+
+      <!-- CAMPOS EXCLUSIVOS PERSONA NATURAL -->
+      <div class="form-field" *ngIf="nuevoUsuario.tipo_persona === 'natural'">
+        <label>Cédula / DNI</label>
+        <input type="text" [(ngModel)]="nuevoUsuario.dni" name="regDni" placeholder="Ej. 8-888-888" />
+      </div>
+
+      <!-- CAMPOS EXCLUSIVOS PERSONA JURIDICA -->
+      <div class="form-grid-layout full-width-field" *ngIf="nuevoUsuario.tipo_persona === 'juridica'">
+        <div class="form-field">
+          <label>RUC (Registro Único de Contribuyente)</label>
+          <input type="text" [(ngModel)]="nuevoUsuario.ruc" name="regRuc" placeholder="Ej. 123456-1-789" />
+        </div>
+
+        <div class="form-field">
+          <label>No. Aviso de Operación</label>
+          <input type="text" [(ngModel)]="nuevoUsuario.no_aviso_operacion" name="regAviso" placeholder="Ej. AO-998822" />
+        </div>
+
+        <div class="form-field">
+          <label>Fecha Aviso de Operación</label>
+          <input type="date" [(ngModel)]="nuevoUsuario.fecha_aviso_operacion" name="regFechaAviso" />
+        </div>
+
+        <div class="form-field">
+          <label>Representante Legal (ID Usuario)</label>
+          <select [(ngModel)]="nuevoUsuario.rep_legal" name="regRepLegal">
+            <option [value]="undefined">Ninguno</option>
+            <option *ngFor="let p of personasNaturales()" [value]="p.idUsuario">{{ p.nombre }} {{ p.apellidos }} ({{ p.email }})</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Alertas específicas del Formulario de Registro -->
+      <div *ngIf="errorRegistroMsg()" class="alert danger animate-in full-width-field" style="margin-bottom: 1rem;">
+        {{ errorRegistroMsg() }}
+      </div>
+      <div *ngIf="exitoRegistroMsg()" class="alert success animate-in full-width-field" style="margin-bottom: 1rem;">
+        {{ exitoRegistroMsg() }}
+      </div>
+
+      <div class="form-actions-row full-width-field">
+        <button type="submit" class="action-btn save-btn" [disabled]="loading()" style="flex: 1;">
+          {{ loading() ? 'Registrando...' : '💾 Guardar' }}
+        </button>
+        <button type="button" class="action-btn cancel-btn" (click)="mostrarFormularioCreacion.set(false); restablecerNuevoUsuarioForm()" style="flex: 1;">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- CARD DETALLE DE USUARIO CON TABS: DATOS GENERALES Y ROLES -->
+  <section class="user-detail-card glass-card animate-in" *ngIf="selectedUser() as user">
+    <div class="card-header flex-header">
+      <h2>Detalle del Usuario: <span>{{ user.nombre }}</span></h2>
+      <button type="button" class="action-btn cancel-btn" (click)="cerrarDetalle()">✖ Cerrar Detalle</button>
+    </div>
+
+    <app-usuario-tab
+      [user]="user"
+      [personasNaturales]="personasNaturales()"
+      [juntaDirectiva]="juntaDirectiva()"
+      [errorJuntaMsg]="errorJuntaMsg()"
+      [exitoJuntaMsg]="exitoJuntaMsg()"
+      [nuevaJuntaMiembroId]="nuevaJuntaMiembroId()"
+      [nuevaJuntaRolId]="nuevaJuntaRolId()"
+      [loading]="loading()"
+    ></app-usuario-tab>
+  </section>
+
+</div>

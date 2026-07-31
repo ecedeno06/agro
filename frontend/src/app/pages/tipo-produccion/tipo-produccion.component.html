@@ -1,0 +1,279 @@
+<div class="tipo-produccion-wrapper">
+
+  <!-- TABS PRINCIPALES: Pecuaria / Agrícola -->
+  <div class="form-subtabs">
+    <button
+      type="button"
+      class="subtab-btn"
+      [class.subtab-active]="activeTab() === 'pecuaria'"
+      (click)="activeTab.set('pecuaria')"
+    >
+      🐄 Pecuaria
+    </button>
+    <button
+      type="button"
+      class="subtab-btn"
+      [class.subtab-active]="activeTab() === 'agricola'"
+      (click)="activeTab.set('agricola')"
+    >
+      🌾 Agrícola
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  TAB: PECUARIA                                        -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="tab-panel" *ngIf="activeTab() === 'pecuaria'">
+
+    <div class="panel-toolbar">
+      <div class="panel-title">
+        <span class="panel-icon">🐄</span>
+        <div>
+          <h4>Producción Pecuaria</h4>
+          <p class="panel-subtitle">Registro de animales y ganado de la finca.</p>
+        </div>
+      </div>
+      <button
+        *ngIf="!readOnly"
+        type="button"
+        class="add-btn"
+        (click)="showFormPecuaria.set(!showFormPecuaria()); cancelarPecuario()"
+      >
+        {{ showFormPecuaria() ? '✖ Cancelar' : '➕ Agregar' }}
+      </button>
+    </div>
+
+    <!-- Alertas -->
+    <div class="tp-alert danger"  *ngIf="errorPecuaria()">{{ errorPecuaria() }}</div>
+    <div class="tp-alert success" *ngIf="successPecuaria()">{{ successPecuaria() }}</div>
+
+    <!-- Formulario de entrada -->
+    <div class="tp-form glass-inner" *ngIf="showFormPecuaria()">
+      <h5 class="form-title">{{ nuevoPecuario.id ? '✏️ Editar Registro' : '➕ Nuevo Registro Pecuario' }}</h5>
+      <div class="tp-form-grid">
+
+        <div class="tp-field">
+          <label>Especie *</label>
+          <select [(ngModel)]="nuevoPecuario.especie" name="pec_especie">
+            <option value="">-- Seleccionar especie --</option>
+            <option *ngFor="let e of especiesComunes" [value]="e">{{ e }}</option>
+          </select>
+        </div>
+
+        <div class="tp-field">
+          <label>Raza / Variedad</label>
+          <input type="text" [(ngModel)]="nuevoPecuario.raza" name="pec_raza" placeholder="Ej. Holstein, Brahman..." />
+        </div>
+
+        <div class="tp-field">
+          <label>Cantidad *</label>
+          <input type="number" [(ngModel)]="nuevoPecuario.cantidad" name="pec_cantidad" min="0" placeholder="Ej. 25" />
+        </div>
+
+        <div class="tp-field">
+          <label>Unidad</label>
+          <input type="text" [(ngModel)]="nuevoPecuario.unidad" name="pec_unidad" placeholder="cabezas, aves, colmenas..." />
+        </div>
+
+        <div class="tp-field">
+          <label>Propósito</label>
+          <select [(ngModel)]="nuevoPecuario.proposito" name="pec_proposito">
+            <option value="">-- Seleccionar propósito --</option>
+            <option *ngFor="let p of propositosComunes" [value]="p">{{ p }}</option>
+          </select>
+        </div>
+
+        <div class="tp-field tp-field--full">
+          <label>Observaciones</label>
+          <textarea [(ngModel)]="nuevoPecuario.observaciones" name="pec_obs" rows="2" placeholder="Notas adicionales sobre este animal/grupo..."></textarea>
+        </div>
+      </div>
+
+      <div class="tp-form-actions">
+        <button type="button" class="tp-btn primary" (click)="guardarPecuario()" [disabled]="savingPecuaria()">
+          {{ savingPecuaria() ? 'Guardando...' : '💾 Guardar' }}
+        </button>
+        <button type="button" class="tp-btn secondary" (click)="cancelarPecuario()">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="tp-loading" *ngIf="loadingPecuaria()">Cargando producción pecuaria...</div>
+
+    <!-- Empty state -->
+    <div class="tp-empty" *ngIf="!loadingPecuaria() && productosPecuarios().length === 0 && !showFormPecuaria()">
+      <span class="empty-icon">🐄</span>
+      <p>No hay registros pecuarios para esta finca.</p>
+      <small *ngIf="!readOnly">Haz clic en <strong>➕ Agregar</strong> para registrar ganado o animales.</small>
+    </div>
+
+    <!-- Tabla de registros -->
+    <div class="tp-table-wrap" *ngIf="!loadingPecuaria() && productosPecuarios().length > 0">
+      <table class="tp-table">
+        <thead>
+          <tr>
+            <th>Especie</th>
+            <th>Raza</th>
+            <th>Cantidad</th>
+            <th>Propósito</th>
+            <th>Observaciones</th>
+            <th *ngIf="!readOnly">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of productosPecuarios()">
+            <td><span class="especie-badge">{{ item.especie }}</span></td>
+            <td>{{ item.raza || '—' }}</td>
+            <td><strong>{{ item.cantidad }}</strong> <small>{{ item.unidad }}</small></td>
+            <td>{{ item.proposito || '—' }}</td>
+            <td class="obs-cell">{{ item.observaciones || '—' }}</td>
+            <td *ngIf="!readOnly" class="actions-cell">
+              <button type="button" class="tp-action-btn edit" (click)="editarPecuario(item); showFormPecuaria.set(true)" title="Editar">✏️</button>
+              <button type="button" class="tp-action-btn delete" (click)="eliminarPecuario(item)" title="Eliminar">🗑️</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  TAB: AGRÍCOLA                                        -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="tab-panel" *ngIf="activeTab() === 'agricola'">
+
+    <div class="panel-toolbar">
+      <div class="panel-title">
+        <span class="panel-icon">🌾</span>
+        <div>
+          <h4>Producción Agrícola</h4>
+          <p class="panel-subtitle">Registro de cultivos y cosechas de la finca.</p>
+        </div>
+      </div>
+      <button
+        *ngIf="!readOnly"
+        type="button"
+        class="add-btn"
+        (click)="showFormAgricola.set(!showFormAgricola()); cancelarAgricola()"
+      >
+        {{ showFormAgricola() ? '✖ Cancelar' : '➕ Agregar' }}
+      </button>
+    </div>
+
+    <!-- Alertas -->
+    <div class="tp-alert danger"  *ngIf="errorAgricola()">{{ errorAgricola() }}</div>
+    <div class="tp-alert success" *ngIf="successAgricola()">{{ successAgricola() }}</div>
+
+    <!-- Formulario de entrada -->
+    <div class="tp-form glass-inner" *ngIf="showFormAgricola()">
+      <h5 class="form-title">{{ nuevoAgricola.id ? '✏️ Editar Cultivo' : '➕ Nuevo Cultivo' }}</h5>
+      <div class="tp-form-grid">
+
+        <div class="tp-field">
+          <label>Cultivo *</label>
+          <select [(ngModel)]="nuevoAgricola.cultivo" name="agr_cultivo">
+            <option value="">-- Seleccionar cultivo --</option>
+            <option *ngFor="let c of cultivosComunes" [value]="c">{{ c }}</option>
+          </select>
+        </div>
+
+        <div class="tp-field">
+          <label>Variedad</label>
+          <input type="text" [(ngModel)]="nuevoAgricola.variedad" name="agr_variedad" placeholder="Ej. Híbrido 30P70..." />
+        </div>
+
+        <div class="tp-field">
+          <label>Área Sembrada (ha)</label>
+          <input type="number" [(ngModel)]="nuevoAgricola.area_sembrada" name="agr_area" min="0" step="0.1" placeholder="Ej. 5.5" />
+        </div>
+
+        <div class="tp-field">
+          <label>Sistema de Riego</label>
+          <select [(ngModel)]="nuevoAgricola.sistema_riego" name="agr_riego">
+            <option value="">-- Seleccionar --</option>
+            <option *ngFor="let s of sistemasRiego" [value]="s">{{ s }}</option>
+          </select>
+        </div>
+
+        <div class="tp-field">
+          <label>Fecha de Siembra</label>
+          <input type="date" [(ngModel)]="nuevoAgricola.fecha_siembra" name="agr_siembra" />
+        </div>
+
+        <div class="tp-field">
+          <label>Fecha Cosecha Estimada</label>
+          <input type="date" [(ngModel)]="nuevoAgricola.fecha_cosecha_estimada" name="agr_cosecha" />
+        </div>
+
+        <div class="tp-field">
+          <label>Rendimiento Estimado</label>
+          <input type="number" [(ngModel)]="nuevoAgricola.rendimiento_estimado" name="agr_rend" min="0" placeholder="Ej. 120" />
+        </div>
+
+        <div class="tp-field">
+          <label>Unidad</label>
+          <input type="text" [(ngModel)]="nuevoAgricola.unidad_rendimiento" name="agr_unidad" placeholder="qq, kg, ton..." />
+        </div>
+
+        <div class="tp-field tp-field--full">
+          <label>Observaciones</label>
+          <textarea [(ngModel)]="nuevoAgricola.observaciones" name="agr_obs" rows="2" placeholder="Notas sobre el cultivo, plagas, condiciones..."></textarea>
+        </div>
+      </div>
+
+      <div class="tp-form-actions">
+        <button type="button" class="tp-btn primary" (click)="guardarAgricola()" [disabled]="savingAgricola()">
+          {{ savingAgricola() ? 'Guardando...' : '💾 Guardar' }}
+        </button>
+        <button type="button" class="tp-btn secondary" (click)="cancelarAgricola()">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="tp-loading" *ngIf="loadingAgricola()">Cargando producción agrícola...</div>
+
+    <!-- Empty state -->
+    <div class="tp-empty" *ngIf="!loadingAgricola() && productosAgricolas().length === 0 && !showFormAgricola()">
+      <span class="empty-icon">🌾</span>
+      <p>No hay cultivos registrados para esta finca.</p>
+      <small *ngIf="!readOnly">Haz clic en <strong>➕ Agregar</strong> para registrar un cultivo.</small>
+    </div>
+
+    <!-- Tabla de registros -->
+    <div class="tp-table-wrap" *ngIf="!loadingAgricola() && productosAgricolas().length > 0">
+      <table class="tp-table">
+        <thead>
+          <tr>
+            <th>Cultivo</th>
+            <th>Variedad</th>
+            <th>Área (ha)</th>
+            <th>Riego</th>
+            <th>Siembra</th>
+            <th>Cosecha Est.</th>
+            <th>Rendimiento</th>
+            <th *ngIf="!readOnly">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of productosAgricolas()">
+            <td><span class="cultivo-badge">{{ item.cultivo }}</span></td>
+            <td>{{ item.variedad || '—' }}</td>
+            <td>{{ item.area_sembrada != null ? (item.area_sembrada + ' ha') : '—' }}</td>
+            <td>{{ item.sistema_riego || '—' }}</td>
+            <td>{{ item.fecha_siembra ? (item.fecha_siembra | date:'dd/MM/yyyy') : '—' }}</td>
+            <td>{{ item.fecha_cosecha_estimada ? (item.fecha_cosecha_estimada | date:'dd/MM/yyyy') : '—' }}</td>
+            <td>
+              <span *ngIf="item.rendimiento_estimado != null">{{ item.rendimiento_estimado }} {{ item.unidad_rendimiento }}</span>
+              <span *ngIf="item.rendimiento_estimado == null">—</span>
+            </td>
+            <td *ngIf="!readOnly" class="actions-cell">
+              <button type="button" class="tp-action-btn edit" (click)="editarAgricola(item); showFormAgricola.set(true)" title="Editar">✏️</button>
+              <button type="button" class="tp-action-btn delete" (click)="eliminarAgricola(item)" title="Eliminar">🗑️</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,144 @@
+<div class="finca-fenomenos-wrapper animate-in">
+
+  <!-- ALERTAS LOCALES -->
+  @if (errorMsg()) {
+    <div class="alert danger animate-in">
+      {{ errorMsg() }}
+    </div>
+  }
+  @if (successMsg()) {
+    <div class="alert success animate-in">
+      {{ successMsg() }}
+    </div>
+  }
+
+  <!-- BARRA SUPERIOR DE ASIGNACIÓN -->
+  @if (!readOnly) {
+    <div class="assign-bar glass-card">
+      <div class="assign-title">
+        <h4>🌤️ Asociar Fenómeno Atmosférico a esta Finca</h4>
+        <p>Seleccione un evento climático registrado en el catálogo para dar seguimiento a su impacto en la producción.</p>
+      </div>
+
+      <div class="assign-controls">
+        <select 
+          [ngModel]="selectedFenomenoId()"
+          (ngModelChange)="selectedFenomenoId.set($event ? +$event : null)"
+          name="selectFenomeno"
+          class="custom-select"
+        >
+          <option [ngValue]="null">-- Seleccionar Fenómeno del Catálogo --</option>
+          @for (item of fenomenosDisponibles(); track item.idFenomeno) {
+            <option [value]="item.idFenomeno">
+              {{ item.nombre }} ({{ item.periodoMeses }}) — {{ item.porcentajeMerma }}% Merma
+            </option>
+          }
+        </select>
+
+        <button 
+          type="button"
+          class="primary-btn assign-btn"
+          [disabled]="!selectedFenomenoId() || loading()"
+          (click)="asignarFenomeno()"
+        >
+          ➕ Asignar a Finca
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- TABLA DE FENÓMENOS ASOCIADOS A LA FINCA -->
+  <div class="glass-card table-card" style="margin-top: 1rem;">
+    <div class="card-subtitle-header">
+      <h4>Fenómenos Atmosféricos que Afectan la Finca</h4>
+      <span class="badge-count">{{ fenomenosAsignados().length }} Registrados</span>
+    </div>
+
+    @if (loading() && fenomenosAsignados().length === 0) {
+      <div class="loading-state">
+        Cargando fenómenos de la finca...
+      </div>
+    }
+
+    @if (!loading() && fenomenosAsignados().length === 0) {
+      <div class="empty-state">
+        🌤️ No se han asociado fenómenos atmosféricos a esta finca. Utilice el selector superior para vincular eventos climáticos.
+      </div>
+    }
+
+    @if (fenomenosAsignados().length > 0) {
+      <div class="table-scroll-container">
+        <table class="fincas-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Fenómeno Atmosférico</th>
+              <th>Meses Afectación</th>
+              <th>Efecto Climático Principal</th>
+              <th class="center-text">Merma Est. (%)</th>
+              <th class="center-text">Estado en Finca</th>
+              @if (!readOnly) {
+                <th style="text-align: right;">Acciones</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of fenomenosAsignados(); track item.id) {
+              <tr [class.disabled-row]="!item.asignacionActiva">
+                <td><strong>#{{ item.idFenomeno }}</strong></td>
+                <td>
+                  <span class="fenomeno-name">{{ item.nombre }}</span>
+                  @if (item.descripcion) {
+                    <p class="fenomeno-desc">{{ item.descripcion }}</p>
+                  }
+                </td>
+                <td>
+                  <span class="periodo-badge">
+                    🗓️ {{ item.periodoMeses }}
+                  </span>
+                </td>
+                <td>
+                  <span class="impacto-text">{{ item.tipoImpacto }}</span>
+                  @if (item.medidasMitigacion) {
+                    <p class="mitigacion-hint">💡 <strong>Mitigación:</strong> {{ item.medidasMitigacion }}</p>
+                  }
+                </td>
+                <td class="center-text">
+                  <span class="badge-merma" [ngClass]="getMermaClass(item.porcentajeMerma)">
+                    📉 {{ item.porcentajeMerma }}%
+                  </span>
+                </td>
+                <td class="center-text">
+                  <span class="badge" [class.success-badge]="item.asignacionActiva" [class.danger-badge]="!item.asignacionActiva">
+                    {{ item.asignacionActiva ? 'Activo en Finca' : 'Inactivo' }}
+                  </span>
+                </td>
+                @if (!readOnly) {
+                  <td style="text-align: right;">
+                    <button 
+                      type="button" 
+                      class="secondary-btn action-sm"
+                      (click)="alternarEstado(item)"
+                      [title]="item.asignacionActiva ? 'Desactivar para esta finca' : 'Activar para esta finca'"
+                    >
+                      {{ item.asignacionActiva ? 'Desactivar' : 'Activar' }}
+                    </button>
+                    <button 
+                      type="button" 
+                      class="danger-btn action-sm"
+                      (click)="eliminarAsignacion(item)"
+                      title="Eliminar asociación con la finca"
+                    >
+                      🗑️ Quitar
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+</div>

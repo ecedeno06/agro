@@ -1,0 +1,79 @@
+<aside class="sidebar" [class.collapsed]="collapsed()">
+  <div class="sidebar-brand">
+    <div class="brand-logo-wrapper">
+      <span class="brand-icon">🚜</span>
+      <span class="brand-text" *ngIf="!collapsed()">AgroAzuero</span>
+    </div>
+    <button class="toggle-sidebar-btn" (click)="toggleCollapsed()" type="button" [title]="collapsed() ? 'Expandir menú' : 'Colapsar menú'">
+      {{ collapsed() ? '▶' : '◀' }}
+    </button>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div *ngFor="let m of navService.menu()">
+      <!-- Caso A: Menú con submenú colapsable -->
+      <div *ngIf="m.submenu && m.submenu.length > 0">
+        <button
+          type="button"
+          [class.active]="activeSubmenu() === m.id"
+          (click)="toggleSubmenu(m.id)"
+          [attr.data-tooltip]="collapsed() ? m.nombre : null"
+        >
+          <span class="nav-icon">
+            <img *ngIf="isUrlIcon(m.icono)" [src]="getIconUrl(m.icono)" style="width: 1.15rem; height: 1.15rem; object-fit: contain; vertical-align: middle;" alt="icon" />
+            <span *ngIf="!isUrlIcon(m.icono)">{{ m.icono }}</span>
+          </span>
+          <span class="nav-label" *ngIf="!collapsed()">{{ m.nombre }}</span>
+          <span class="expand-arrow" *ngIf="!collapsed()">
+            {{ activeSubmenu() === m.id ? '▾' : '▸' }}
+          </span>
+        </button>
+
+        <div class="submenu" *ngIf="activeSubmenu() === m.id && !collapsed()">
+          <a
+            *ngFor="let sub of m.submenu"
+            [routerLink]="rutaMenu(sub.ruta)"
+            routerLinkActive="active"
+          >
+            <span class="nav-icon">
+              <img *ngIf="isUrlIcon(sub.icono)" [src]="getIconUrl(sub.icono)" style="width: 1.15rem; height: 1.15rem; object-fit: contain; vertical-align: middle;" alt="icon" />
+              <span *ngIf="!isUrlIcon(sub.icono)">{{ sub.icono }}</span>
+            </span>
+            <span>{{ sub.nombre }}</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Caso B: Menú directo (sin submenú) -->
+      <a
+        *ngIf="!m.submenu || m.submenu.length === 0"
+        [routerLink]="rutaMenu(m.ruta)"
+        routerLinkActive="active"
+        [attr.data-tooltip]="collapsed() ? m.nombre : null"
+      >
+        <span class="nav-icon">
+          <img *ngIf="isUrlIcon(m.icono)" [src]="getIconUrl(m.icono)" style="width: 1.15rem; height: 1.15rem; object-fit: contain; vertical-align: middle;" alt="icon" />
+          <span *ngIf="!isUrlIcon(m.icono)">{{ m.icono }}</span>
+        </span>
+        <span class="nav-label" *ngIf="!collapsed()">{{ m.nombre }}</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="footer-btn theme-toggle-btn" type="button" (click)="toggleTheme()" title="Cambiar tema" [attr.data-tooltip]="collapsed() ? (isDark ? 'Tema Claro' : 'Tema Oscuro') : null">
+      <span class="nav-icon">{{ isDark ? '☀️' : '🌙' }}</span>
+      <span class="nav-label" *ngIf="!collapsed()">Tema {{ isDark ? 'Claro' : 'Oscuro' }}</span>
+    </button>
+
+    <button class="footer-btn inactivity-demo-btn" type="button" (click)="triggerInactivity.emit(); $event.stopPropagation()" title="Demo Inactividad" [attr.data-tooltip]="collapsed() ? 'Simular Inactividad' : null">
+      <span class="nav-icon">⏱️</span>
+      <span class="nav-label" *ngIf="!collapsed()">Simular Inactividad</span>
+    </button>
+
+    <button class="footer-btn logout-btn" type="button" (click)="logout()" [attr.data-tooltip]="collapsed() ? 'Cerrar Sesión' : null">
+      <span class="nav-icon">🚪</span>
+      <span class="nav-label" *ngIf="!collapsed()">Cerrar Sesión</span>
+    </button>
+  </div>
+</aside>

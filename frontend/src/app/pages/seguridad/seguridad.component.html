@@ -1,0 +1,286 @@
+<div class="dashboard-container animate-in">
+  <section class="glass-card config-card">
+    <h2>Seguridad y Cuenta</h2>
+    <p class="section-desc">Gestiona tus credenciales de acceso y la seguridad adicional de tu cuenta.</p>
+
+    <!-- TABS DE SEGURIDAD -->
+    <div class="tabs">
+      <button
+        type="button"
+        class="tab-button"
+        [class.tab-active]="activeSeguridadTab() === 'password'"
+        (click)="activeSeguridadTab.set('password'); pwdErrorMsg.set(''); pwdSuccessMsg.set('')"
+      >
+        🔑 Cambiar Contraseña
+      </button>
+      <button
+        type="button"
+        class="tab-button"
+        [class.tab-active]="activeSeguridadTab() === 'two-factor'"
+        (click)="activeSeguridadTab.set('two-factor'); error2faMsg.set(''); success2faMsg.set('')"
+      >
+        🛡️ Doble Factor (2FA)
+      </button>
+    </div>
+
+    <!-- 1. FORMULARIO CAMBIAR CONTRASEÑA -->
+    <div *ngIf="activeSeguridadTab() === 'password'">
+      @if (pwdErrorMsg()) {
+        <div class="alert danger animate-in">{{ pwdErrorMsg() }}</div>
+      }
+      @if (pwdSuccessMsg()) {
+        <div class="alert success animate-in">{{ pwdSuccessMsg() }}</div>
+      }
+
+      <form (submit)="$event.preventDefault(); realizarCambioPassword()" class="edit-form" style="max-width: 500px; display: flex; flex-direction: column; gap: 1rem;">
+        <label class="form-field">
+          <span>Contraseña Actual</span>
+          <div class="password-input-wrapper">
+            <input
+              [type]="showPasswordActual() ? 'text' : 'password'"
+              [ngModel]="passwordActual()"
+              (ngModelChange)="passwordActual.set($event)"
+              name="passwordActual"
+              placeholder="Ingrese su contraseña actual"
+              required
+              [disabled]="pwdLoading()"
+            />
+            <button type="button" class="toggle-password-btn" (click)="toggleShowPasswordActual()" [title]="showPasswordActual() ? 'Ocultar contraseña' : 'Ver contraseña'" tabindex="-1">
+              @if (!showPasswordActual()) {
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                  <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                  <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                  <line x1="2" x2="22" y1="2" y2="22"/>
+                </svg>
+              }
+            </button>
+          </div>
+        </label>
+
+        <label class="form-field">
+          <span>Nueva Contraseña</span>
+          <div class="password-input-wrapper">
+            <input
+              [type]="showNuevoPassword() ? 'text' : 'password'"
+              [ngModel]="nuevoPassword()"
+              (ngModelChange)="nuevoPassword.set($event); validarSimilitud()"
+              name="nuevoPassword"
+              placeholder="Ingrese su nueva contraseña"
+              required
+              [disabled]="pwdLoading()"
+            />
+            <button type="button" class="toggle-password-btn" (click)="toggleShowNuevoPassword()" [title]="showNuevoPassword() ? 'Ocultar contraseña' : 'Ver contraseña'" tabindex="-1">
+              @if (!showNuevoPassword()) {
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                  <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                  <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                  <line x1="2" x2="22" y1="2" y2="22"/>
+                </svg>
+              }
+            </button>
+          </div>
+        </label>
+
+        <label class="form-field">
+          <span>Confirmar Nueva Contraseña</span>
+          <div class="password-input-wrapper">
+            <input
+              [type]="showConfirmarPassword() ? 'text' : 'password'"
+              [ngModel]="confirmarPassword()"
+              (ngModelChange)="confirmarPassword.set($event)"
+              name="confirmarPassword"
+              placeholder="Confirme su nueva contraseña"
+              required
+              [disabled]="pwdLoading()"
+            />
+            <button type="button" class="toggle-password-btn" (click)="toggleShowConfirmarPassword()" [title]="showConfirmarPassword() ? 'Ocultar contraseña' : 'Ver contraseña'" tabindex="-1">
+              @if (!showConfirmarPassword()) {
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                  <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                  <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                  <line x1="2" x2="22" y1="2" y2="22"/>
+                </svg>
+              }
+            </button>
+          </div>
+
+          <div *ngIf="nuevoPassword() && confirmarPassword() && nuevoPassword() !== confirmarPassword()" class="alert danger animate-in" style="margin-top: 0.5rem; margin-bottom: 0px; padding: 0.5rem 0.75rem; font-size: 0.8rem; width: 100%; box-sizing: border-box;">
+            ⚠️ Las contraseñas no coinciden.
+          </div>
+        </label>
+
+        <label class="form-field">
+          <span>Pista para recordar contraseña</span>
+          <input
+            type="text"
+            [ngModel]="pista()"
+            (ngModelChange)="pista.set($event); validarSimilitud()"
+            name="pista"
+            placeholder="Ej. Mi país favorito y el año del mundial"
+            required
+            [disabled]="pwdLoading()"
+          />
+        </label>
+
+        <div *ngIf="nuevoPassword() && pista()" style="padding: 0.75rem; border-radius: 6px; background: rgba(255,255,255,0.015); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 0.75rem; box-sizing: border-box;">
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Porcentaje de similitud:</span>
+          <span
+            [style.color]="similitudPorcentaje() > maxSimilitud() ? '#f87171' : '#4ade80'"
+            style="font-weight: 700; font-size: 0.85rem; padding: 0.25rem 0.5rem; border-radius: 4px;"
+            [style.background]="similitudPorcentaje() > maxSimilitud() ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)'"
+          >
+            {{ similitudPorcentaje() }}%
+            {{ similitudPorcentaje() > maxSimilitud() ? '❌ Muy Parecido (Debe ser ≤ ' + maxSimilitud() + '%)' : '✅ Seguro' }}
+          </span>
+        </div>
+
+        <div class="actions" style="margin-top: 1.25rem; display: flex; gap: 0.75rem;">
+          <button type="submit" class="primary-btn" [disabled]="!canSubmitChangePassword() || pwdLoading()">
+            {{ pwdLoading() ? 'Guardando...' : 'Cambiar Contraseña' }}
+          </button>
+          <button
+            type="button"
+            class="primary-btn"
+            style="background: var(--cancel-bg); border: 1px solid var(--cancel-border); color: var(--cancel-color); box-shadow: none; text-shadow: none;"
+            routerLink="/dashboard/monitoreo"
+            [disabled]="pwdLoading()"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- 2. CONTROL DOBLE FACTOR (2FA) -->
+    <div *ngIf="activeSeguridadTab() === 'two-factor'">
+      @if (error2faMsg()) {
+        <div class="alert danger animate-in">{{ error2faMsg() }}</div>
+      }
+      @if (success2faMsg()) {
+        <div class="alert success animate-in">{{ success2faMsg() }}</div>
+      }
+
+      <div class="two-factor-control">
+        <div class="two-factor-status" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;">
+          <span class="status-label" style="font-weight: 700;">Estado de 2FA:</span>
+          @if (user()?.twoFactorEnabled) {
+            <span class="value active" style="color: var(--accent-color, #10b981); font-weight: 800;">🔐 Activado</span>
+          } @else {
+            <span class="value disabled" style="color: var(--text-muted); font-weight: 800;">🔓 Desactivado</span>
+          }
+        </div>
+
+        @if (!user()?.twoFactorEnabled && !show2faSetup() && !show2faDisable()) {
+          <button class="primary-btn" type="button" (click)="iniciarSetup2FA()" [disabled]="loading2fa()">
+            {{ loading2fa() ? 'Iniciando...' : 'Activar Doble Factor (2FA)' }}
+          </button>
+        }
+
+        @if (show2faSetup()) {
+          <div class="two-factor-setup-flow animate-in" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+            <p class="setup-instructions">1. Escanea este código QR con tu aplicación de autenticación, o ingresa la clave manual.</p>
+
+            <div class="qr-container" style="text-align: center;">
+              @if (qrCode()) {
+                <img [src]="qrCode()" alt="Código QR 2FA" style="max-width: 180px; border-radius: 12px; border: 1px solid var(--border-color);" />
+              }
+            </div>
+
+            <div class="manual-key-container" style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 8px; font-family: monospace; font-size: 0.9rem; text-align: center;">
+              <span class="manual-label" style="display:block; font-size:0.75rem; color:var(--text-muted);">Clave manual:</span>
+              <code class="manual-key">{{ secretKey() }}</code>
+            </div>
+
+            <p class="setup-instructions">2. Ingresa el código de 6 dígitos generado por tu aplicación para confirmar la activación:</p>
+
+            <label class="form-field">
+              <input
+                type="text"
+                [ngModel]="confirmCode()"
+                (ngModelChange)="confirmCode.set($event)"
+                placeholder="000000"
+                maxlength="6"
+                required
+                class="otp-input-field"
+                style="text-align: center; font-size: 1.25rem; letter-spacing: 2px;"
+              />
+            </label>
+
+            <div class="two-factor-actions" style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+              <button
+                type="button"
+                class="primary-btn"
+                style="background: var(--cancel-bg); border: 1px solid var(--cancel-border); color: var(--cancel-color); box-shadow: none; text-shadow: none;"
+                (click)="cancelarFlujo2fa()"
+                [disabled]="loading2fa()"
+              >
+                Cancelar
+              </button>
+              <button class="primary-btn" type="button" (click)="activar2FA()" [disabled]="!canSubmitConfirm2fa() || loading2fa()">
+                {{ loading2fa() ? 'Activando...' : 'Confirmar y Activar' }}
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (user()?.twoFactorEnabled && !show2faDisable()) {
+          <button class="danger-btn" type="button" (click)="iniciarDesactivacion2FA()" style="background: #ef4444; color: white; border: none; border-radius: 8px; padding: 0.6rem 1.2rem; font-weight: 700; cursor: pointer;">
+            Desactivar Doble Factor (2FA)
+          </button>
+        }
+
+        @if (show2faDisable()) {
+          <div class="two-factor-disable-flow animate-in" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+            <p class="setup-instructions">Ingresa el código de 6 dígitos de tu aplicación de autenticación para confirmar la desactivación del 2FA:</p>
+
+            <label class="form-field">
+              <input
+                type="text"
+                [ngModel]="disableCode()"
+                (ngModelChange)="disableCode.set($event)"
+                placeholder="000000"
+                maxlength="6"
+                required
+                class="otp-input-field"
+                style="text-align: center; font-size: 1.25rem; letter-spacing: 2px;"
+              />
+            </label>
+
+            <div class="two-factor-actions" style="display: flex; gap: 1rem;">
+              <button
+                type="button"
+                class="primary-btn"
+                style="background: var(--cancel-bg); border: 1px solid var(--cancel-border); color: var(--cancel-color); box-shadow: none; text-shadow: none;"
+                (click)="cancelarFlujo2fa()"
+                [disabled]="loading2fa()"
+              >
+                Cancelar
+              </button>
+              <button class="danger-btn" type="button" (click)="desactivar2FA()" [disabled]="!canSubmitDisable2fa() || loading2fa()" style="background: #ef4444; color: white; border: none; border-radius: 8px; padding: 0.6rem 1.2rem; font-weight: 700; cursor: pointer;">
+                {{ loading2fa() ? 'Desactivando...' : 'Confirmar y Desactivar' }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+</div>

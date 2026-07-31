@@ -1,0 +1,228 @@
+<div class="mantenimiento-suelos-container animate-in">
+
+  <!-- CARD 1: LISTADO DE PAÍSES -->
+  <section class="suelos-list-card">
+    <div class="card-header flex-header">
+      <div>
+        <h2>Catálogo de Países</h2>
+        <p class="subtitle">Administra y registra los países, nacionalidades, monedas e idiomas oficiales.</p>
+      </div>
+      <button 
+        type="button" 
+        class="action-btn register-suelo-btn"
+        (click)="abrirNuevoForm()"
+      >
+        {{ showForm() && !editingId() ? '❌ Cerrar Formulario' : '➕ Registrar País' }}
+      </button>
+    </div>
+
+    <!-- Mensajes Generales -->
+    <div *ngIf="successMsg()" class="alert success animate-in" style="margin-top: 1.25rem;">
+      {{ successMsg() }}
+    </div>
+    <div *ngIf="errorMsg() && !showForm()" class="alert danger animate-in" style="margin-top: 1.25rem;">
+      {{ errorMsg() }}
+    </div>
+
+    <!-- BÚSQUEDA GLOBAL -->
+    <div class="search-container">
+      <div class="search-field">
+        <label for="globalSearchPaises">🔎 Buscar en Catálogo de Países</label>
+        <input 
+          id="globalSearchPaises"
+          type="text" 
+          [ngModel]="filterText()" 
+          (ngModelChange)="filterText.set($event)" 
+          placeholder="Buscar por nombre, nacionalidad, código ISO, moneda o idioma..." 
+        />
+      </div>
+    </div>
+
+    <!-- TABLA DE PAÍSES -->
+    <div class="list-section">
+      <div *ngIf="loading() && paises().length === 0" class="loading-state" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+        Cargando catálogo de países...
+      </div>
+      <div *ngIf="!loading() && filteredPaises().length === 0" class="empty-state">
+        No se encontraron países con ese criterio de búsqueda.
+      </div>
+
+      <div class="table-scroll-container" *ngIf="filteredPaises().length > 0">
+        <table class="usuarios-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">ID</th>
+              <th style="width: 180px;">País</th>
+              <th style="width: 65px;">ISO2</th>
+              <th style="width: 65px;">ISO3</th>
+              <th style="width: 140px;">Nacionalidad</th>
+              <th>Moneda</th>
+              <th>Idioma Oficial</th>
+              <th style="width: 90px;">Estado</th>
+              <th style="width: 210px; text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of filteredPaises()" [class.row-selected]="editingId() === item.id" (click)="abrirEditarForm(item)">
+              <td><strong>#{{ item.id }}</strong></td>
+              <td><strong>{{ item.nombre }}</strong></td>
+              <td><code>{{ item.codigo_iso2 }}</code></td>
+              <td><code>{{ item.codigo_iso3 }}</code></td>
+              <td>{{ item.nacionalidad }}</td>
+              <td class="description-cell" [title]="item.moneda || 'Sin moneda'">{{ item.moneda || '—' }}</td>
+              <td class="description-cell" [title]="item.idioma_oficial || 'Sin idioma'">{{ item.idioma_oficial || '—' }}</td>
+              <td>
+                <span class="status-badge" [class.active]="item.activo">
+                  {{ item.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td style="text-align: right;" (click)="$event.stopPropagation()">
+                <button 
+                  type="button" 
+                  class="action-btn edit-btn"
+                  (click)="abrirEditarForm(item)"
+                  style="margin-right: 0.5rem;"
+                >
+                  ✏️ Editar
+                </button>
+                <button 
+                  type="button" 
+                  [class.action-btn]="true"
+                  [class.cancel-btn]="item.activo"
+                  [class.save-btn]="!item.activo"
+                  (click)="toggleEstado(item)"
+                >
+                  {{ item.activo ? '🔒' : '🔓' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARD 2: FORMULARIO REGISTRO/EDICION -->
+  <section class="suelos-form-card user-form-card glass-card animate-in" *ngIf="showForm()">
+    <div class="card-header flex-header">
+      <div>
+        <h2>{{ editingId() ? '✏️ Editar País' : '🌍 Registrar País' }}</h2>
+        <p class="subtitle">Complete los campos para guardar el registro del país.</p>
+      </div>
+      <button class="action-btn cancel-btn" (click)="cerrarForm()">
+        ✕ Cerrar Formulario
+      </button>
+    </div>
+
+    <div class="card-body" style="margin-top: 1.5rem;">
+      <div class="alert danger animate-in" *ngIf="errorMsg()" style="margin-bottom: 1.25rem;">
+        {{ errorMsg() }}
+      </div>
+
+      <form (submit)="$event.preventDefault(); guardarPais()" class="modal-form">
+        <div class="form-grid-2col">
+          <label class="form-field">
+            <span>Nombre del País *</span>
+            <input
+              type="text"
+              [ngModel]="formNombre()"
+              (ngModelChange)="formNombre.set($event)"
+              name="nombre"
+              placeholder="Ej. Panamá, Colombia..."
+              required
+              [disabled]="loading()"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>Nacionalidad *</span>
+            <input
+              type="text"
+              [ngModel]="formNacionalidad()"
+              (ngModelChange)="formNacionalidad.set($event)"
+              name="nacionalidad"
+              placeholder="Ej. Panameña, Colombiana..."
+              required
+              [disabled]="loading()"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>Código ISO2 *</span>
+            <input
+              type="text"
+              [ngModel]="formIso2()"
+              (ngModelChange)="formIso2.set($event)"
+              name="iso2"
+              placeholder="Ej. PA"
+              maxlength="2"
+              required
+              [disabled]="loading()"
+              style="text-transform: uppercase;"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>Código ISO3 *</span>
+            <input
+              type="text"
+              [ngModel]="formIso3()"
+              (ngModelChange)="formIso3.set($event)"
+              name="iso3"
+              placeholder="Ej. PAN"
+              maxlength="3"
+              required
+              [disabled]="loading()"
+              style="text-transform: uppercase;"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>Moneda</span>
+            <input
+              type="text"
+              [ngModel]="formMoneda()"
+              (ngModelChange)="formMoneda.set($event)"
+              name="moneda"
+              placeholder="Ej. Balboa (PAB) / Dólar (USD)"
+              [disabled]="loading()"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>Idioma Oficial</span>
+            <input
+              type="text"
+              [ngModel]="formIdioma()"
+              (ngModelChange)="formIdioma.set($event)"
+              name="idioma"
+              placeholder="Ej. Español"
+              [disabled]="loading()"
+            />
+          </label>
+        </div>
+
+        <label class="form-field checkbox-field" *ngIf="editingId()">
+          <input
+            type="checkbox"
+            [ngModel]="formActivo()"
+            (ngModelChange)="formActivo.set($event)"
+            name="activo"
+            [disabled]="loading()"
+          />
+          <span>Estado Activo</span>
+        </label>
+
+        <div class="modal-actions" style="margin-top: 1.25rem;">
+          <button type="submit" class="action-btn save-btn" [disabled]="loading() || !formNombre().trim() || !formIso2().trim() || !formIso3().trim() || !formNacionalidad().trim()">
+            {{ loading() ? 'Guardando...' : 'Guardar' }}
+          </button>
+          <button type="button" class="action-btn cancel-btn" (click)="cerrarForm()" [disabled]="loading()">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+</div>

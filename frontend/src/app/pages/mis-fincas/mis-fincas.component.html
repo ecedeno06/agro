@@ -1,0 +1,626 @@
+<div class="fincas-container">
+
+  <!-- CARD 1: LISTA DE FINCAS -->
+  <section class="mis-fincas-card glass-card">
+    <div class="card-header flex-header">
+      <div>
+        <h2>Mis Fincas</h2>
+        <p class="subtitle">Gestiona y consulta las fincas registradas en tu perfil.</p>
+      </div>
+      <button 
+        *ngIf="puedeCrearFinca()"
+        type="button" 
+        class="action-btn register-finca-btn"
+        (click)="abrirFormularioCreacion()"
+      >
+        {{ modoFormulario() === 'crear' ? '❌ Cerrar Formulario' : '➕ Registrar Finca' }}
+      </button>
+    </div>
+
+    <!-- Alertas de estado -->
+    <div *ngIf="mensajeError()" class="alert danger">
+      {{ mensajeError() }}
+    </div>
+    <div *ngIf="mensajeExito()" class="alert success">
+      {{ mensajeExito() }}
+    </div>
+
+    <!-- BÚSQUEDA GLOBAL DE FINCAS -->
+    <div class="search-container" *ngIf="fincas().length > 0">
+      <div class="search-field">
+        <label for="globalFincaSearch">🔎 Buscar Finca</label>
+        <input 
+          id="globalFincaSearch"
+          type="text" 
+          [ngModel]="filterText()" 
+          (ngModelChange)="filterText.set($event)" 
+          placeholder="Buscar por nombre de finca, propietario, estado..." 
+        />
+      </div>
+    </div>
+
+    <!-- LIST SECTION -->
+    <div class="list-section">
+      <div *ngIf="loading() && fincas().length === 0" class="loading-state">
+        Cargando fincas registradas...
+      </div>
+
+      <div *ngIf="!loading() && fincas().length === 0" class="empty-state">
+        No se encontraron fincas registradas en el sistema.
+      </div>
+
+      <div *ngIf="!loading() && fincas().length > 0 && filteredFincas().length === 0" class="empty-state">
+        No se encontraron fincas con ese criterio de búsqueda.
+      </div>
+
+      <div class="table-scroll-container" *ngIf="filteredFincas().length > 0">
+        <table class="fincas-table">
+          <thead>
+            <tr>
+              <th (click)="toggleSort('nombre_finca')" class="sortable-header">
+                Nombre Finca
+                <span class="sort-icon" *ngIf="sortColumn() === 'nombre_finca'">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              </th>
+              <th (click)="toggleSort('nombre_propietario')" class="sortable-header">
+                Propietario
+                <span class="sort-icon" *ngIf="sortColumn() === 'nombre_propietario'">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              </th>
+              <th (click)="toggleSort('tamano')" class="sortable-header">
+                Tamaño (ha)
+                <span class="sort-icon" *ngIf="sortColumn() === 'tamano'">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              </th>
+              <th (click)="toggleSort('estado')" class="sortable-header">
+                Estado Finca
+                <span class="sort-icon" *ngIf="sortColumn() === 'estado'">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              </th>
+              <th (click)="toggleSort('nombre_estado_legal')" class="sortable-header">
+                Estado Legal
+                <span class="sort-icon" *ngIf="sortColumn() === 'nombre_estado_legal'">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              </th>
+              <th (click)="toggleSort('nombre_tipo_terreno')" class="sortable-header">
+                Tipo Terreno
+                <span class="sort-icon" *ngIf="sortColumn() === 'nombre_tipo_terreno'">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              </th>
+              <th (click)="toggleSort('nombre_tipo_suelo')" class="sortable-header">
+                Tipo Suelo
+                <span class="sort-icon" *ngIf="sortColumn() === 'nombre_tipo_suelo'">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              </th>
+              <th (click)="toggleSort('nombre_tipo_geografia')" class="sortable-header">
+                Tipo Geografía
+                <span class="sort-icon" *ngIf="sortColumn() === 'nombre_tipo_geografia'">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              *ngFor="let finca of filteredFincas()" 
+              (click)="seleccionarFinca(finca)" 
+              class="clickable-row"
+              [class.row-selected]="modoFormulario() === 'editar' && selectedFinca()?.id_finca === finca.id_finca"
+            >
+              <td><strong class="finca-name-cell">{{ finca.nombre_finca }}</strong></td>
+              <td class="propietario-cell">
+                <span class="propietario-name">{{ finca.nombre_propietario || 'Sin Propietario' }}</span>
+              </td>
+              <td><strong>{{ finca.tamano }}</strong> ha</td>
+              <td>
+                <span 
+                  class="status-badge" 
+                  [class.prod]="finca.estado === 'En producción'"
+                  [class.alquiler]="finca.estado === 'En alquiler'"
+                  [class.descanso]="finca.estado === 'En descanso'"
+                >
+                  {{ finca.estado || 'En producción' }}
+                </span>
+              </td>
+              <td>
+                <div [class.custom-tooltip-wrapper]="finca.notas && finca.notas.trim()">
+                  <span class="legal-badge">
+                    {{ finca.nombre_estado_legal || 'Sin definir' }}
+                  </span>
+                  <div class="custom-tooltip-box" *ngIf="finca.notas && finca.notas.trim()">
+                    {{ getTooltipNotas(finca) }}
+                  </div>
+                </div>
+              </td>
+              <td><span class="cat-tag">{{ finca.nombre_tipo_terreno || '-' }}</span></td>
+              <td><span class="cat-tag">{{ finca.nombre_tipo_suelo || '-' }}</span></td>
+              <td><span class="cat-tag">{{ finca.nombre_tipo_geografia || '-' }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARD UNIFICADA: DETALLE, EDICIÓN Y CREACIÓN DE FINCA -->
+  <section id="detailSection" class="finca-detail-card glass-card animate-in" *ngIf="modoFormulario() && selectedFinca() as finca">
+    <div class="card-header flex-header">
+      <div>
+        <h2>
+          {{ modoFormulario() === 'crear' ? 'Registrar Nueva Finca' : 'Detalle de Finca:' }}
+          <span *ngIf="modoFormulario() === 'editar'"> {{ finca.nombre_finca }}</span>
+        </h2>
+        <p class="subtitle" *ngIf="modoFormulario() === 'crear'">
+          Ingresa los datos generales, de terreno, ubicación y registro para agregar la nueva finca.
+        </p>
+      </div>
+    </div>
+
+    <div class="detail-content">
+      <div class="tabs">
+        <button 
+          class="tab-button" 
+          [class.tab-active]="activeDetailTab() === 'editar'" 
+          (click)="activeDetailTab.set('editar'); enfocarNombreInput()"
+        >
+          {{ modoFormulario() === 'crear' ? 'Formulario de Registro' : (puedeEditarSeleccionada() ? 'Editar Finca' : 'Información Finca') }}
+        </button>
+        <button 
+          *ngIf="modoFormulario() === 'editar'"
+          class="tab-button" 
+          [class.tab-active]="activeDetailTab() === 'mapa'" 
+          (click)="cambiarTabDetalle('mapa')"
+        >
+          Mapa
+        </button>
+      </div>
+
+      <!-- NOTA MODO LECTURA PARA NO ASOCIADOS -->
+      <div *ngIf="modoFormulario() === 'editar' && !puedeEditarSeleccionada()" class="read-only-notice">
+        ℹ️ Modo lectura: solo el asociado (rol aso) propietario de la finca puede realizar modificaciones.
+      </div>
+
+      <!-- VISTA FORMULARIO UNIFICADO (CREACIÓN / EDICIÓN) -->
+      <div class="tab-content" *ngIf="activeDetailTab() === 'editar'">
+        
+        <!-- SUB-TABS INTERNAS DEL FORMULARIO -->
+        <div class="form-subtabs">
+          <button 
+            type="button" 
+            class="subtab-btn" 
+            [class.subtab-active]="activeFormSubTab() === 'general'"
+            (click)="activeFormSubTab.set('general'); enfocarNombreInput()"
+          >
+            📋 General
+          </button>
+          <button 
+            type="button" 
+            class="subtab-btn" 
+            [class.subtab-active]="activeFormSubTab() === 'geografia'"
+            (click)="activeFormSubTab.set('geografia')"
+          >
+            🌱 Terreno y Geo
+          </button>
+          <button 
+            type="button" 
+            class="subtab-btn" 
+            [class.subtab-active]="activeFormSubTab() === 'ubicacion'"
+            (click)="activeFormSubTab.set('ubicacion')"
+          >
+            📍 Ubicación
+          </button>
+          <button 
+            type="button" 
+            class="subtab-btn" 
+            [class.subtab-active]="activeFormSubTab() === 'fenomenos'"
+            (click)="activeFormSubTab.set('fenomenos')"
+          >
+            🌤️ Fenómenos
+          </button>
+          <button 
+            type="button" 
+            class="subtab-btn" 
+            [class.subtab-active]="activeFormSubTab() === 'legal'"
+            (click)="activeFormSubTab.set('legal')"
+          >
+            ⚖️ Legal y Registro
+          </button>
+
+          <button 
+          type="button" 
+          class="subtab-btn" 
+          [class.subtab-active]="activeFormSubTab() === 'produccion'"
+          (click)="activeFormSubTab.set('produccion')"
+        >
+          🚜 Produccion
+        </button>
+        
+        </div>
+
+        <form (ngSubmit)="guardarCambios()" class="edit-form grid-form">
+
+          <!-- 1. SUB-TAB: GENERAL -->
+          <div class="form-grid-layout" *ngIf="activeFormSubTab() === 'general'">
+            <div class="form-field">
+              <label>Nombre de la Finca *</label>
+              <input 
+                #nombreInput
+                type="text" 
+                [(ngModel)]="finca.nombre_finca" 
+                name="nombre_finca" 
+                required 
+                placeholder="Ej. Finca San Rafael"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              />
+            </div>
+
+            <div class="form-field">
+              <label>Tamaño (Hectáreas) *</label>
+              <input 
+                type="number" 
+                [(ngModel)]="finca.tamano" 
+                name="tamano" 
+                required 
+                step="0.1"
+                placeholder="Ej. 45.5"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              />
+            </div>
+
+            <div class="form-field">
+              <label>Clima Predominante</label>
+              <input 
+                type="text" 
+                [(ngModel)]="finca.clima" 
+                name="clima" 
+                placeholder="Ej. Tropical Seco, Húmedo"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              />
+            </div>
+
+            <div class="form-field">
+              <label>Estado Operativo</label>
+              <select 
+                [(ngModel)]="finca.estado" 
+                name="estado" 
+                required
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              >
+                <option value="En producción">En producción</option>
+                <option value="En alquiler">En alquiler</option>
+                <option value="En venta">En venta</option>
+                <option value="En descanso">En descanso</option>
+                <option value="Inutilizada">Inutilizada</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 2. SUB-TAB: GEOGRAFIA Y TERRENO -->
+          <div class="form-grid-layout" *ngIf="activeFormSubTab() === 'geografia'">
+            <div class="form-field">
+              <label>Tipo de Terreno</label>
+              <select 
+                [(ngModel)]="finca.tipo_terreno" 
+                name="tipo_terreno" 
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              >
+                <option [ngValue]="null">-- Seleccione Tipo de Terreno --</option>
+                <option *ngFor="let tt of tiposTerreno()" [ngValue]="+tt.id">
+                  {{ tt.nombre }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label>Tipo de Suelo</label>
+              <select 
+                [(ngModel)]="finca.tipo_suelo" 
+                name="tipo_suelo" 
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              >
+                <option [ngValue]="null">-- Seleccione Tipo de Suelo --</option>
+                <option *ngFor="let ts of tiposSuelo()" [ngValue]="+ts.id">
+                  {{ ts.nombre }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label>Tipo de Geografía</label>
+              <select 
+                [(ngModel)]="finca.tipo_geografia" 
+                name="tipo_geografia" 
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              >
+                <option [ngValue]="null">-- Seleccionar Tipo de Geografía --</option>
+                <option *ngFor="let tg of tiposGeografia()" [ngValue]="+tg.id">
+                  {{ tg.nombre }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label>Área del Terreno (m²)</label>
+              <input 
+                type="number" 
+                [(ngModel)]="finca.area_terreno" 
+                name="area_terreno" 
+                placeholder="Superficie total"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              />
+            </div>
+
+            <div class="form-field full-width-field">
+              <label>Distribución Geográfica (%)</label>
+              <input 
+                type="number" 
+                [(ngModel)]="finca.distribcion_geografia" 
+                name="distribcion_geografia" 
+                placeholder="Porcentaje útil"
+                step="0.01"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              />
+            </div>
+          </div>
+
+          <!-- 3. SUB-TAB: UBICACION -->
+          <div class="form-grid-layout" *ngIf="activeFormSubTab() === 'ubicacion'">
+            <div class="form-field">
+              <label>País</label>
+              <select 
+                [(ngModel)]="finca.id_pais" 
+                name="id_pais" 
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              >
+                <option value="">-- Seleccionar País --</option>
+                <option *ngFor="let p of paises()" [value]="p.codigo_iso2">
+                  {{ p.nombre }} ({{ p.codigo_iso2 }})
+                </option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label>Provincia (ID)</label>
+              <input 
+                type="number" 
+                [(ngModel)]="finca.id_privincia" 
+                name="id_privincia" 
+                placeholder="ID Provincia"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              />
+            </div>
+
+            <div class="form-field">
+              <label>Distrito (ID)</label>
+              <input 
+                type="number" 
+                [(ngModel)]="finca.id_distrito" 
+                name="id_distrito" 
+                placeholder="ID Distrito"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              />
+            </div>
+
+            <div class="form-field">
+              <label>Corregimiento (ID)</label>
+              <input 
+                type="number" 
+                [(ngModel)]="finca.id_corregimiento" 
+                name="id_corregimiento" 
+                placeholder="ID Corregimiento"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              />
+            </div>
+
+            <div class="form-field">
+              <label>Latitud Mapa</label>
+              <input 
+                type="number" 
+                [(ngModel)]="finca.mapa_latitud" 
+                name="mapa_latitud" 
+                placeholder="Coordenada Latitud (ej. 7.945)"
+                step="0.000001"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              />
+            </div>
+
+            <div class="form-field">
+              <label>Longitud Mapa</label>
+              <input 
+                type="number" 
+                [(ngModel)]="finca.mapa_logitud" 
+                name="mapa_logitud" 
+                placeholder="Coordenada Longitud (ej. -80.412)"
+                step="0.000001"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              />
+            </div>
+          </div>
+
+          <!-- 4. SUB-TAB: FENOMENOS -->
+          <div *ngIf="activeFormSubTab() === 'fenomenos'" style="width: 100%;">
+            <app-finca-fenomenos 
+              *ngIf="selectedFinca()?.id_finca" 
+              [idFinca]="selectedFinca()!.id_finca"
+              [readOnly]="!puedeEditarOFormulario()"
+            ></app-finca-fenomenos>
+
+            <div *ngIf="!selectedFinca()?.id_finca" class="empty-state" style="padding: 2rem; text-align: center; color: var(--text-muted);">
+              🌤️ Debe guardar la finca primero antes de asignarle fenómenos atmosféricos.
+            </div>
+          </div>
+
+          <!-- 5. SUB-TAB: LEGAL -->
+          <div class="form-grid-layout" *ngIf="activeFormSubTab() === 'legal'">
+            <div class="form-field">
+              <label>Número de Finca</label>
+              <input 
+                type="text" 
+                [(ngModel)]="finca.no_finca" 
+                name="no_finca" 
+                placeholder="Ej. F-10293"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              />
+            </div>
+
+            <div class="form-field">
+              <label>Título de la Finca</label>
+              <input 
+                type="text" 
+                [(ngModel)]="finca.titulo_finca" 
+                name="titulo_finca" 
+                placeholder="Ej. Título No. 40192"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              />
+            </div>
+
+            <div class="form-field">
+              <label>Tomo</label>
+              <input 
+                type="text" 
+                [(ngModel)]="finca.tomo" 
+                name="tomo" 
+                placeholder="Ej. 102"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              />
+            </div>
+
+            <div class="form-field">
+              <label>Folio</label>
+              <input 
+                type="text" 
+                [(ngModel)]="finca.folio" 
+                name="folio" 
+                placeholder="Ej. 45"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              />
+            </div>
+
+            <div class="form-field half-width-field">
+              <label>Estado Legal</label>
+              <select 
+                [(ngModel)]="finca.estado_legal" 
+                name="estado_legal" 
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              >
+                <option [ngValue]="null">-- Seleccionar Estado Legal --</option>
+                <option *ngFor="let el of tiposEstadoLegal()" [ngValue]="+el.id">
+                  {{ el.nombre }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-field half-width-field">
+              <label>Notas / Observaciones</label>
+              <textarea 
+                [(ngModel)]="finca.notas" 
+                name="notas" 
+                [disabled]="!puedeEditarOFormulario() || loading()"
+                placeholder="Observaciones adicionales sobre la finca..."
+                rows="3"
+                style="resize: vertical; min-height: 38px;"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="form-grid-layout" *ngIf="activeFormSubTab() === 'produccion'">
+            <app-finca-produccion
+            *ngIf="selectedFinca()?.id_finca" 
+           ></app-finca-produccion>
+          </div>
+
+          <!-- BOTÓN DE ACCIÓN (GUARDAR / REGISTRAR Y CANCELAR) CON SIMETRÍA UX -->
+          <div class="form-actions-row full-width-field">
+            <button 
+              *ngIf="puedeEditarOFormulario()" 
+              type="submit" 
+              class="action-btn save-btn"
+              [disabled]="loading()"
+            >
+              {{ loading() ? (modoFormulario() === 'crear' ? 'Registrando...' : 'Guardando...') : (modoFormulario() === 'crear' ? '💾 Registrar Nueva Finca' : '💾 Guardar Cambios de la Finca') }}
+            </button>
+            <button 
+              type="button" 
+              class="action-btn cancel-btn" 
+              (click)="modoFormulario.set(null); selectedFinca.set(null)"
+            >
+              ❌ Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- TAB: MAPA INTERACTIVO (CLIC Y ARRASTRE DE PUNTO) -->
+      <div class="tab-content animate-in" *ngIf="activeDetailTab() === 'mapa'">
+        <div class="map-view-container">
+          <div class="map-header-info">
+            <div class="coords-badge">
+              📍 <strong>Punto Fijado:</strong> {{ finca.nombre_finca }} (Lat: {{ finca.mapa_latitud || 'S/N' }}, Lng: {{ finca.mapa_logitud || 'S/N' }})
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+              <button 
+                *ngIf="puedeEditarOFormulario()"
+                type="button" 
+                class="action-btn gps-header-btn" 
+                (click)="obtenerUbicacionGPS()"
+                title="Actualizar coordenadas con la ubicación GPS del navegador"
+                style="background: rgba(16, 185, 129, 0.15); color: var(--accent-color); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.45rem 0.85rem; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.85rem;"
+              >
+                🎯 Usar mi GPS
+              </button>
+              <button 
+                *ngIf="puedeEditarOFormulario()"
+                type="button" 
+                class="action-btn save-coords-btn" 
+                (click)="guardarCambios()"
+                [disabled]="loading()"
+                style="background: var(--primary-color); color: #020a0d; border: none; padding: 0.45rem 0.85rem; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.85rem;"
+              >
+                {{ loading() ? 'Guardando...' : '💾 Guardar Coordenadas' }}
+              </button>
+              <a 
+                [href]="whatsappShareUrl()" 
+                target="_blank" 
+                class="whatsapp-share-btn"
+                title="Compartir ubicación de la finca por WhatsApp"
+                style="background: #25D366; color: #ffffff !important; font-weight: 700; font-size: 0.85rem; padding: 0.45rem 0.85rem; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.2s ease;"
+              >
+                💬 WhatsApp
+              </a>
+              <a 
+                [href]="googleMapsExternalUrl()" 
+                target="_blank" 
+                class="external-map-link"
+                title="Abrir en pestaña nueva de Google Maps"
+              >
+                🗺️ Google Maps ↗
+              </a>
+            </div>
+          </div>
+
+          <!-- BUSCADOR GEOGRÁFICO DE LUGARES -->
+          <div class="map-search-bar" style="display: flex; gap: 0.5rem; align-items: center; width: 100%;">
+            <input 
+              type="text" 
+              [(ngModel)]="busquedaLugar" 
+              (keyup.enter)="buscarLugarEnMapa()"
+              placeholder="🔍 Buscar lugar o dirección (ej. Alto de piedra Santa Fe)..."
+              style="flex: 1; padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem;"
+              [disabled]="loading()"
+            />
+            <button 
+              type="button" 
+              class="action-btn search-btn" 
+              (click)="buscarLugarEnMapa()"
+              [disabled]="loading()"
+              style="background: var(--primary-color); color: #020a0d; border: none; padding: 0.6rem 1.1rem; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap;"
+            >
+              {{ loading() ? 'Buscando...' : '🔍 Buscar Lugar' }}
+            </button>
+          </div>
+
+          <div class="interactive-map-hint" *ngIf="puedeEditarOFormulario()" style="background: rgba(6, 182, 212, 0.06); border: 1px solid var(--glass-border); padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.85rem; color: var(--text-muted);">
+            💡 <strong>Instrucción:</strong> Haz clic en cualquier lugar del mapa o arrastra el marcador rojo/azul para mover la finca a una nueva ubicación. Luego haz clic en <strong>"💾 Guardar Coordenadas"</strong>.
+          </div>
+
+          <div class="map-iframe-wrapper">
+            <div id="finca-interactive-map" style="width: 100%; height: 450px; border-radius: 14px; z-index: 1;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+

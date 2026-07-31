@@ -1,0 +1,188 @@
+<section class="glass-card profile-card">
+  <div class="profile-header">
+    <span class="user-avatar-large">🚜</span>
+    <div class="profile-info">
+      <h2>{{ user()?.nombre }}</h2>
+      <span class="badge" [class.admin]="user()?.rol === 'admin'">{{ user()?.rol }}</span>
+    </div>
+  </div>
+  <hr class="divider">
+  <div class="profile-details">
+    <div class="detail-row">
+      <span class="label">Correo Electrónico:</span>
+      <span class="value">{{ user()?.email }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">Teléfono:</span>
+      <span class="value">{{ user()?.telefono || 'No registrado' }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">Estado de Cuenta:</span>
+      <span class="value active">● Activo</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================== -->
+<!-- SECCIÓN: HISTORIAL DE CUOTAS DE ASOCIADO        -->
+<!-- ============================================== -->
+<section class="glass-card m-top-md animate-in">
+  <div class="cuotas-header-row">
+    <div>
+      <h2>Historial de Cuotas de Asociado</h2>
+      <p class="section-desc">Visualiza y controla el estado de tus cuotas mensuales por capítulo.</p>
+    </div>
+    
+    <button 
+      *ngIf="esAsociado()" 
+      type="button" 
+      class="action-btn register-pago-btn"
+      (click)="showRegistrarPago.set(true)"
+    >
+      ➕ Registrar Pago
+    </button>
+  </div>
+
+  @if (errorCuotasMsg()) {
+    <div class="alert danger animate-in">
+      {{ errorCuotasMsg() }}
+    </div>
+  }
+  @if (successCuotasMsg()) {
+    <div class="alert success animate-in">
+      {{ successCuotasMsg() }}
+    </div>
+  }
+
+  <!-- NOTA PARA NO ASOCIADOS -->
+  <div *ngIf="!esAsociado()" class="read-only-notice">
+    ℹ️ Esta sección está habilitada exclusivamente para usuarios con el rol de Asociado (`aso`).
+  </div>
+
+  <div *ngIf="esAsociado()">
+    <!-- FILTROS -->
+    <div class="cuotas-filters-layout">
+      <div class="filter-field">
+        <label>Capítulo Asociado</label>
+        <select 
+          [ngModel]="selectedCapitulo()" 
+          (ngModelChange)="selectedCapitulo.set($event); cargarCuotas()" 
+          name="filterCapitulo"
+        >
+          <option *ngFor="let cap of capitulos()" [value]="cap.id_capitulo">{{ cap.nombre_capitulo }}</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label>Año de Consulta</label>
+        <select 
+          [ngModel]="selectedYear()" 
+          (ngModelChange)="selectedYear.set($event); cargarCuotas()" 
+          name="filterYear"
+        >
+          <option *ngFor="let y of availableYears" [value]="y">{{ y }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- CARGANDO -->
+    <div *ngIf="loadingCuotas() && cuotas().length === 0" class="loading-state">
+      Obteniendo registro de pagos...
+    </div>
+
+    <!-- REGISTRO MENSUAL -->
+    <div class="months-grid-layout" *ngIf="!loadingCuotas() || cuotas().length > 0">
+      <div 
+        *ngFor="let mes of cuotasMensuales()" 
+        class="month-item-card" 
+        [class.month-paid]="mes.pagado"
+        [class.month-pending]="!mes.pagado"
+      >
+        <div class="month-card-header">
+          <h3>{{ mes.nombre }} {{ selectedYear() }}</h3>
+          <span class="status-pill" [class.paid]="mes.pagado">
+            {{ mes.pagado ? 'PAGADO' : 'PENDIENTE' }}
+          </span>
+        </div>
+
+        <div class="month-card-body">
+          @if (mes.pagado && mes.detalle) {
+            <div class="payment-details">
+              <p>💰 <strong>Monto:</strong> ${{ mes.detalle.monto }}</p>
+              <p>📅 <strong>Fecha:</strong> {{ mes.detalle.fecha_pago | date:'dd/MM/yyyy' }}</p>
+              <p>💳 <strong>Método:</strong> {{ mes.detalle.metodo_pago }}</p>
+              <p *ngIf="mes.detalle.referencia_pago">🔑 <strong>Ref:</strong> {{ mes.detalle.referencia_pago }}</p>
+            </div>
+          } @else {
+            <div class="pending-details">
+              <p class="pending-warning-text">⚠️ Sin registro de cuota recibida.</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- FORMULARIO REGISTRAR PAGO -->
+    <div class="pago-registration-panel glass-card m-top-lg" *ngIf="showRegistrarPago()">
+      <h3 style="margin-top: 0; color: var(--primary-color);">Registrar Pago de Cuota</h3>
+      <form (ngSubmit)="registrarPago()" class="grid-registration-form">
+        <div class="registration-fields">
+          <div class="form-field">
+            <label>Capítulo</label>
+            <select [(ngModel)]="nuevoPago.id_capitulo" name="pagoCapitulo" required>
+              <option *ngFor="let cap of capitulos()" [value]="cap.id_capitulo">{{ cap.nombre_capitulo }}</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>Monto ($)</label>
+            <input type="number" [(ngModel)]="nuevoPago.monto" name="pagoMonto" required min="0.01" step="0.01" />
+          </div>
+
+          <div class="form-field">
+            <label>Mes</label>
+            <select [(ngModel)]="nuevoPago.mes_periodo" name="pagoMes" required>
+              <option *ngFor="let mes of mesesAno" [value]="mes.numero">{{ mes.nombre }}</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>Año</label>
+            <select [(ngModel)]="nuevoPago.anio_periodo" name="pagoAnio" required>
+              <option *ngFor="let y of availableYears" [value]="y">{{ y }}</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>Método de Pago</label>
+            <select [(ngModel)]="nuevoPago.metodo_pago" name="pagoMetodo" required>
+              <option value="Transferencia">Transferencia Bancaria</option>
+              <option value="ACH">ACH</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Tarjeta">Tarjeta</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>Referencia / Depósito</label>
+            <input type="text" [(ngModel)]="nuevoPago.referencia_pago" name="pagoRef" placeholder="Ej. #99128" />
+          </div>
+
+          <div class="form-field full-width">
+            <label>Observaciones</label>
+            <textarea [(ngModel)]="nuevoPago.observaciones" name="pagoObs" placeholder="Comentarios adicionales..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions-row">
+          <button type="submit" class="primary-btn" [disabled]="loadingCuotas()">
+            💾 Confirmar Pago
+          </button>
+          <button type="button" class="secondary-btn" (click)="showRegistrarPago.set(false)">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

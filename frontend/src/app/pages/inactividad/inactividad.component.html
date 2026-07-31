@@ -1,0 +1,19 @@
+@if (sessionService.showExpiryWarning()) {
+  <div class="session-modal-overlay">
+    <div class="session-modal">
+      <div class="session-modal-header">
+        <span class="session-modal-icon">⏳</span>
+        <h3>Sesión por expirar</h3>
+      </div>
+      <div class="session-modal-body">
+        <p>Tu sesión se cerrará automáticamente debido a inactividad en:</p>
+        <div class="session-modal-countdown">{{ sessionService.countdownText() }}</div>
+        <p class="session-modal-hint">¿Deseas continuar trabajando y mantener tu sesión activa?</p>
+      </div>
+      <div class="session-modal-footer">
+        <button class="session-btn btn-secondary" type="button" (click)="logout()">Cerrar sesión</button>
+        <button class="session-btn btn-primary" type="button" (click)="extender()">Continuar trabajando</button>
+      </div>
+    </div>
+  </div>
+}

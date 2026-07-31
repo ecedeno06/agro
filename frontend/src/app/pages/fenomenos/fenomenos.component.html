@@ -1,0 +1,274 @@
+<div class="fenomenos-container animate-in">
+
+  <!-- ENCABEZADO DE SECCIÓN -->
+  <div class="section-header border-b">
+    <div>
+      <h2>🌤️ Fenómenos Atmosféricos y Mermas</h2>
+      <p>Gestión de eventos climáticos (El Niño, La Niña, Frentes Fríos), meses de ocurrencia, impactos en la producción y porcentajes de merma agrícola/ganadera.</p>
+    </div>
+    <button 
+      type="button" 
+      class="primary-btn register-btn"
+      (click)="abrirFormularioCrear()"
+    >
+      ➕ Registrar Fenómeno
+    </button>
+  </div>
+
+  <!-- ALERTAS -->
+  @if (errorMsg()) {
+    <div class="alert danger animate-in">
+      {{ errorMsg() }}
+    </div>
+  }
+  @if (successMsg()) {
+    <div class="alert success animate-in">
+      {{ successMsg() }}
+    </div>
+  }
+
+  <!-- TABLA DE CATALOGO -->
+  <div class="glass-card table-card">
+    
+    <!-- BUSCADOR -->
+    <div class="search-container">
+      <div class="search-field">
+        <label for="fenomenoSearch">🔎 Buscar en Fenómenos</label>
+        <input 
+          id="fenomenoSearch"
+          type="text" 
+          [ngModel]="filterText()" 
+          (ngModelChange)="filterText.set($event)" 
+          placeholder="Buscar por nombre, meses (ej. El Niño, Agosto, Sequía)..." 
+        />
+      </div>
+    </div>
+
+    @if (!loading() && filteredFenomenos().length === 0) {
+      <div class="empty-state">
+        No se encontraron fenómenos atmosféricos que coincidan con la búsqueda.
+      </div>
+    }
+
+    @if (filteredFenomenos().length > 0) {
+      <div class="table-wrapper">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th (click)="toggleSort('idFenomeno')" class="sortable-th">
+                ID 
+                <span class="sort-icon">{{ sortColumn() === 'idFenomeno' ? (sortAsc() ? '▲' : '▼') : '↕' }}</span>
+              </th>
+              <th (click)="toggleSort('nombre')" class="sortable-th">
+                Fenómeno Atmosférico
+                <span class="sort-icon">{{ sortColumn() === 'nombre' ? (sortAsc() ? '▲' : '▼') : '↕' }}</span>
+              </th>
+              <th (click)="toggleSort('periodoMeses')" class="sortable-th">
+                Meses de Afectación
+                <span class="sort-icon">{{ sortColumn() === 'periodoMeses' ? (sortAsc() ? '▲' : '▼') : '↕' }}</span>
+              </th>
+              <th (click)="toggleSort('tipoImpacto')" class="sortable-th">
+                Tipo de Impacto Climático
+                <span class="sort-icon">{{ sortColumn() === 'tipoImpacto' ? (sortAsc() ? '▲' : '▼') : '↕' }}</span>
+              </th>
+              <th (click)="toggleSort('porcentajeMerma')" class="sortable-th center-text">
+                Merma Est. (%)
+                <span class="sort-icon">{{ sortColumn() === 'porcentajeMerma' ? (sortAsc() ? '▲' : '▼') : '↕' }}</span>
+              </th>
+              <th (click)="toggleSort('activo')" class="sortable-th center-text">
+                Estado
+                <span class="sort-icon">{{ sortColumn() === 'activo' ? (sortAsc() ? '▲' : '▼') : '↕' }}</span>
+              </th>
+              <th style="text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (f of filteredFenomenos(); track f.idFenomeno) {
+              <tr [class.selected-row]="editingId() === f.idFenomeno">
+                <td><strong>#{{ f.idFenomeno }}</strong></td>
+                <td>
+                  <span class="fenomeno-name">{{ f.nombre }}</span>
+                  @if (f.descripcion) {
+                    <p class="fenomeno-desc">{{ f.descripcion }}</p>
+                  }
+                </td>
+                <td>
+                  <span class="periodo-badge">
+                    🗓️ {{ f.periodoMeses }}
+                  </span>
+                </td>
+                <td>
+                  <span class="impacto-text">{{ f.tipoImpacto }}</span>
+                  @if (f.medidasMitigacion) {
+                    <p class="mitigacion-hint">💡 <strong>Mitigación:</strong> {{ f.medidasMitigacion }}</p>
+                  }
+                </td>
+                <td class="center-text">
+                  <span class="badge-merma" [ngClass]="getMermaClass(f.porcentajeMerma)">
+                    📉 {{ f.porcentajeMerma }}%
+                  </span>
+                </td>
+                <td class="center-text">
+                  <span class="badge" [class.success-badge]="f.activo" [class.danger-badge]="!f.activo">
+                    {{ f.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td style="text-align: right;">
+                  <button 
+                    type="button" 
+                    class="secondary-btn action-sm"
+                    (click)="abrirFormularioEditar(f)"
+                    title="Editar datos del fenómeno"
+                  >
+                    ✏️ Editar
+                  </button>
+                  @if (f.activo) {
+                    <button 
+                      type="button" 
+                      class="danger-btn action-sm"
+                      (click)="alternarEstado(f)"
+                      title="Desactivar fenómeno"
+                    >
+                      Desactivar
+                    </button>
+                  } @else {
+                    <button 
+                      type="button" 
+                      class="primary-btn action-sm"
+                      (click)="alternarEstado(f)"
+                      title="Activar fenómeno"
+                    >
+                      Activar
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- FORMULARIO DE REGISTRO / EDICIÓN -->
+  @if (showForm()) {
+    <div class="glass-card form-card animate-in" style="margin-top: 1.5rem;">
+      <div class="title-header border-b">
+        <h3>{{ editingId() === null ? '➕ Registrar Fenómeno Atmosférico' : '✏️ Modificar Fenómeno Atmosférico' }}</h3>
+        <p>Complete los parámetros agrometeorológicos y el porcentaje estimado de impacto en la producción.</p>
+      </div>
+
+      <form (ngSubmit)="guardarFenomeno()" style="margin-top: 1.25rem;">
+        <div class="form-grid">
+          
+          <label class="form-field">
+            <span class="field-label">Nombre del Fenómeno *</span>
+            <input 
+              type="text" 
+              [ngModel]="formNombre()" 
+              (ngModelChange)="formNombre.set($event)"
+              name="nombre"
+              placeholder="Ej. El Niño (ENSO - Fase Cálida)"
+              required
+            />
+          </label>
+
+          <label class="form-field">
+            <span class="field-label">Período / Meses de Afectación *</span>
+            <input 
+              type="text" 
+              [ngModel]="formPeriodoMeses()" 
+              (ngModelChange)="formPeriodoMeses.set($event)"
+              name="periodoMeses"
+              placeholder="Ej. Diciembre - Abril"
+              required
+            />
+          </label>
+
+          <label class="form-field">
+            <span class="field-label">Porcentaje de Merma Estimada (%) *</span>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+              <input 
+                type="number" 
+                min="0"
+                max="100"
+                step="0.5"
+                [ngModel]="formPorcentajeMerma()" 
+                (ngModelChange)="formPorcentajeMerma.set($event)"
+                name="porcentajeMerma"
+                required
+                style="width: 110px;"
+              />
+              <span class="badge-merma" [ngClass]="getMermaClass(formPorcentajeMerma())">
+                📉 {{ formPorcentajeMerma() }}% de Pérdida
+              </span>
+            </div>
+          </label>
+
+          <label class="form-field full-width">
+            <span class="field-label">Tipo de Impacto Climático *</span>
+            <input 
+              type="text" 
+              [ngModel]="formTipoImpacto()" 
+              (ngModelChange)="formTipoImpacto.set($event)"
+              name="tipoImpacto"
+              placeholder="Ej. Sequía severa, estrés hídrico, escasez de pastos..."
+              required
+            />
+          </label>
+
+          <label class="form-field full-width">
+            <span class="field-label">Descripción General / Afectación Agrometeorológica</span>
+            <textarea 
+              rows="3"
+              [ngModel]="formDescripcion()" 
+              (ngModelChange)="formDescripcion.set($event)"
+              name="descripcion"
+              placeholder="Detalle de cómo el fenómeno altera el rendimiento del suelo, ganado o cosecha..."
+            ></textarea>
+          </label>
+
+          <label class="form-field full-width">
+            <span class="field-label">Medidas de Mitigación Agrónoma Recomendadas</span>
+            <textarea 
+              rows="3"
+              [ngModel]="formMedidasMitigacion()" 
+              (ngModelChange)="formMedidasMitigacion.set($event)"
+              name="medidasMitigacion"
+              placeholder="Acciones preventivas (ej. reservorios de agua, drenajes, ensilaje, coberturas)..."
+            ></textarea>
+          </label>
+
+          <label class="form-field checkbox-field">
+            <input 
+              type="checkbox" 
+              [ngModel]="formActivo()" 
+              (ngModelChange)="formActivo.set($event)"
+              name="activo"
+            />
+            <span class="field-label" style="margin: 0;">Fenómeno Activo para la Producción</span>
+          </label>
+
+        </div>
+
+        <div class="form-actions border-t" style="margin-top: 1.5rem; padding-top: 1rem; display: flex; gap: 0.75rem; justify-content: flex-end;">
+          <button 
+            type="button" 
+            class="secondary-btn"
+            (click)="cerrarFormulario()"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="submit" 
+            class="primary-btn"
+            [disabled]="loading()"
+          >
+            {{ editingId() === null ? 'Guardar Fenómeno' : 'Actualizar Fenómeno' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+</div>

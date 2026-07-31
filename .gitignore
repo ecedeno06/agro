@@ -1,0 +1,16 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+
+# Node (backup in case nested .gitignore is bypassed)
+node_modules/
+
+# Misc local artifacts
+*.log
+*.lnk

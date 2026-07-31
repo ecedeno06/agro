@@ -1,0 +1,738 @@
+<div class="mantenimiento-container">
+  <!-- Pestañas de Mantenimiento -->
+  <div class="tabs">
+    <button 
+      type="button" 
+      class="tab-button" 
+      [class.tab-active]="tabActivo() === 'menus'"
+      (click)="tabActivo.set('menus'); errorMsg.set(''); successMsg.set('')"
+    >
+      📂 Mantenimiento de Menús
+    </button>
+    <button 
+      type="button" 
+      class="tab-button" 
+      [class.tab-active]="tabActivo() === 'roles'"
+      (click)="tabActivo.set('roles'); errorMsg.set(''); successMsg.set('')"
+    >
+      🔑 Mantenimiento de Roles
+    </button>
+    <button 
+      type="button" 
+      class="tab-button" 
+      [class.tab-active]="tabActivo() === 'permisos-crud'"
+      (click)="tabActivo.set('permisos-crud'); errorMsg.set(''); successMsg.set('')"
+    >
+      ⚙️ Mantenimiento de Permisos
+    </button>
+    <button 
+      type="button" 
+      class="tab-button" 
+      [class.tab-active]="tabActivo() === 'matrix'"
+      (click)="tabActivo.set('matrix'); errorMsg.set(''); successMsg.set('')"
+    >
+      🛡️ Asignar Permisos a Rol
+    </button>
+  </div>
+
+  <!-- Alertas contextuales -->
+  <div class="alert danger animate-in" *ngIf="errorMsg()">
+    {{ errorMsg() }}
+  </div>
+  <div class="alert success animate-in" *ngIf="successMsg()">
+    {{ successMsg() }}
+  </div>
+
+  <!-- TAB 1: MANTENIMIENTO DE MENUS (CRUD) -->
+  <div *ngIf="tabActivo() === 'menus'" class="tab-content-stacked animate-in">
+    <!-- Card Superior: Tabla de Opciones de Menú -->
+    <div class="glass-card">
+      <div class="title-header border-b">
+        <h3>Opciones de Menú y Submenús</h3>
+        <p>Haga clic en una opción de menú para editarla, o use el botón Desactivar/Activar para cambiar su estado.</p>
+      </div>
+
+      <!-- BÚSQUEDA GLOBAL -->
+      <div class="search-container">
+        <div class="search-field">
+          <label for="globalMenuSearch">🔎 Buscar en Menús</label>
+          <input 
+            id="globalMenuSearch"
+            type="text" 
+            [ngModel]="filterMenuText()" 
+            (ngModelChange)="filterMenuText.set($event)" 
+            placeholder="Buscar por ID, nombre, ruta, ícono o estado..." 
+          />
+        </div>
+      </div>
+
+      <div *ngIf="!loading() && filteredMenusList().length === 0" class="empty-state" style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+        No se encontraron opciones de menú que coincidan con la búsqueda.
+      </div>
+
+      <div class="table-wrapper" *ngIf="filteredMenusList().length > 0" style="margin-top: 1rem;">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre / Título</th>
+              <th>Ruta / Destino</th>
+              <th>Ícono</th>
+              <th>Orden</th>
+              <th>Estado</th>
+              <th style="text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              *ngFor="let m of filteredMenusList()" 
+              [class.selected-row]="editingMenuId() === m.id"
+              (click)="seleccionarMenuParaEditar(m)"
+              class="clickable-row"
+              [class.child-menu]="m.padre_id !== null"
+            >
+              <td><strong>#{{ m.id }}</strong></td>
+              <td>
+                <span class="menu-indent" *ngIf="m.padre_id !== null" style="margin-right: 0.5rem; color: var(--text-muted); font-weight: bold;">↳</span>
+                <span class="menu-icon" style="margin-right: 0.5rem; display: inline-flex; align-items: center; vertical-align: middle;">
+                  <img *ngIf="isUrlIcon(m.icono)" [src]="getIconUrl(m.icono)" style="width: 1.15rem; height: 1.15rem; object-fit: contain;" />
+                  <span *ngIf="!isUrlIcon(m.icono)">{{ m.icono }}</span>
+                </span>
+                <span class="menu-name">{{ m.nombre }}</span>
+              </td>
+              <td><span style="font-family: monospace; font-size: 0.8rem; color: var(--text-muted);">{{ m.ruta }}</span></td>
+              <td style="text-align: center;">
+                <img *ngIf="isUrlIcon(m.icono)" [src]="getIconUrl(m.icono)" style="width: 1.25rem; height: 1.25rem; object-fit: contain; display: inline-block; vertical-align: middle;" />
+                <span *ngIf="!isUrlIcon(m.icono)" style="font-size: 1.1rem;">{{ m.icono }}</span>
+              </td>
+              <td>{{ m.orden }}</td>
+              <td>
+                <span class="badge" [class.success-badge]="m.estado" [class.danger-badge]="!m.estado">
+                  {{ m.estado ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td style="text-align: right;" (click)="$event.stopPropagation()">
+                <button 
+                  type="button" 
+                  class="secondary-btn edit-action-btn"
+                  (click)="seleccionarMenuParaEditar(m)"
+                  style="margin-right: 0.5rem; font-size: 0.75rem; padding: 0.35rem 0.6rem; height: auto;"
+                >
+                  ✏️ Editar
+                </button>
+                <button 
+                  type="button" 
+                  class="danger-btn"
+                  *ngIf="m.estado"
+                  (click)="alternarEstadoMenu(m)"
+                  style="font-size: 0.75rem; padding: 0.35rem 0.6rem; height: auto;"
+                >
+                  Desactivar
+                </button>
+                <button 
+                  type="button" 
+                  class="primary-btn"
+                  *ngIf="!m.estado"
+                  (click)="alternarEstadoMenu(m)"
+                  style="font-size: 0.75rem; padding: 0.35rem 0.6rem; height: auto;"
+                >
+                  Activar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Card Inferior: Formulario de Menús -->
+    <div class="glass-card form-card">
+      <div class="title-header border-b">
+        <h3>{{ editingMenuId() === null ? '➕ Agregar Opción de Menú' : '✏️ Modificar Opción de Menú' }}</h3>
+        <p>Gestione el título, ícono, orden y estructura jerárquica de la navegación.</p>
+      </div>
+
+      <form (ngSubmit)="guardarMenuForm()" style="margin-top: 1.25rem;">
+        <div class="horizontal-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) auto;">
+
+
+          <label class="form-field">
+            <span class="field-label">Nombre / Título</span>
+            <input 
+              type="text" 
+              [ngModel]="formMenuNombre()" 
+              (ngModelChange)="formMenuNombre.set($event)"
+              name="menuNombre"
+              placeholder="Ej. Reportes"
+              required
+              style="padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text-main);"
+            />
+          </label>
+
+          <label class="form-field">
+            <span class="field-label">Ruta / Link</span>
+            <input 
+              type="text" 
+              [ngModel]="formMenuRuta()" 
+              (ngModelChange)="formMenuRuta.set($event)"
+              name="menuRuta"
+              placeholder="Ej. /reportes"
+              required
+              style="padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text-main);"
+            />
+          </label>
+
+          <label class="form-field">
+            <span class="field-label">Ícono</span>
+            <div style="display: flex; gap: 0.5rem; align-items: center; width: 100%;">
+              <div style="width: 38px; height: 38px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--input-bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden;" [title]="formMenuIcono()">
+                <img *ngIf="isUrlIcon(formMenuIcono())" [src]="getIconUrl(formMenuIcono())" style="width: 22px; height: 22px; object-fit: contain;" />
+                <span *ngIf="!isUrlIcon(formMenuIcono())" style="font-size: 1.1rem;">{{ formMenuIcono() || '📁' }}</span>
+              </div>
+              <input 
+                type="text" 
+                [ngModel]="formMenuIcono()" 
+                (ngModelChange)="formMenuIcono.set($event)"
+                name="menuIcono"
+                placeholder="Ej. 📊 o /assets/suelos.png"
+                required
+                style="flex: 1; min-width: 0; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text-main);"
+              />
+              <input 
+                #fileInput 
+                type="file" 
+                accept="image/*" 
+                style="display: none;" 
+                (change)="onIconFileSelected($event)" 
+              />
+              <button 
+                type="button" 
+                class="secondary-btn" 
+                (click)="abrirModalIconos()" 
+                title="Explorar galería de /assets del proyecto y seleccionar ícono"
+                style="padding: 0.6rem 0.85rem; border-radius: 6px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; flex-shrink: 0; height: auto;"
+              >
+                📁 Explorar
+              </button>
+            </div>
+          </label>
+
+          <label class="form-field">
+            <span class="field-label">Submenú de (Menú Padre)</span>
+            <select 
+              [ngModel]="formMenuPadreId()" 
+              (ngModelChange)="onPadreIdChange($event)"
+              name="menuPadre"
+              style="padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text-main);"
+            >
+              <option [value]="null">-- Ninguno (Menú Principal) --</option>
+              <option *ngFor="let pm of parentMenusList()" [value]="pm.id">
+                {{ pm.icono }} {{ pm.nombre }}
+              </option>
+            </select>
+          </label>
+
+          <label class="form-field">
+            <span class="field-label">Orden de Visualización</span>
+            <input 
+              type="number" 
+              [ngModel]="formMenuOrden()" 
+              (ngModelChange)="formMenuOrden.set($event)"
+              name="menuOrden"
+              required
+              style="padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text-main);"
+            />
+          </label>
+
+          <label class="form-field checkbox-field" *ngIf="editingMenuId() !== null" style="align-self: center;">
+            <span class="field-label">Estado</span>
+            <div style="display:flex; align-items:center; gap: 0.5rem; margin-top: 0.25rem;">
+              <input 
+                type="checkbox" 
+                [ngModel]="formMenuEstado()" 
+                (ngModelChange)="formMenuEstado.set($event)"
+                name="menuEstado"
+                id="menuEstadoCheck"
+              />
+              <label for="menuEstadoCheck" style="font-size: 0.85rem; cursor: pointer;">Activo</label>
+            </div>
+          </label>
+
+          <div class="form-actions-row" style="align-self: flex-end;">
+            <button 
+              type="button" 
+              class="secondary-btn" 
+              (click)="limpiarMenuForm()"
+              *ngIf="editingMenuId() !== null || formMenuNombre() || formMenuRuta()"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="primary-btn" 
+              [disabled]="loading() || !formMenuNombre() || !formMenuRuta() || !formMenuIcono()"
+            >
+              {{ editingMenuId() === null ? 'Crear Opción' : 'Guardar Cambios' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TAB 2: MANTENIMIENTO DE ROLES (CRUD) -->
+  <div *ngIf="tabActivo() === 'roles'" class="tab-content-stacked animate-in">
+    <!-- Card Superior: Tabla de Roles -->
+    <div class="glass-card">
+      <div class="title-header border-b">
+        <h3>Roles Registrados</h3>
+        <p>Haga clic en un rol para editarlo, o use el botón Desactivar/Activar para cambiar su estado.</p>
+      </div>
+
+      <!-- BÚSQUEDA GLOBAL -->
+      <div class="search-container">
+        <div class="search-field">
+          <label for="globalRolSearch">🔎 Buscar en Roles</label>
+          <input 
+            id="globalRolSearch"
+            type="text" 
+            [ngModel]="filterRolText()" 
+            (ngModelChange)="filterRolText.set($event)" 
+            placeholder="Buscar por ID, código, descripción o estado..." 
+          />
+        </div>
+      </div>
+
+      <div *ngIf="!loading() && filteredRolesList().length === 0" class="empty-state" style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+        No se encontraron roles que coincidan con la búsqueda.
+      </div>
+
+      <div class="table-wrapper" *ngIf="filteredRolesList().length > 0" style="margin-top: 1rem;">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Código</th>
+              <th>Descripción</th>
+              <th>Estado</th>
+              <th style="text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              *ngFor="let r of filteredRolesList()" 
+              [class.selected-row]="editingRolId() === r.idRol"
+              (click)="seleccionarRolParaEditar(r)"
+              class="clickable-row"
+            >
+              <td><strong>#{{ r.idRol }}</strong></td>
+              <td><span class="code-badge">{{ r.codigo }}</span></td>
+              <td>{{ r.descripcion }}</td>
+              <td>
+                <span class="badge" [class.success-badge]="r.activo" [class.danger-badge]="!r.activo">
+                  {{ r.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td style="text-align: right;" (click)="$event.stopPropagation()">
+                <button 
+                  type="button" 
+                  class="secondary-btn edit-action-btn"
+                  (click)="seleccionarRolParaEditar(r)"
+                  style="margin-right: 0.5rem; font-size: 0.75rem; padding: 0.35rem 0.6rem; height: auto;"
+                >
+                  ✏️ Editar
+                </button>
+                <button 
+                  type="button" 
+                  class="danger-btn"
+                  *ngIf="r.activo"
+                  (click)="alternarEstadoRol(r)"
+                  style="font-size: 0.75rem; padding: 0.35rem 0.6rem; height: auto;"
+                >
+                  Desactivar
+                </button>
+                <button 
+                  type="button" 
+                  class="primary-btn"
+                  *ngIf="!r.activo"
+                  (click)="alternarEstadoRol(r)"
+                  style="font-size: 0.75rem; padding: 0.35rem 0.6rem; height: auto;"
+                >
+                  Activar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Card Inferior: Formulario de Roles -->
+    <div class="glass-card form-card">
+      <div class="title-header border-b">
+        <h3>{{ editingRolId() === null ? '➕ Agregar Nuevo Rol' : '✏️ Modificar Rol' }}</h3>
+        <p>Modifique todos los campos necesarios. Para cancelar la edición y volver a modo creación haga clic en Cancelar.</p>
+      </div>
+
+      <form (ngSubmit)="guardarRolForm()" style="margin-top: 1.25rem;">
+        <div class="horizontal-form-grid">
+          <label class="form-field">
+            <span class="field-label">Código del Rol</span>
+            <input 
+              type="text" 
+              [ngModel]="formRolCodigo()" 
+              (ngModelChange)="formRolCodigo.set($event)"
+              name="rolCodigo"
+              placeholder="Ej. audit"
+              required
+              style="padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text-main);"
+            />
+          </label>
+
+          <label class="form-field">
+            <span class="field-label">Descripción</span>
+            <input 
+              type="text" 
+              [ngModel]="formRolDescripcion()" 
+              (ngModelChange)="formRolDescripcion.set($event)"
+              name="rolDescripcion"
+              placeholder="Ej. Auditor de Campo"
+              required
+              style="padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text-main);"
+            />
+          </label>
+
+          <label class="form-field checkbox-field" *ngIf="editingRolId() !== null" style="align-self: center; justify-self: start;">
+            <span class="field-label">Rol Activo</span>
+            <div style="display:flex; align-items:center; gap: 0.5rem; margin-top: 0.25rem;">
+              <input 
+                type="checkbox" 
+                [ngModel]="formRolActivo()" 
+                (ngModelChange)="formRolActivo.set($event)"
+                name="rolActivo"
+                id="rolActivoCheck"
+              />
+              <label for="rolActivoCheck" style="font-size: 0.85rem; cursor: pointer;">Habilitar acceso con este rol</label>
+            </div>
+          </label>
+
+          <div class="form-actions-row">
+            <button 
+              type="button" 
+              class="secondary-btn" 
+              (click)="limpiarRolForm()"
+              *ngIf="editingRolId() !== null || formRolCodigo() || formRolDescripcion()"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="primary-btn" 
+              [disabled]="loading() || !formRolCodigo() || !formRolDescripcion()"
+            >
+              {{ editingRolId() === null ? 'Crear Rol' : 'Guardar Cambios' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TAB 3: MANTENIMIENTO DE PERMISOS (CRUD) -->
+  <div *ngIf="tabActivo() === 'permisos-crud'" class="tab-content-stacked animate-in">
+    <!-- Card Superior: Tabla de Permisos -->
+    <div class="glass-card">
+      <div class="title-header border-b">
+        <h3>Permisos Registrados</h3>
+        <p>Haga clic en un permiso para editarlo, o use el botón Desactivar/Activar para cambiar su estado.</p>
+      </div>
+
+      <!-- BÚSQUEDA GLOBAL -->
+      <div class="search-container">
+        <div class="search-field">
+          <label for="globalPermSearch">🔎 Buscar en Permisos</label>
+          <input 
+            id="globalPermSearch"
+            type="text" 
+            [ngModel]="filterPermText()" 
+            (ngModelChange)="filterPermText.set($event)" 
+            placeholder="Buscar por ID, código, nombre o estado..." 
+          />
+        </div>
+      </div>
+
+      <div *ngIf="!loading() && filteredPermissionsList().length === 0" class="empty-state" style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+        No se encontraron permisos que coincidan con la búsqueda.
+      </div>
+
+      <div class="table-wrapper" *ngIf="filteredPermissionsList().length > 0" style="margin-top: 1rem;">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Estado</th>
+              <th style="text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              *ngFor="let p of filteredPermissionsList()" 
+              [class.selected-row]="editingPermId() === p.id"
+              (click)="seleccionarPermParaEditar(p)"
+              class="clickable-row"
+            >
+              <td><strong>#{{ p.id }}</strong></td>
+              <td><span class="code-badge secondary-code">{{ p.codigo }}</span></td>
+              <td>{{ p.nombre }}</td>
+              <td>
+                <span class="badge" [class.success-badge]="p.activo" [class.danger-badge]="!p.activo">
+                  {{ p.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td style="text-align: right;" (click)="$event.stopPropagation()">
+                <button 
+                  type="button" 
+                  class="secondary-btn edit-action-btn"
+                  (click)="seleccionarPermParaEditar(p)"
+                  style="margin-right: 0.5rem; font-size: 0.75rem; padding: 0.35rem 0.6rem; height: auto;"
+                >
+                  ✏️ Editar
+                </button>
+                <button 
+                  type="button" 
+                  class="danger-btn"
+                  *ngIf="p.activo"
+                  (click)="alternarEstadoPermiso(p)"
+                  style="font-size: 0.75rem; padding: 0.35rem 0.6rem; height: auto;"
+                >
+                  Desactivar
+                </button>
+                <button 
+                  type="button" 
+                  class="primary-btn"
+                  *ngIf="!p.activo"
+                  (click)="alternarEstadoPermiso(p)"
+                  style="font-size: 0.75rem; padding: 0.35rem 0.6rem; height: auto;"
+                >
+                  Activar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Card Inferior: Formulario de Permisos -->
+    <div class="glass-card form-card">
+      <div class="title-header border-b">
+        <h3>{{ editingPermId() === null ? '➕ Agregar Nuevo Permiso' : '✏️ Modificar Permiso' }}</h3>
+        <p>Modifique todos los campos necesarios. Para cancelar la edición y volver a modo creación haga clic en Cancelar.</p>
+      </div>
+
+      <form (ngSubmit)="guardarPermForm()" style="margin-top: 1.25rem;">
+        <div class="horizontal-form-grid">
+          <label class="form-field">
+            <span class="field-label">Código del Permiso</span>
+            <input 
+              type="text" 
+              [ngModel]="formPermCodigo()" 
+              (ngModelChange)="formPermCodigo.set($event)"
+              name="permCodigo"
+              placeholder="Ej. exportar"
+              required
+              style="padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text-main);"
+            />
+          </label>
+
+          <label class="form-field">
+            <span class="field-label">Nombre del Permiso</span>
+            <input 
+              type="text" 
+              [ngModel]="formPermNombre()" 
+              (ngModelChange)="formPermNombre.set($event)"
+              name="permNombre"
+              placeholder="Ej. Exportar Reportes Excel"
+              required
+              style="padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text-main);"
+            />
+          </label>
+
+          <label class="form-field checkbox-field" *ngIf="editingPermId() !== null" style="align-self: center; justify-self: start;">
+            <span class="field-label">Permiso Activo</span>
+            <div style="display:flex; align-items:center; gap: 0.5rem; margin-top: 0.25rem;">
+              <input 
+                type="checkbox" 
+                [ngModel]="formPermActivo()" 
+                (ngModelChange)="formPermActivo.set($event)"
+                name="permActivo"
+                id="permActivoCheck"
+              />
+              <label for="permActivoCheck" style="font-size: 0.85rem; cursor: pointer;">Habilitar uso en el sistema</label>
+            </div>
+          </label>
+
+          <div class="form-actions-row">
+            <button 
+              type="button" 
+              class="secondary-btn" 
+              (click)="limpiarPermForm()"
+              *ngIf="editingPermId() !== null || formPermCodigo() || formPermNombre()"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="primary-btn" 
+              [disabled]="loading() || !formPermCodigo() || !formPermNombre()"
+            >
+              {{ editingPermId() === null ? 'Crear Permiso' : 'Guardar Cambios' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TAB 4: ASIGNAR PERMISOS A ROL (MATRIZ) -->
+  <div *ngIf="tabActivo() === 'matrix'" class="tab-content-stacked animate-in">
+    <div class="glass-card">
+      <div class="title-header border-b">
+        <h3>Matriz de Permisos por Rol</h3>
+        <p>Seleccione un rol y marque los permisos correspondientes para cada sección de la navegación del sistema.</p>
+      </div>
+
+      <!-- Selector de Rol -->
+      <div class="selector-row" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+        <label for="rolSelectMatrix" class="field-label" style="display: block; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">
+          Seleccionar Rol para Configurar
+        </label>
+        <select 
+          id="rolSelectMatrix"
+          [ngModel]="matrixSelectedRolId()" 
+          (ngModelChange)="onRolSelectChange($event)"
+          style="width: 100%; max-width: 400px; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text-main); font-size: 0.95rem; outline: none; font-weight: 600;"
+        >
+          <option *ngFor="let r of activeRolesList()" [value]="r.idRol">
+            {{ r.descripcion }} ({{ r.codigo }})
+          </option>
+        </select>
+      </div>
+
+      <!-- Tabla Matriz -->
+      <div class="table-wrapper" *ngIf="matrixSelectedRolId()">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>Menú / Ruta</th>
+              <th *ngFor="let p of activePermissionsList()" style="text-align: center;">
+                {{ p.nombre | uppercase }}
+                <div style="font-size: 0.7rem; font-weight: normal; color: var(--text-muted); margin-top: 0.25rem;">
+                  ({{ p.codigo | uppercase }})
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of activeMenusList()" [class.child-menu]="m.padre_id !== null">
+              <td>
+                <span class="menu-indent" *ngIf="m.padre_id !== null" style="margin-right: 0.5rem; color: var(--text-muted); font-weight: bold;">↳</span>
+                <span style="margin-right: 0.5rem; display: inline-flex; align-items: center; vertical-align: middle;">
+                  <img *ngIf="isUrlIcon(m.icono)" [src]="getIconUrl(m.icono)" style="width: 1.15rem; height: 1.15rem; object-fit: contain;" />
+                  <span *ngIf="!isUrlIcon(m.icono)">{{ m.icono }}</span>
+                </span>
+                <strong>{{ m.nombre }}</strong>
+                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; margin-top: 0.2rem;">
+                  {{ m.ruta }}
+                </div>
+              </td>
+              <td *ngFor="let p of activePermissionsList()" style="text-align: center;">
+                <label class="custom-checkbox">
+                  <input 
+                    type="checkbox" 
+                    [checked]="isMatrixPermissionChecked(m.id, p.id)"
+                    (change)="toggleMatrixPermission(m.id, p.id, $event)"
+                  />
+                  <span class="checkmark"></span>
+                </label>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Botón Guardar -->
+      <div class="actions-row" *ngIf="matrixSelectedRolId()" style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+        <button 
+          type="button" 
+          class="primary-btn save-btn" 
+          [disabled]="loading()"
+          (click)="guardarMatrixPermisos()"
+        >
+          Guardar Matriz
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE GALERÍA DE ÍCONOS DE /assets DEL PROYECTO -->
+  <div class="modal-overlay" *ngIf="mostrarModalIconos()" (click)="cerrarModalIconos()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div class="glass-card animate-in" (click)="$event.stopPropagation()" style="max-width: 650px; width: 100%; max-height: 85vh; overflow-y: auto; border-radius: 16px; padding: 1.75rem; border: 1px solid var(--glass-border); background: var(--surface-color, #0f172a);">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 1.25rem;">
+        <div>
+          <h3 style="margin: 0; font-size: 1.2rem; color: var(--primary-color);">📁 Explorador de Íconos de /assets/icons</h3>
+          <p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--text-muted);">Selecciona un ícono existente de la carpeta /assets/icons del proyecto o examina un nuevo archivo.</p>
+        </div>
+        <button type="button" (click)="cerrarModalIconos()" style="background: none; border: none; font-size: 1.25rem; color: var(--text-muted); cursor: pointer;">✕</button>
+      </div>
+
+      <!-- BOTÓN PARA SELECCIONAR ARCHIVO LOCAL -->
+      <div style="margin-bottom: 1.5rem; text-align: center;">
+        <input 
+          #fileModalInput 
+          type="file" 
+          accept="image/*" 
+          style="display: none;" 
+          (change)="onIconFileSelected($event)" 
+        />
+        <button 
+          type="button" 
+          class="primary-btn" 
+          (click)="fileModalInput.click()"
+          style="padding: 0.7rem 1.25rem; border-radius: 10px; font-size: 0.9rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;"
+        >
+          📂 Buscar/Examinar Nuevo Archivo de Imagen
+        </button>
+      </div>
+
+      <!-- GRID DE ÍCONOS EXISTENTES DEL PROYECTO -->
+      <h4 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.85rem;">Íconos Disponibles en /assets/icons</h4>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 1rem;">
+        <div 
+          *ngFor="let ico of iconosProyectoList()" 
+          (click)="seleccionarIconoModal(ico.ruta)"
+          class="icon-gallery-card"
+          [class.selected]="formMenuIcono() === ico.ruta"
+          style="border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.04); padding: 0.85rem; text-align: center; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; overflow: hidden;"
+        >
+          <div style="width: 44px; height: 44px; border-radius: 8px; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+            <img [src]="getIconUrl(ico.ruta)" [alt]="ico.nombre" style="width: 28px; height: 28px; object-fit: contain;" />
+          </div>
+          <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-main); word-break: break-all; max-width: 100%;">{{ ico.nombre }}</span>
+          <code style="font-size: 0.68rem; color: var(--text-muted); word-break: break-all; white-space: normal; overflow-wrap: anywhere; max-width: 100%; display: block;">{{ ico.ruta }}</code>
+        </div>
+      </div>
+
+      <div style="margin-top: 1.5rem; text-align: right; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+        <button type="button" class="secondary-btn" (click)="cerrarModalIconos()" style="padding: 0.5rem 1rem; border-radius: 8px;">
+          Cancelar
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

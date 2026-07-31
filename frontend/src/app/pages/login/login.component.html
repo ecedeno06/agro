@@ -1,0 +1,548 @@
+<main class="page-shell">
+  <!-- Dynamic agricultural organic shapes background -->
+  <div class="bg-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+
+  <div class="login-container animate-in">
+    <button class="theme-toggle" type="button" (click)="toggleTheme()" title="Cambiar tema">
+      {{ isDark() ? '☀️' : '🌙' }}
+    </button>
+
+    <header class="login-header">
+      <p class="eyebrow">Portal Agropecuario</p>
+      <h1>AgroNet</h1>
+    </header>
+
+    <section class="login-card">
+      @if (errorMsg()) {
+        <div class="alert danger animate-in">
+          {{ errorMsg() }}
+        </div>
+      }
+      @if (successMsg()) {
+        <div class="alert success animate-in">
+          {{ successMsg() }}
+        </div>
+      }
+
+      @switch (currentStep()) {
+        <!-- 1. FORMULARIO DE INICIO DE SESIÓN -->
+        @case ('login') {
+          <form (submit)="$event.preventDefault(); onSubmitLogin()" class="form-flow">
+            <p class="section-desc">Por favor, ingrese sus credenciales de acceso registradas para el sector ganadero/agrícola.</p>
+            
+            <label class="form-field">
+              <span>Correo Electrónico</span>
+              <input
+                type="email"
+                [ngModel]="email()"
+                (ngModelChange)="onEmailChange($event)"
+                name="email"
+                placeholder="ejemplo@agro.com"
+                required
+                [disabled]="loading()"
+              />
+            </label>
+
+            <label class="form-field">
+              <span>Contraseña</span>
+              <div class="password-input-wrapper">
+                <input
+                  [type]="showPassword() ? 'text' : 'password'"
+                  [ngModel]="password()"
+                  (ngModelChange)="password.set($event)"
+                  name="password"
+                  placeholder="Ingrese su contraseña"
+                  required
+                  [disabled]="loading()"
+                />
+                <button
+                  type="button"
+                  class="toggle-password-btn"
+                  (click)="toggleShowPassword()"
+                  [title]="showPassword() ? 'Ocultar contraseña' : 'Ver contraseña'"
+                  tabindex="-1"
+                >
+                  @if (!showPassword()) {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                      <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                      <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                      <line x1="2" x2="22" y1="2" y2="22"/>
+                    </svg>
+                  }
+                </button>
+              </div>
+            </label>
+
+            <div class="forgot-password-link" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <div>
+                @if (isEmailValido()) {
+                  <a href="javascript:void(0)" (click)="goToForgotPassword()">Olvidé mi contraseña</a>
+                } @else {
+                  <span class="disabled-link">Olvidé mi contraseña</span>
+                }
+              </div>
+              <div>
+                <a href="javascript:void(0)" (click)="togglePista()" style="color: var(--primary-color); text-decoration: none; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 0.25rem;">
+                  💡 {{ pistaRecuperada() ? 'Ocultar pista' : 'Ver pista' }}
+                </a>
+              </div>
+            </div>
+
+            @if (pistaRecuperada()) {
+              <div class="animate-in" style="margin-bottom: 1rem; padding: 0.75rem; border-radius: 6px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); text-align: center; width: 100%; box-sizing: border-box;">
+                <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Pista recuperada:</span>
+                <strong style="color: var(--primary-color); font-size: 0.9rem; word-break: break-all;">{{ pistaRecuperada() }}</strong>
+              </div>
+            }
+
+            @if (pistaMsgError()) {
+              <div class="animate-in" style="margin-bottom: 1rem; padding: 0.5rem 0.75rem; border-radius: 6px; background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); text-align: center; font-size: 0.8rem; width: 100%; box-sizing: border-box;">
+                {{ pistaMsgError() }}
+              </div>
+            }
+
+            <div class="actions">
+              <button
+                type="submit"
+                class="primary-btn full-width"
+                [disabled]="!canSubmitLogin() || loading()"
+              >
+                {{ loading() ? 'Iniciando...' : 'Iniciar Sesión' }}
+              </button>
+            </div>
+          </form>
+        }
+
+        <!-- 2. DESAFÍO OTP (OTP EMAIL / OTP 2FA) -->
+        @case ('otp-2fa') {
+          <form (submit)="$event.preventDefault(); onSubmitOtp2fa()" class="form-flow">
+            <p class="section-desc">Se requiere ingresar el código dinámico de tu aplicación de autenticación para la cuenta <strong>{{ email() }}</strong>.</p>
+            
+            <label class="form-field">
+              <span>Código de Seguridad de 2FA</span>
+              <input
+                autofocus
+                type="text"
+                [ngModel]="otp()"
+                (ngModelChange)="otp.set($event)"
+                name="otp"
+                placeholder="000000"
+                maxlength="6"
+                required
+                [disabled]="loading()"
+                autocomplete="off"
+                class="otp-input"
+              />
+            </label>
+
+            <div class="actions vertical">
+              <button
+                type="submit"
+                class="accent-btn full-width"
+                [disabled]="!canSubmitOtp() || loading()"
+              >
+                {{ loading() ? 'Verificando...' : 'Verificar Doble Factor' }}
+              </button>
+              <button
+                type="button"
+                class="secondary-btn full-width"
+                (click)="regresar()"
+                [disabled]="loading()"
+              >
+                Regresar
+              </button>
+            </div>
+          </form>
+        }
+
+        <!-- 3. DIÁLOGO PREGUNTA ACTIVAR 2FA -->
+        @case ('prompt-enable') {
+          <div class="form-flow text-center">
+            <h3>🔑 ¿Proteger tu cuenta con 2FA?</h3>
+            <p class="section-desc" style="margin-top: 1rem; margin-bottom: 2rem;">
+              La autenticación de doble factor añade una capa extra de seguridad. ¿Deseas configurarla usando Google Authenticator o Microsoft Authenticator ahora mismo?
+            </p>
+
+            <div class="actions vertical">
+              <button
+                type="button"
+                class="accent-btn full-width"
+                (click)="iniciarEnrolamiento()"
+                [disabled]="loading()"
+              >
+                {{ loading() ? 'Iniciando...' : 'Sí, activar Doble Factor (2FA)' }}
+              </button>
+              <button
+                type="button"
+                class="secondary-btn full-width"
+                (click)="omitirAccion2fa()"
+                [disabled]="loading()"
+              >
+                No, ir directo al Dashboard
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- 4. PANTALLA DE ENROLAMIENTO 2FA (QR) -->
+        @case ('setup-2fa') {
+          <form (submit)="$event.preventDefault(); activar2FA()" class="form-flow text-center">
+            <h3>Configuración de 2FA</h3>
+            <p class="section-desc" style="margin-top: 0.5rem; margin-bottom: 1.5rem;">
+              1. Escanea el código QR con Google o Microsoft Authenticator en tu celular:
+            </p>
+
+            <div class="qr-container">
+              <img [src]="qrCode()" alt="Código QR Enrolamiento" class="qr-img">
+            </div>
+
+            <p class="section-desc" style="margin-bottom: 1.5rem;">
+              O ingresa esta clave manual en tu aplicación:<br>
+              <code class="secret-key">{{ secretKey() }}</code>
+            </p>
+
+            <p class="section-desc" style="margin-bottom: 1rem;">
+              2. Ingresa el código de 6 dígitos que te genera la aplicación para validar la activación:
+            </p>
+
+            <label class="form-field">
+              <input
+                autofocus
+                type="text"
+                [ngModel]="confirmCode()"
+                (ngModelChange)="confirmCode.set($event)"
+                name="confirmCode"
+                placeholder="000000"
+                maxlength="6"
+                required
+                [disabled]="loading()"
+                autocomplete="off"
+                class="otp-input text-center"
+              />
+            </label>
+
+            <div class="actions vertical" style="margin-top: 1.5rem;">
+              <button
+                type="submit"
+                class="accent-btn full-width"
+                [disabled]="!canSubmitConfirm2fa() || loading()"
+              >
+                {{ loading() ? 'Activando...' : 'Confirmar y Activar 2FA' }}
+              </button>
+              <button
+                type="button"
+                class="secondary-btn full-width"
+                (click)="omitirAccion2fa()"
+                [disabled]="loading()"
+              >
+                Cancelar y Continuar
+              </button>
+            </div>
+          </form>
+        }
+
+        <!-- 5. DIÁLOGO PREGUNTA DESACTIVAR 2FA -->
+        @case ('prompt-disable') {
+          <div class="form-flow text-center">
+            <h3>🛡️ Cuenta Protegida</h3>
+            <p class="section-desc" style="margin-top: 1rem; margin-bottom: 2rem;">
+              Tu cuenta actualmente tiene habilitada la Autenticación de Doble Factor (2FA). ¿Deseas desactivarla antes de entrar al Dashboard?
+            </p>
+
+            <div class="actions vertical">
+              <button
+                type="button"
+                class="danger-btn full-width"
+                (click)="confirmarDesactivacion()"
+                [disabled]="loading()"
+              >
+                Sí, desactivar Doble Factor
+              </button>
+              <button
+                type="button"
+                class="primary-btn full-width"
+                (click)="omitirAccion2fa()"
+                [disabled]="loading()"
+              >
+                No, mantener activada y Continuar
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- 6. CONFIRMACIÓN DE DESACTIVACIÓN 2FA (REQUIERE CÓDIGO) -->
+        @case ('confirm-disable') {
+          <form (submit)="$event.preventDefault(); desactivar2FA()" class="form-flow text-center">
+            <h3>⚠️ Confirmar Desactivación</h3>
+            <p class="section-desc" style="margin-top: 1rem; margin-bottom: 1.5rem;">
+              Para confirmar la desactivación del Doble Factor, ingresa el código de 6 dígitos de tu aplicación autenticadora.
+            </p>
+
+            <label class="form-field">
+              <span>Código de Verificación</span>
+              <input
+                autofocus
+                type="text"
+                [ngModel]="disableCode()"
+                (ngModelChange)="disableCode.set($event)"
+                name="disableCode"
+                placeholder="000000"
+                maxlength="6"
+                required
+                [disabled]="loading()"
+                autocomplete="off"
+                class="otp-input text-center"
+              />
+            </label>
+
+            <div class="actions vertical" style="margin-top: 1.5rem;">
+              <button
+                type="submit"
+                class="danger-btn full-width"
+                [disabled]="!canSubmitDisableCode() || loading()"
+              >
+                {{ loading() ? 'Desactivando...' : 'Confirmar Desactivación' }}
+              </button>
+              <button
+                type="button"
+                class="primary-btn full-width"
+                (click)="omitirAccion2fa()"
+                [disabled]="loading()"
+              >
+                Cancelar y Continuar
+              </button>
+            </div>
+          </form>
+        }
+
+        <!-- 7. SELECCIÓN DE ROL -->
+        @case ('select-rol') {
+          <div class="form-flow">
+            <h3>🚜 ¿Con qué perfil deseas ingresar?</h3>
+            <p class="section-desc" style="margin-top: 0.5rem; margin-bottom: 1.5rem;">
+              Tu cuenta tiene acceso a múltiples roles dentro de la finca/clínica. Selecciona uno para continuar.
+            </p>
+
+            <div class="roles-list">
+              @for (rol of rolesDisponibles(); track rol.idRegistro || rol.rol) {
+                <button
+                  type="button"
+                  class="rol-card"
+                  [class.selected]="rolSeleccionado() === rol"
+                  (click)="rolSeleccionado.set(rol)"
+                  [disabled]="loading()"
+                >
+                  <span class="rol-icon">
+                    @if (rol.rol === 'adm' || rol.rol === 'admin') { 👨‍💼 }
+                    @else if (rol.rol === 'vet' || rol.rol === 'veterinario') { 🩺 }
+                    @else if (rol.rol === 'ope' || rol.rol === 'operario') { 🚜 }
+                    @else if (rol.rol === 'rep') { ⚖️ }
+                    @else if (rol.rol === 'Tes') { 💰 }
+                    @else if (rol.rol === 'sec') { 📋 }
+                    @else { 👤 }
+                  </span>
+                  <div class="rol-info">
+                    <strong>{{ rol.descripcion || rol.rol }}</strong>
+                    <small>
+                      Rol: {{ rol.rol }}
+                      @if (rol.nombreCapitulo) {
+                        • {{ rol.nombreCapitulo }}
+                      }
+                    </small>
+                  </div>
+                  @if (rolSeleccionado() === rol) {
+                    <span class="rol-check">✓</span>
+                  }
+                </button>
+              }
+            </div>
+
+            <div class="actions vertical" style="margin-top: 1.5rem;">
+              <button
+                type="button"
+                class="primary-btn full-width"
+                [disabled]="!canConfirmarRol() || loading()"
+                (click)="confirmarRol()"
+              >
+                {{ loading() ? 'Ingresando...' : 'Ingresar con este perfil' }}
+              </button>
+              <button
+                type="button"
+                class="secondary-btn full-width"
+                (click)="regresar()"
+                [disabled]="loading()"
+              >
+                Regresar
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- 8. RECUPERACIÓN DE CONTRASEÑA -->
+        @case ('forgot-password') {
+          <form (submit)="$event.preventDefault(); solicitarRecuperacion()" class="form-flow">
+            <p class="section-desc">Se enviará una contraseña temporal de acceso al siguiente correo electrónico registrado.</p>
+            
+            <label class="form-field">
+              <span>Correo registrado</span>
+              <input
+                type="email"
+                [ngModel]="recoveryEmail()"
+                name="recoveryEmail"
+                placeholder="ejemplo@agro.com"
+                required
+                readonly
+                class="readonly-input"
+              />
+            </label>
+
+            <div class="actions vertical" style="margin-top: 1.5rem;">
+              <button
+                type="submit"
+                class="primary-btn full-width"
+                [disabled]="!canSubmitRecovery() || loading()"
+              >
+                {{ loading() ? 'Enviando...' : 'Enviar contraseña temporal' }}
+              </button>
+              <button
+                type="button"
+                class="secondary-btn full-width"
+                (click)="regresar()"
+                [disabled]="loading()"
+              >
+                Regresar
+              </button>
+            </div>
+          </form>
+        }
+
+        <!-- 9. CAMBIO OBLIGATORIO DE CONTRASEÑA -->
+        @case ('change-password-obligatorio') {
+          <form (submit)="$event.preventDefault(); guardarNuevaPasswordObligatoria()" class="form-flow">
+            <h3 class="obligatorio-title">⚠️ Cambio de Contraseña Obligatorio</h3>
+            <p class="section-desc">Has ingresado con una contraseña temporal. Por seguridad, debes cambiar tu contraseña para continuar.</p>
+            
+            <label class="form-field">
+              <span>Nueva Contraseña *</span>
+              <div class="password-input-wrapper">
+                <input
+                  [type]="showNuevaPassword() ? 'text' : 'password'"
+                  [ngModel]="nuevaPassword()"
+                  (ngModelChange)="nuevaPassword.set($event); validarSimilitud()"
+                  name="nuevaPassword"
+                  placeholder="Escribe tu nueva contraseña"
+                  required
+                  [disabled]="loading()"
+                />
+                <button
+                  type="button"
+                  class="toggle-password-btn"
+                  (click)="toggleShowNuevaPassword()"
+                  [title]="showNuevaPassword() ? 'Ocultar contraseña' : 'Ver contraseña'"
+                  tabindex="-1"
+                >
+                  @if (!showNuevaPassword()) {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                      <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                      <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                      <line x1="2" x2="22" y1="2" y2="22"/>
+                    </svg>
+                  }
+                </button>
+              </div>
+            </label>
+
+            <label class="form-field">
+              <span>Confirmar Nueva Contraseña *</span>
+              <div class="password-input-wrapper">
+                <input
+                  [type]="showConfirmarPassword() ? 'text' : 'password'"
+                  [ngModel]="confirmarPassword()"
+                  (ngModelChange)="confirmarPassword.set($event)"
+                  name="confirmarPassword"
+                  placeholder="Repite tu nueva contraseña"
+                  required
+                  [disabled]="loading()"
+                />
+                <button
+                  type="button"
+                  class="toggle-password-btn"
+                  (click)="toggleShowConfirmarPassword()"
+                  [title]="showConfirmarPassword() ? 'Ocultar contraseña' : 'Ver contraseña'"
+                  tabindex="-1"
+                >
+                  @if (!showConfirmarPassword()) {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                      <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                      <path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                      <line x1="2" x2="22" y1="2" y2="22"/>
+                    </svg>
+                  }
+                </button>
+              </div>
+            </label>
+
+            <label class="form-field">
+              <span>Pista de Contraseña (Opcional)</span>
+              <input
+                type="text"
+                [ngModel]="pista()"
+                (ngModelChange)="pista.set($event); validarSimilitud()"
+                name="pista"
+                placeholder="Ej. Nombre de mi primera mascota"
+                [disabled]="loading()"
+              />
+            </label>
+
+            <!-- Medidor y Alerta de Similitud idénticos a Seguridad -->
+            @if (nuevaPassword() && pista()) {
+              <div style="padding: 0.75rem; border-radius: 6px; background: rgba(255,255,255,0.015); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 0.75rem; box-sizing: border-box;">
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Porcentaje de similitud:</span>
+                <span
+                  [style.color]="similitudPorcentaje() > maxSimilitud() ? '#f87171' : '#4ade80'"
+                  style="font-weight: 700; font-size: 0.85rem; padding: 0.25rem 0.5rem; border-radius: 4px;"
+                  [style.background]="similitudPorcentaje() > maxSimilitud() ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)'"
+                >
+                  {{ similitudPorcentaje() }}%
+                  {{ similitudPorcentaje() > maxSimilitud() ? '❌ Muy Parecido (Debe ser ≤ ' + maxSimilitud() + '%)' : '✅ Seguro' }}
+                </span>
+              </div>
+            }
+
+            <div class="actions vertical" style="margin-top: 1.5rem;">
+              <button
+                type="submit"
+                class="accent-btn full-width"
+                [disabled]="!canSubmitChangePasswordObligatorio() || loading()"
+              >
+                {{ loading() ? 'Actualizar y continuar...' : 'Actualizar y continuar' }}
+              </button>
+            </div>
+          </form>
+        }
+      }
+    </section>
+  </div>
+</main>

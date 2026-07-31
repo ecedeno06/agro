@@ -1,0 +1,165 @@
+<div class="mantenimiento-suelos-container animate-in">
+
+  <!-- CARD 1: LISTADO DE SUELOS -->
+  <section class="suelos-list-card">
+    <div class="card-header flex-header">
+      <div>
+        <h2>Mantenimiento de Tipos de Suelos</h2>
+        <p class="subtitle">Administra y registra las variantes de tipos de suelos para las fincas.</p>
+      </div>
+      <button 
+        type="button" 
+        class="action-btn register-suelo-btn"
+        (click)="abrirNuevoForm()"
+      >
+        {{ showForm() && !editingId() ? '❌ Cerrar Formulario' : '➕ Registrar Tipo de Suelo' }}
+      </button>
+    </div>
+
+    <!-- Mensajes Generales -->
+    <div *ngIf="successMsg()" class="alert success animate-in" style="margin-top: 1.25rem;">
+      {{ successMsg() }}
+    </div>
+    <div *ngIf="errorMsg() && !showForm()" class="alert danger animate-in" style="margin-top: 1.25rem;">
+      {{ errorMsg() }}
+    </div>
+
+    <!-- BÚSQUEDA GLOBAL -->
+    <div class="search-container">
+      <div class="search-field">
+        <label for="globalSearch">🔎 Buscar en Tipos de Suelos</label>
+        <input 
+          id="globalSearch"
+          type="text" 
+          [ngModel]="filterText()" 
+          (ngModelChange)="filterText.set($event)" 
+          placeholder="Buscar por nombre o descripción..." 
+        />
+      </div>
+    </div>
+
+    <!-- TABLA DE TIPOS DE SUELOS -->
+    <div class="list-section">
+      <div *ngIf="loading() && tipoSuelos().length === 0" class="loading-state" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+        Cargando catálogo de suelos...
+      </div>
+      <div *ngIf="!loading() && filteredTipoSuelos().length === 0" class="empty-state">
+        No se encontraron tipos de suelos con ese criterio de búsqueda.
+      </div>
+
+      <div class="table-scroll-container" *ngIf="filteredTipoSuelos().length > 0">
+        <table class="usuarios-table">
+          <thead>
+            <tr>
+              <th style="width: 100px;">ID</th>
+              <th style="width: 220px;">Nombre</th>
+              <th>Descripción</th>
+              <th style="width: 130px;">Estado</th>
+              <th style="width: 250px; text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of filteredTipoSuelos()" [class.row-selected]="editingId() === item.id" (click)="abrirEditarForm(item)">
+              <td><strong>#{{ item.id }}</strong></td>
+              <td><strong>{{ item.nombre }}</strong></td>
+              <td class="description-cell" [title]="item.descripcion || 'Sin descripción'">
+                {{ item.descripcion || 'Sin descripción disponible.' }}
+              </td>
+              <td>
+                <span class="status-badge" [class.active]="item.estado">
+                  {{ item.estado ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td style="text-align: right;" (click)="$event.stopPropagation()">
+                <button 
+                  type="button" 
+                  class="action-btn edit-btn"
+                  (click)="abrirEditarForm(item)"
+                  style="margin-right: 0.5rem;"
+                >
+                  ✏️ Editar
+                </button>
+                <button 
+                  type="button" 
+                  [class.action-btn]="true"
+                  [class.cancel-btn]="item.estado"
+                  [class.save-btn]="!item.estado"
+                  (click)="toggleEstado(item)"
+                >
+                  {{ item.estado ? '🔒 Desactivar' : '🔓 Activar' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARD 2: FORMULARIO REGISTRO/EDICION (EN LUGAR DE POPUP) -->
+  <section class="suelos-form-card user-form-card glass-card animate-in" *ngIf="showForm()">
+    <div class="card-header flex-header">
+      <div>
+        <h2>{{ editingId() ? '✏️ Editar Tipo de Suelo' : '🌱 Registrar Tipo de Suelo' }}</h2>
+        <p class="subtitle">Complete los campos para guardar el registro de tipo de suelo.</p>
+      </div>
+      <button class="action-btn cancel-btn" (click)="cerrarForm()">
+        ✕ Cerrar Formulario
+      </button>
+    </div>
+
+    <div class="card-body" style="margin-top: 1.5rem;">
+      <div class="alert danger animate-in" *ngIf="errorMsg()" style="margin-bottom: 1.25rem;">
+        {{ errorMsg() }}
+      </div>
+
+      <form (submit)="$event.preventDefault(); guardarSuelo()" class="modal-form">
+        <label class="form-field">
+          <span>Nombre del Tipo de Suelo *</span>
+          <input
+            type="text"
+            [ngModel]="formNombre()"
+            (ngModelChange)="formNombre.set($event)"
+            name="nombre"
+            placeholder="Ej. Arcilloso, Arenoso..."
+            required
+            [disabled]="loading()"
+          />
+        </label>
+
+        <label class="form-field">
+          <span>Descripción</span>
+          <textarea
+            [ngModel]="formDescripcion()"
+            (ngModelChange)="formDescripcion.set($event)"
+            name="descripcion"
+            placeholder="Detalles sobre las propiedades y características del suelo..."
+            rows="4"
+            [disabled]="loading()"
+          ></textarea>
+        </label>
+
+        <label class="form-field checkbox-field" *ngIf="editingId()">
+          <input
+            type="checkbox"
+            [ngModel]="formEstado()"
+            (ngModelChange)="formEstado.set($event)"
+            name="estado"
+            [disabled]="loading()"
+          />
+          <span>Estado Activo</span>
+        </label>
+
+        <div class="modal-actions" style="margin-top: 1.25rem;">
+          <button type="submit" class="action-btn save-btn" [disabled]="loading() || !formNombre().trim()">
+            {{ loading() ? 'Guardando...' : 'Guardar' }}
+          </button>
+          <button type="button" class="action-btn cancel-btn" (click)="cerrarForm()" [disabled]="loading()">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+</div>
