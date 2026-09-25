@@ -22,6 +22,7 @@
           <option value="tipo_produccion">Tipo de Producción</option>
           <option value="pais">País</option>
           <option value="provincia">Provincia</option>
+          <option value="estado">Estado</option>
           <option value="tamano">Tamaño (Hectáreas)</option>
         </select>
       </div>
@@ -55,6 +56,14 @@
         <select [ngModel]="valorProvincia()" (ngModelChange)="valorProvincia.set($event)">
           <option value="">-- Todas --</option>
           <option *ngFor="let p of provinciasDisponibles()" [value]="p">{{ p }}</option>
+        </select>
+      </div>
+
+      <div class="form-field" *ngIf="criterio() === 'estado'">
+        <label>Estado</label>
+        <select [ngModel]="valorEstado()" (ngModelChange)="valorEstado.set($event)">
+          <option value="">-- Todos --</option>
+          <option *ngFor="let e of estadosDisponibles()" [value]="e">{{ e }}</option>
         </select>
       </div>
 
@@ -99,6 +108,7 @@
             <th>Propietario</th>
             <th>País</th>
             <th>Provincia</th>
+            <th>Estado</th>
             <th>Criterio</th>
             <th>Valor</th>
             <th>Tamaño</th>
@@ -115,6 +125,7 @@
             <td>{{ f.nombre_propietario || '-' }}</td>
             <td>{{ f.nombre_pais || '-' }}</td>
             <td>{{ f.id_privincia ?? '-' }}</td>
+            <td>{{ f.estado || '-' }}</td>
             <td>{{ criterioLabel() }}</td>
             <td>{{ valorParaFinca(f) }}</td>
             <td>{{ f.tamano }} Ha</td>

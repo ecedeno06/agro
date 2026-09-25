@@ -18,7 +18,7 @@ type FincaMapa = {
   mapa_logitud?: number | null;
 };
 
-type Criterio = 'ninguno' | 'asociado' | 'tipo_produccion' | 'pais' | 'provincia' | 'tamano';
+type Criterio = 'ninguno' | 'asociado' | 'tipo_produccion' | 'pais' | 'provincia' | 'estado' | 'tamano';
 
 @Component({
   selector: 'app-mapa-fincas',
@@ -43,6 +43,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
   valorTipoProduccion = signal('');
   valorPais = signal('');
   valorProvincia = signal('');
+  valorEstado = signal('');
   tamanoMin = signal<number | null>(null);
   tamanoMax = signal<number | null>(null);
 
@@ -70,6 +71,13 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
   provinciasDisponibles = computed(() => {
     const nombres = this.fincas()
       .map(f => f.id_privincia)
+      .filter((n): n is string => !!n && n.trim().length > 0);
+    return Array.from(new Set(nombres)).sort((a, b) => a.localeCompare(b));
+  });
+
+  estadosDisponibles = computed(() => {
+    const nombres = this.fincas()
+      .map(f => f.estado)
       .filter((n): n is string => !!n && n.trim().length > 0);
     return Array.from(new Set(nombres)).sort((a, b) => a.localeCompare(b));
   });
@@ -102,6 +110,12 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
       return list.filter(f => f.id_privincia === valor);
     }
 
+    if (criterio === 'estado') {
+      const valor = this.valorEstado();
+      if (!valor) return list;
+      return list.filter(f => f.estado === valor);
+    }
+
     if (criterio === 'tamano') {
       const min = this.tamanoMin();
       const max = this.tamanoMax();
@@ -126,6 +140,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
       case 'tipo_produccion': return 'Tipo de Producción';
       case 'pais': return 'País';
       case 'provincia': return 'Provincia';
+      case 'estado': return 'Estado';
       case 'tamano': return 'Tamaño (Hectáreas)';
       default: return 'Sin filtro';
     }
@@ -137,6 +152,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
       case 'tipo_produccion': return f.nombre_tipo_produccion || '-';
       case 'pais': return f.nombre_pais || '-';
       case 'provincia': return f.id_privincia || '-';
+      case 'estado': return f.estado || '-';
       case 'tamano': return `${f.tamano} Ha`;
       default: return '-';
     }
@@ -237,6 +253,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
     this.valorTipoProduccion.set('');
     this.valorPais.set('');
     this.valorProvincia.set('');
+    this.valorEstado.set('');
     this.tamanoMin.set(null);
     this.tamanoMax.set(null);
   }
