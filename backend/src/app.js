@@ -15,6 +15,7 @@ import tipoEstadoLegalRoutes from './routes/tipo-estado-legal.routes.js';
 import paisesRoutes from './routes/paises.routes.js';
 import fenomenosRoutes from './routes/fenomenos.routes.js';
 import fincaFenomenosRoutes from './routes/finca-fenomenos.routes.js';
+import geocodificacionRoutes from './routes/geocodificacion.routes.js';
 import errorMiddleware from './middlewares/error.middleware.js';
 
 import path from 'path';
@@ -48,6 +49,7 @@ app.use('/api/tipo-estado-legal', tipoEstadoLegalRoutes);
 app.use('/api/paises', paisesRoutes);
 app.use('/api/fenomenos', fenomenosRoutes);
 app.use('/api/fincas-fenomenos', fincaFenomenosRoutes);
+app.use('/api/geocodificacion', geocodificacionRoutes);
 
 // Root Endpoint
 app.get('/', (req, res) => {

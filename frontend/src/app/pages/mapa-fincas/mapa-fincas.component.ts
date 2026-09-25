@@ -13,7 +13,7 @@ type FincaMapa = {
   id_tipo_produccion?: number | null;
   nombre_tipo_produccion?: string;
   nombre_pais?: string;
-  id_privincia?: number | null;
+  id_privincia?: string | null;
   mapa_latitud?: number | null;
   mapa_logitud?: number | null;
 };
@@ -186,7 +186,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
         id_tipo_produccion: (f.id_tipo_produccion != null && f.id_tipo_produccion !== '') ? Number(f.id_tipo_produccion) : null,
         nombre_tipo_produccion: f.nombre_tipo_produccion,
         nombre_pais: f.nombre_pais,
-        id_privincia: (f.id_privincia != null && f.id_privincia !== '') ? Number(f.id_privincia) : null,
+        id_privincia: f.id_privincia || null,
         mapa_latitud: (f.mapa_latitud != null && f.mapa_latitud !== '') ? Number(f.mapa_latitud) : null,
         mapa_logitud: (f.mapa_logitud != null && f.mapa_logitud !== '') ? Number(f.mapa_logitud) : null
       })) : [];
@@ -259,7 +259,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
   paisProvinciaTexto(f: FincaMapa): string {
     const partes: string[] = [];
     if (f.nombre_pais) partes.push(f.nombre_pais);
-    if (f.id_privincia != null) partes.push(`Provincia #${f.id_privincia}`);
+    if (f.id_privincia) partes.push(f.id_privincia);
     return partes.length > 0 ? partes.join(', ') : '-';
   }
 

@@ -26,8 +26,8 @@ type Finca = {
   area_terreno?: number;
   clima?: string;
   id_pais?: string;
-  id_privincia?: number;
-  id_distrito?: number;
+  id_privincia?: string;
+  id_distrito?: string;
   id_corregimiento?: number;
   mapa_logitud?: number;
   mapa_latitud?: number;
@@ -295,6 +295,45 @@ export class MisFincasComponent implements OnInit {
       );
     } else {
       this.mensajeError.set('La geolocalización no está soportada por su navegador.');
+    }
+  }
+
+  detectandoDivisionPolitica = signal(false);
+
+  async detectarDivisionPolitica(): Promise<void> {
+    const finca = this.selectedFinca();
+    if (!finca || finca.mapa_latitud == null || finca.mapa_logitud == null) {
+      this.mensajeError.set('Primero fija las coordenadas (Latitud/Longitud) para poder detectar la división política.');
+      return;
+    }
+
+    this.detectandoDivisionPolitica.set(true);
+    this.mensajeError.set('');
+    this.mensajeExito.set('');
+
+    try {
+      const url = `${this.apiBaseUrl}/geocodificacion/reverse?lat=${finca.mapa_latitud}&lng=${finca.mapa_logitud}`;
+      const response = await fetch(url, { headers: this.getAuthHeaders() });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'No se pudo detectar la división política para ese punto.');
+      }
+
+      const paisCoincidente = data.pais_codigo
+        ? this.paises().find(p => p.codigo_iso2 === data.pais_codigo)
+        : null;
+
+      if (paisCoincidente) finca.id_pais = paisCoincidente.codigo_iso2;
+      if (data.provincia) finca.id_privincia = data.provincia;
+      if (data.distrito) finca.id_distrito = data.distrito;
+      this.selectedFinca.set({ ...finca });
+
+      this.mensajeExito.set('📍 División política detectada. Revisa los campos y presiona "💾 Guardar Cambios" para confirmar.');
+    } catch (error: any) {
+      this.mensajeError.set(error.message || 'No se pudo detectar la división política para ese punto.');
+    } finally {
+      this.detectandoDivisionPolitica.set(false);
     }
   }
 
@@ -643,8 +682,8 @@ export class MisFincasComponent implements OnInit {
       tipo_suelo: (finca.tipo_suelo != null && finca.tipo_suelo !== '') ? Number(finca.tipo_suelo) : undefined,
       tipo_geografia: (finca.tipo_geografia != null && finca.tipo_geografia !== '') ? Number(finca.tipo_geografia) : undefined,
       area_terreno: (finca.area_terreno != null && finca.area_terreno !== '') ? Number(finca.area_terreno) : undefined,
-      id_privincia: (finca.id_privincia != null && finca.id_privincia !== '') ? Number(finca.id_privincia) : undefined,
-      id_distrito: (finca.id_distrito != null && finca.id_distrito !== '') ? Number(finca.id_distrito) : undefined,
+      id_privincia: finca.id_privincia || undefined,
+      id_distrito: finca.id_distrito || undefined,
       id_corregimiento: (finca.id_corregimiento != null && finca.id_corregimiento !== '') ? Number(finca.id_corregimiento) : undefined,
       mapa_latitud: (finca.mapa_latitud != null && finca.mapa_latitud !== '') ? Number(finca.mapa_latitud) : undefined,
       mapa_logitud: (finca.mapa_logitud != null && finca.mapa_logitud !== '') ? Number(finca.mapa_logitud) : undefined,
@@ -734,8 +773,8 @@ export class MisFincasComponent implements OnInit {
       area_terreno: ((finca.area_terreno as any) != null && (finca.area_terreno as any) !== '') ? Number(finca.area_terreno) : null,
       clima: (finca.clima || '').trim(),
       id_pais: (finca.id_pais || 'PA').trim(),
-      id_privincia: ((finca.id_privincia as any) != null && (finca.id_privincia as any) !== '') ? Number(finca.id_privincia) : null,
-      id_distrito: ((finca.id_distrito as any) != null && (finca.id_distrito as any) !== '') ? Number(finca.id_distrito) : null,
+      id_privincia: (finca.id_privincia || '').trim() || null,
+      id_distrito: (finca.id_distrito || '').trim() || null,
       id_corregimiento: ((finca.id_corregimiento as any) != null && (finca.id_corregimiento as any) !== '') ? Number(finca.id_corregimiento) : null,
       mapa_logitud: ((finca.mapa_logitud as any) != null && (finca.mapa_logitud as any) !== '') ? Number(finca.mapa_logitud) : null,
       mapa_latitud: ((finca.mapa_latitud as any) != null && (finca.mapa_latitud as any) !== '') ? Number(finca.mapa_latitud) : null,

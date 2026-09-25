@@ -385,23 +385,23 @@
             </div>
 
             <div class="form-field">
-              <label>Provincia (ID)</label>
-              <input 
-                type="number" 
-                [(ngModel)]="finca.id_privincia" 
-                name="id_privincia" 
-                placeholder="ID Provincia"
+              <label>Provincia</label>
+              <input
+                type="text"
+                [(ngModel)]="finca.id_privincia"
+                name="id_privincia"
+                placeholder="Ej. Panamá Oeste"
                 [disabled]="!puedeEditarOFormulario() || loading()"
               />
             </div>
 
             <div class="form-field">
-              <label>Distrito (ID)</label>
-              <input 
-                type="number" 
-                [(ngModel)]="finca.id_distrito" 
-                name="id_distrito" 
-                placeholder="ID Distrito"
+              <label>Distrito</label>
+              <input
+                type="text"
+                [(ngModel)]="finca.id_distrito"
+                name="id_distrito"
+                placeholder="Ej. La Chorrera"
                 [disabled]="!puedeEditarOFormulario() || loading()"
               />
             </div>
@@ -439,6 +439,17 @@
                 step="0.000001"
                 [disabled]="!puedeEditarOFormulario() || loading()"
               />
+            </div>
+
+            <div class="form-field" style="grid-column: 1 / -1;">
+              <button
+                type="button"
+                class="action-btn save-btn"
+                (click)="detectarDivisionPolitica()"
+                [disabled]="!puedeEditarOFormulario() || loading() || detectandoDivisionPolitica() || finca.mapa_latitud == null || finca.mapa_logitud == null"
+              >
+                {{ detectandoDivisionPolitica() ? '🌎 Detectando...' : '🌎 Detectar País/Provincia/Distrito' }}
+              </button>
             </div>
           </div>
 
