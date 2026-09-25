@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as L from 'leaflet';
 import { environment } from '../../../environments/environment';
@@ -66,8 +66,64 @@ export class AuditoriaSesionesComponent implements OnInit {
   seleccionadas = signal<Set<number>>(new Set());
   cerrandoSesiones = signal(false);
 
-  hayEnCurso = computed(() => this.sesiones().some(s => s.motivo_salida === 'en_curso'));
+  // Filtros de texto aproximado por columna (coincidencia parcial, sin
+  // distinguir mayúsculas), aplicados en el cliente sobre lo ya cargado.
+  filtroUsuario = signal('');
+  filtroRol = signal('');
+  filtroIpUbicacion = signal('');
+  filtroPais = signal('');
+  filtroInicio = signal('');
+  filtroCierre = signal('');
+  filtroDuracion = signal('');
+  filtroMotivo = signal('');
+
+  hayFiltrosColumna = computed(() =>
+    !!(this.filtroUsuario() || this.filtroRol() || this.filtroIpUbicacion() || this.filtroPais() ||
+       this.filtroInicio() || this.filtroCierre() || this.filtroDuracion() || this.filtroMotivo())
+  );
+
+  sesionesFiltradas = computed(() => {
+    const contiene = (valor: string, filtro: string) => valor.toLowerCase().includes(filtro.toLowerCase().trim());
+
+    const fUsuario = this.filtroUsuario();
+    const fRol = this.filtroRol();
+    const fIp = this.filtroIpUbicacion();
+    const fPais = this.filtroPais();
+    const fInicio = this.filtroInicio();
+    const fCierre = this.filtroCierre();
+    const fDuracion = this.filtroDuracion();
+    const fMotivo = this.filtroMotivo();
+
+    return this.sesiones().filter(s => {
+      if (fUsuario && !contiene(`${s.usuario_nombre} ${s.usuario_email}`, fUsuario)) return false;
+      if (fRol && !contiene(s.rol_nombre || s.rol_codigo || '', fRol)) return false;
+      if (fIp && !contiene(`${s.ip_address || ''} ${this.ubicacionTexto(s)}`, fIp)) return false;
+      if (fPais && !contiene(s.geo_pais || '', fPais)) return false;
+      if (fInicio && !contiene(this.formatoFecha(s.login_en), fInicio)) return false;
+      if (fCierre && !contiene(s.logout_en ? this.formatoFecha(s.logout_en) : '-', fCierre)) return false;
+      if (fDuracion && !contiene(this.formatoDuracion(s.duracion_segundos), fDuracion)) return false;
+      if (fMotivo && !contiene(this.etiquetaMotivo(s.motivo_salida), fMotivo)) return false;
+      return true;
+    });
+  });
+
+  hayEnCurso = computed(() => this.sesionesFiltradas().some(s => s.motivo_salida === 'en_curso'));
   totalSeleccionadas = computed(() => this.seleccionadas().size);
+
+  limpiarFiltrosColumna(): void {
+    this.filtroUsuario.set('');
+    this.filtroRol.set('');
+    this.filtroIpUbicacion.set('');
+    this.filtroPais.set('');
+    this.filtroInicio.set('');
+    this.filtroCierre.set('');
+    this.filtroDuracion.set('');
+    this.filtroMotivo.set('');
+  }
+
+  private formatoFecha(iso: string): string {
+    return formatDate(iso, 'dd/MM/yyyy HH:mm', 'en-US');
+  }
 
   private getAuthHeaders(): Record<string, string> {
     const token = localStorage.getItem('agro_session_token');
@@ -102,6 +158,7 @@ export class AuditoriaSesionesComponent implements OnInit {
     this.loading.set(true);
     this.errorMsg.set('');
     this.seleccionadas.set(new Set());
+    this.limpiarFiltrosColumna();
 
     try {
       const params = new URLSearchParams();
@@ -147,7 +204,7 @@ export class AuditoriaSesionesComponent implements OnInit {
   }
 
   toggleSeleccionarTodas(): void {
-    const seleccionables = this.sesiones().filter(s => this.esSeleccionable(s)).map(s => s.id);
+    const seleccionables = this.sesionesFiltradas().filter(s => this.esSeleccionable(s)).map(s => s.id);
     const todasSeleccionadas = seleccionables.length > 0 && seleccionables.every(id => this.seleccionadas().has(id));
     this.seleccionadas.set(todasSeleccionadas ? new Set() : new Set(seleccionables));
   }

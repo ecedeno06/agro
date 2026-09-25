@@ -41,10 +41,8 @@
     }
   }
 
-  .btn-buscar {
+  .icon-btn-buscar {
     flex: 0 0 auto;
-    padding: 0.6rem 1.25rem;
-    white-space: nowrap;
   }
 }
 
@@ -187,6 +185,47 @@ tbody tr:nth-child(even) {
 .icon-btn-danger:hover:not(:disabled) {
   background: rgba(239, 68, 68, 0.15);
   border-color: var(--danger-color, #f87171);
+}
+
+.icon-btn-buscar {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #020a0d;
+
+  &:hover:not(:disabled) {
+    background: var(--secondary-color);
+    border-color: var(--secondary-color);
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.fila-filtros th {
+  padding: 0.4rem 0.65rem;
+  background: var(--surface-color);
+
+  input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.35rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-main);
+    font-size: 0.78rem;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+  }
 }
 
 /* Modal de ubicación */

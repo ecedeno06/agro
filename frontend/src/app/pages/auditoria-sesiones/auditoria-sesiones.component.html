@@ -29,8 +29,14 @@
         <input type="date" [ngModel]="hasta()" (ngModelChange)="hasta.set($event)" />
       </div>
 
-      <button type="button" class="action-btn save-btn btn-buscar" (click)="buscar()" [disabled]="loading()">
-        {{ loading() ? 'Buscando...' : '🔎 Buscar' }}
+      <button
+        type="button"
+        class="icon-btn icon-btn-buscar"
+        (click)="buscar()"
+        [disabled]="loading()"
+        [title]="loading() ? 'Buscando...' : 'Buscar'"
+      >
+        {{ loading() ? '⏳' : '🔎' }}
       </button>
     </div>
   </section>
@@ -39,22 +45,35 @@
     <div class="card-header flex-header">
       <div>
         <h3>📋 Resultados</h3>
-        <p class="subtitle">{{ sesiones().length }} sesión(es) encontradas.</p>
+        <p class="subtitle">{{ sesionesFiltradas().length }} de {{ sesiones().length }} sesión(es).</p>
       </div>
-      <button
-        type="button"
-        class="action-btn cancel-btn"
-        *ngIf="totalSeleccionadas() > 0"
-        [disabled]="cerrandoSesiones()"
-        (click)="cerrarSeleccionadas()"
-      >
-        {{ cerrandoSesiones() ? 'Cerrando...' : '🔒 Terminar sesiones (' + totalSeleccionadas() + ')' }}
-      </button>
+      <div class="header-actions">
+        <button
+          type="button"
+          class="action-btn cancel-btn"
+          *ngIf="hayFiltrosColumna()"
+          (click)="limpiarFiltrosColumna()"
+        >
+          ✕ Limpiar filtros
+        </button>
+        <button
+          type="button"
+          class="action-btn cancel-btn"
+          *ngIf="totalSeleccionadas() > 0"
+          [disabled]="cerrandoSesiones()"
+          (click)="cerrarSeleccionadas()"
+        >
+          {{ cerrandoSesiones() ? 'Cerrando...' : '🔒 Terminar sesiones (' + totalSeleccionadas() + ')' }}
+        </button>
+      </div>
     </div>
 
     <div *ngIf="loading()" class="loading-state">Cargando sesiones...</div>
     <div *ngIf="!loading() && buscado() && sesiones().length === 0" class="empty-state">
       No se encontraron sesiones para el filtro seleccionado.
+    </div>
+    <div *ngIf="!loading() && sesiones().length > 0 && sesionesFiltradas().length === 0" class="empty-state">
+      Ningún resultado coincide con los filtros de columna.
     </div>
 
     <div class="table-scroll-container" *ngIf="!loading() && sesiones().length > 0">
@@ -74,9 +93,21 @@
             <th>Motivo</th>
             <th>Acción</th>
           </tr>
+          <tr class="fila-filtros">
+            <th class="col-check"></th>
+            <th><input type="text" [ngModel]="filtroUsuario()" (ngModelChange)="filtroUsuario.set($event)" placeholder="Filtrar..." /></th>
+            <th><input type="text" [ngModel]="filtroRol()" (ngModelChange)="filtroRol.set($event)" placeholder="Filtrar..." /></th>
+            <th><input type="text" [ngModel]="filtroIpUbicacion()" (ngModelChange)="filtroIpUbicacion.set($event)" placeholder="Filtrar..." /></th>
+            <th><input type="text" [ngModel]="filtroPais()" (ngModelChange)="filtroPais.set($event)" placeholder="Filtrar..." /></th>
+            <th><input type="text" [ngModel]="filtroInicio()" (ngModelChange)="filtroInicio.set($event)" placeholder="Filtrar..." /></th>
+            <th><input type="text" [ngModel]="filtroCierre()" (ngModelChange)="filtroCierre.set($event)" placeholder="Filtrar..." /></th>
+            <th><input type="text" [ngModel]="filtroDuracion()" (ngModelChange)="filtroDuracion.set($event)" placeholder="Filtrar..." /></th>
+            <th><input type="text" [ngModel]="filtroMotivo()" (ngModelChange)="filtroMotivo.set($event)" placeholder="Filtrar..." /></th>
+            <th></th>
+          </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let s of sesiones()">
+          <tr *ngFor="let s of sesionesFiltradas()">
             <td class="col-check">
               <input
                 type="checkbox"
