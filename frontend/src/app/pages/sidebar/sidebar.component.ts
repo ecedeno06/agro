@@ -49,6 +49,8 @@ export class SidebarComponent {
 
   getIconUrl(icono: string): string {
     if (!icono) return '';
+    // Ícono subido (base64): se usa tal cual, no es una ruta de archivo.
+    if (icono.trim().startsWith('data:image/')) return icono.trim();
     let cleaned = icono.trim().replace(/\\/g, '/');
     if (cleaned.startsWith('public/')) {
       cleaned = cleaned.substring(6); // Convierte public/assets/... a /assets/...
@@ -74,8 +76,9 @@ export class SidebarComponent {
   isUrlIcon(icono: string): boolean {
     if (!icono) return false;
     const lower = icono.trim().toLowerCase();
-    return lower.startsWith('http://') || 
-           lower.startsWith('https://') || 
+    return lower.startsWith('data:image/') ||
+           lower.startsWith('http://') ||
+           lower.startsWith('https://') ||
            lower.startsWith('/') ||
            lower.includes('/') ||
            lower.endsWith('.png') ||

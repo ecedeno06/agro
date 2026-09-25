@@ -26,7 +26,9 @@ const app = express();
 
 // Middlewares
 app.use(cors());
-app.use(express.json());
+// Default de Express es 100kb — insuficiente para el avatar de usuario (hasta
+// 2MB) y los íconos de menú subidos en base64.
+app.use(express.json({ limit: '5mb' }));
 app.use('/assets', express.static(path.join(__dirname, '../public/assets')));
 
 // Routes

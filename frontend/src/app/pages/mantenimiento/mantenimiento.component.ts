@@ -554,6 +554,8 @@ export class MantenimientoComponent implements OnInit {
 
   getIconUrl(icono: string): string {
     if (!icono) return '';
+    // Ícono subido (base64): se usa tal cual, no es una ruta de archivo.
+    if (icono.trim().startsWith('data:image/')) return icono.trim();
     let cleaned = icono.trim().replace(/\\/g, '/');
     if (cleaned.startsWith('public/')) {
       cleaned = cleaned.substring(6); // Convierte public/assets/... a /assets/...
@@ -586,8 +588,9 @@ export class MantenimientoComponent implements OnInit {
   isUrlIcon(icono: string): boolean {
     if (!icono) return false;
     const lower = icono.trim().toLowerCase();
-    return lower.startsWith('http://') || 
-           lower.startsWith('https://') || 
+    return lower.startsWith('data:image/') ||
+           lower.startsWith('http://') ||
+           lower.startsWith('https://') ||
            lower.startsWith('/') ||
            lower.includes('/') ||
            lower.endsWith('.png') ||
@@ -639,20 +642,44 @@ export class MantenimientoComponent implements OnInit {
     this.cerrarModalIconos();
   }
 
+  /**
+   * Sube un ícono real (mismo patrón que la foto de perfil): se lee el
+   * archivo con FileReader, se convierte a base64 y se guarda directo en
+   * el campo del formulario — queda persistido en BD (menus.icono) recién
+   * cuando se guarda el menú, igual que el resto de los campos.
+   */
   onIconFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      const newPath = `/assets/icons/${file.name}`;
-      
-      const currentList = this.iconosProyectoList();
-      if (!currentList.some(item => item.ruta === newPath)) {
-        this.iconosProyectoList.update(list => [...list, { nombre: file.name, ruta: newPath }]);
-      }
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
 
-      this.formMenuIcono.set(newPath);
-      this.cerrarModalIconos();
+    const allowed = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml'];
+    if (!allowed.includes(file.type)) {
+      this.errorMsg.set('Solo se permiten imágenes PNG, JPG, WEBP, GIF o SVG.');
+      input.value = '';
+      return;
     }
+
+    const maxBytes = 300 * 1024; // 300 KB: es un ícono de menú, no una foto
+    if (file.size > maxBytes) {
+      this.errorMsg.set('El ícono es demasiado grande. El límite es 300 KB.');
+      input.value = '';
+      return;
+    }
+
+    this.errorMsg.set('');
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      this.formMenuIcono.set(base64);
+      this.cerrarModalIconos();
+      input.value = '';
+    };
+    reader.onerror = () => {
+      this.errorMsg.set('No se pudo leer el archivo de imagen.');
+      input.value = '';
+    };
+    reader.readAsDataURL(file);
   }
 }
 

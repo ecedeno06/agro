@@ -247,7 +247,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!icono) return false;
     const normalized = this.getIconUrl(icono);
     const lower = normalized.toLowerCase().trim();
-    return lower.startsWith('http://') ||
+    return lower.startsWith('data:image/') ||
+           lower.startsWith('http://') ||
            lower.startsWith('https://') ||
            lower.startsWith('/') ||
            lower.endsWith('.png') ||

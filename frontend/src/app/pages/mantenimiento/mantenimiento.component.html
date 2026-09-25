@@ -185,34 +185,47 @@
           <label class="form-field">
             <span class="field-label">Ícono</span>
             <div style="display: flex; gap: 0.5rem; align-items: center; width: 100%;">
-              <div style="width: 38px; height: 38px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--input-bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden;" [title]="formMenuIcono()">
+              <div
+                (click)="fileInput.click()"
+                style="width: 38px; height: 38px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--input-bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; cursor: pointer;"
+                [title]="'Click para subir un ícono desde tu equipo — ' + formMenuIcono()"
+              >
                 <img *ngIf="isUrlIcon(formMenuIcono())" [src]="getIconUrl(formMenuIcono())" style="width: 22px; height: 22px; object-fit: contain;" />
                 <span *ngIf="!isUrlIcon(formMenuIcono())" style="font-size: 1.1rem;">{{ formMenuIcono() || '📁' }}</span>
               </div>
-              <input 
-                type="text" 
-                [ngModel]="formMenuIcono()" 
+              <input
+                type="text"
+                [ngModel]="formMenuIcono()"
                 (ngModelChange)="formMenuIcono.set($event)"
                 name="menuIcono"
-                placeholder="Ej. 📊 o /assets/suelos.png"
+                placeholder="Ej. 📊, o sube una imagen"
                 required
                 style="flex: 1; min-width: 0; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--input-bg); color: var(--text-main);"
               />
-              <input 
-                #fileInput 
-                type="file" 
-                accept="image/*" 
-                style="display: none;" 
-                (change)="onIconFileSelected($event)" 
+              <input
+                #fileInput
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                style="display: none;"
+                (change)="onIconFileSelected($event)"
               />
-              <button 
-                type="button" 
-                class="secondary-btn" 
-                (click)="abrirModalIconos()" 
-                title="Explorar galería de /assets del proyecto y seleccionar ícono"
+              <button
+                type="button"
+                class="secondary-btn"
+                (click)="fileInput.click()"
+                title="Subir un ícono nuevo desde tu equipo"
                 style="padding: 0.6rem 0.85rem; border-radius: 6px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; flex-shrink: 0; height: auto;"
               >
-                📁 Explorar
+                ⬆️ Subir
+              </button>
+              <button
+                type="button"
+                class="secondary-btn"
+                (click)="abrirModalIconos()"
+                title="Explorar galería de íconos ya existentes en el proyecto"
+                style="padding: 0.6rem 0.85rem; border-radius: 6px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; flex-shrink: 0; height: auto;"
+              >
+                📁 Galería
               </button>
             </div>
           </label>
