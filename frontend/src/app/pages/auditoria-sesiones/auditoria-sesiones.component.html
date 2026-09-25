@@ -61,12 +61,14 @@
         </button>
         <button
           type="button"
-          class="action-btn cancel-btn"
+          class="icon-btn icon-btn-danger icon-btn-badge"
           *ngIf="totalSeleccionadas() > 0"
           [disabled]="cerrandoSesiones()"
+          [title]="cerrandoSesiones() ? 'Cerrando...' : 'Terminar ' + totalSeleccionadas() + ' sesión(es) seleccionada(s)'"
+          [attr.data-count]="totalSeleccionadas()"
           (click)="cerrarSeleccionadas()"
         >
-          {{ cerrandoSesiones() ? 'Cerrando...' : '🔒 Terminar sesiones (' + totalSeleccionadas() + ')' }}
+          🔒
         </button>
       </div>
     </div>
