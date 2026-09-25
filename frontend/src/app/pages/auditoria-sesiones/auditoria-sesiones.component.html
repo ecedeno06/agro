@@ -13,10 +13,12 @@
     <div class="filtro-bar">
       <div class="form-field">
         <label>Usuario</label>
-        <select [ngModel]="usuarioId()" (ngModelChange)="usuarioId.set($event)">
-          <option value="">-- Todos los usuarios --</option>
-          <option *ngFor="let u of usuarios()" [value]="u.idUsuario">{{ u.nombre }} ({{ u.email }})</option>
-        </select>
+        <input
+          type="text"
+          [ngModel]="usuarioTexto()"
+          (ngModelChange)="usuarioTexto.set($event)"
+          placeholder="Nombre o correo..."
+        />
       </div>
 
       <div class="form-field">

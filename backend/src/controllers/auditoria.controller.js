@@ -34,7 +34,7 @@ export const listarSesiones = async (req, res, next) => {
     }
 
     const { esGlobal, idCapitulo } = resolverScope(req);
-    const { desde, hasta, id_usuario } = req.query;
+    const { desde, hasta, usuario } = req.query;
 
     const condiciones = [];
     const valores = [];
@@ -55,9 +55,11 @@ export const listarSesiones = async (req, res, next) => {
       valores.push(hasta);
       condiciones.push(`s.creado_en::date <= $${valores.length}`);
     }
-    if (id_usuario) {
-      valores.push(Number(id_usuario));
-      condiciones.push(`s.id_usuario = $${valores.length}`);
+    if (usuario) {
+      // Texto libre: coincidencia parcial (LIKE), sin distinguir mayúsculas,
+      // sobre nombre o email del usuario.
+      valores.push(`%${usuario}%`);
+      condiciones.push(`(u.nombre ILIKE $${valores.length} OR u.email ILIKE $${valores.length})`);
     }
 
     const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';

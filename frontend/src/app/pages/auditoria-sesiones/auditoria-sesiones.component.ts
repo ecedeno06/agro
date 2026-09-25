@@ -29,8 +29,6 @@ type SesionAuditoria = {
   activo: boolean;
 };
 
-type UsuarioOpcion = { idUsuario: number; nombre: string; email: string };
-
 function hoyISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -55,13 +53,12 @@ export class AuditoriaSesionesComponent implements OnInit {
 
   sesionMapaAbierta = signal<SesionAuditoria | null>(null);
 
-  usuarios = signal<UsuarioOpcion[]>([]);
   sesiones = signal<SesionAuditoria[]>([]);
   loading = signal(false);
   errorMsg = signal('');
   buscado = signal(false);
 
-  usuarioId = signal('');
+  usuarioTexto = signal('');
   desde = signal(haceDiasISO(7));
   hasta = signal(hoyISO());
 
@@ -136,7 +133,6 @@ export class AuditoriaSesionesComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    await this.cargarUsuarios();
     await this.buscar();
   }
 
@@ -155,23 +151,6 @@ export class AuditoriaSesionesComponent implements OnInit {
     return false;
   }
 
-  async cargarUsuarios(): Promise<void> {
-    try {
-      const res = await fetch(`${this.apiBaseUrl}/usuarios`, { headers: this.getAuthHeaders() });
-      if (this.manejarSesionExpirada(res.status)) return;
-      if (!res.ok) return;
-      const data = await res.json();
-      const lista = Array.isArray(data) ? data : (data.usuarios || []);
-      this.usuarios.set(lista.map((u: any) => ({
-        idUsuario: Number(u.idUsuario),
-        nombre: u.nombre,
-        email: u.email
-      })));
-    } catch (e) {
-      console.error('Error al cargar usuarios:', e);
-    }
-  }
-
   async buscar(): Promise<void> {
     this.loading.set(true);
     this.errorMsg.set('');
@@ -182,7 +161,7 @@ export class AuditoriaSesionesComponent implements OnInit {
       const params = new URLSearchParams();
       if (this.desde()) params.set('desde', this.desde());
       if (this.hasta()) params.set('hasta', this.hasta());
-      if (this.usuarioId()) params.set('id_usuario', this.usuarioId());
+      if (this.usuarioTexto().trim()) params.set('usuario', this.usuarioTexto().trim());
 
       const res = await fetch(`${this.apiBaseUrl}/auditoria/sesiones?${params.toString()}`, {
         headers: this.getAuthHeaders()
