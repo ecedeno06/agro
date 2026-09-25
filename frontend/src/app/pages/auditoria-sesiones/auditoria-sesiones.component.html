@@ -29,12 +29,9 @@
         <input type="date" [ngModel]="hasta()" (ngModelChange)="hasta.set($event)" />
       </div>
 
-      <div class="form-field">
-        <label>&nbsp;</label>
-        <button type="button" class="action-btn save-btn" (click)="buscar()" [disabled]="loading()">
-          {{ loading() ? 'Buscando...' : '🔎 Buscar' }}
-        </button>
-      </div>
+      <button type="button" class="action-btn save-btn btn-buscar" (click)="buscar()" [disabled]="loading()">
+        {{ loading() ? 'Buscando...' : '🔎 Buscar' }}
+      </button>
     </div>
   </section>
 
