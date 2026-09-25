@@ -232,10 +232,12 @@ async function main() {
     console.log(`🏷️  Rol SUPERADMIN encontrado: idrol = ${idRol}`);
 
     // ── Asegurar la asignación en usuario_rol ─────────────────────
+    // Restricción única real: uq_usuario_rol_capitulo (id_usuario, id_rol,
+    // id_capitulo) — ver tools/migration-fase2-rol-multicapitulo.sql.
     await client.query(
       `INSERT INTO public.usuario_rol (id_capitulo, id_usuario, id_rol, fecha_creacion, expira, activo)
        VALUES (1, $1, $2, CURRENT_DATE, false, true)
-       ON CONFLICT (id_usuario, id_rol) DO UPDATE SET activo = true`,
+       ON CONFLICT (id_usuario, id_rol, id_capitulo) DO UPDATE SET activo = true`,
       [idUsuario, idRol]
     );
     console.log('✅ Asignación en usuario_rol verificada.');

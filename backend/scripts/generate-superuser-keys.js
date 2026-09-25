@@ -1,19 +1,17 @@
 /**
  * Genera par de claves Ed25519 para la identidad firmada del SUPERADMIN.
- * 
+ *
  * Uso:
  *   En PowerShell:
  *     $env:SUPERUSER_PRIVATE_KEY_PASSPHRASE="frase-secreta-larga"; node scripts/generate-superuser-keys.js
- *   
+ *
  *   En Bash:
  *     SUPERUSER_PRIVATE_KEY_PASSPHRASE="frase-secreta-larga" node scripts/generate-superuser-keys.js
- * 
+ *
  * Salida:
  *   secrets/superuser-public.pem   → Copiar al backend (verificación)
  *   secrets/superuser-private.pem  → Guardar fuera del backend (solo para firmar)
- * VgFVDEd9BCcWzRLFfikgrbYYrzwM7dodzI78JzhNo8
- * /
-
+ */
 
 import { generateKeyPairSync } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
