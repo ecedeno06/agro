@@ -202,11 +202,16 @@ export class AuditoriaSesionesComponent implements OnInit, OnDestroy {
     if (!headerRow) return;
 
     this.resizeObserver?.disconnect();
-    this.resizeObserver = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        const alto = Math.ceil(entry.contentRect.height);
-        if (alto > 0) this.alturaEncabezado.set(alto);
-      }
+    this.resizeObserver = new ResizeObserver(() => {
+      // entry.contentRect excluye el padding del <th> aunque el elemento use
+      // box-sizing:border-box (contentRect siempre es solo el área de
+      // contenido) -- por eso se recalcula con getBoundingClientRect, que sí
+      // incluye padding/borde. Se suma +2px de margen porque a ciertos
+      // niveles de zoom/escalado de pantalla el alto real cae en un valor
+      // fraccionario que Math.ceil no siempre redondea lo suficiente,
+      // dejando una línea del cuerpo de la tabla asomando por detrás.
+      const alto = Math.ceil(headerRow.getBoundingClientRect().height) + 2;
+      if (alto > 0) this.alturaEncabezado.set(alto);
     });
     this.resizeObserver.observe(headerRow);
   }
