@@ -103,12 +103,38 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.map = L.map('mapa-fincas-container').setView([8.5, -80.5], 7);
+    // Capa Satelital Híbrida (Google Satellite + Nombres de Calles)
+    const mapaSatelitalGoogle = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      attribution: 'Imágenes Satelitales &copy; Google Maps'
+    });
 
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Capa Satelital Alta Resolución (Esri World Imagery)
+    const mapaSatelitalEsri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Satelital &copy; Esri &mdash; i-cubed, USDA, USGS'
+    });
+
+    // Capa Estándar de Calles (OpenStreetMap)
+    const mapaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(this.map);
+    });
+
+    this.map = L.map('mapa-fincas-container', {
+      center: [8.5, -80.5],
+      zoom: 7,
+      layers: [mapaCalles]
+    });
+
+    const baseMaps = {
+      '🗺️ Vista Mapa de Calles': mapaCalles,
+      '🛰️ Vista Satelital (Google)': mapaSatelitalGoogle,
+      '🌍 Vista Satelital (Esri)': mapaSatelitalEsri
+    };
+
+    L.control.layers(baseMaps).addTo(this.map);
 
     this.vistaInicializada = true;
     this.dibujarMarcadores(this.fincasConUbicacion());
