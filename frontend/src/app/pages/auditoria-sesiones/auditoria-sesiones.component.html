@@ -1,0 +1,116 @@
+<div class="auditoria-container animate-in">
+
+  <section class="filtro-card glass-card">
+    <div class="card-header flex-header">
+      <div>
+        <h2>🕵️ Auditoría de Sesiones</h2>
+        <p class="subtitle">Historial de inicios y cierres de sesión. Permite cerrar sesiones activas de forma forzada.</p>
+      </div>
+    </div>
+
+    <div *ngIf="errorMsg()" class="alert danger animate-in">{{ errorMsg() }}</div>
+
+    <div class="filtro-bar">
+      <div class="form-field">
+        <label>Usuario</label>
+        <select [ngModel]="usuarioId()" (ngModelChange)="usuarioId.set($event)">
+          <option value="">-- Todos los usuarios --</option>
+          <option *ngFor="let u of usuarios()" [value]="u.idUsuario">{{ u.nombre }} ({{ u.email }})</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label>Desde</label>
+        <input type="date" [ngModel]="desde()" (ngModelChange)="desde.set($event)" />
+      </div>
+
+      <div class="form-field">
+        <label>Hasta</label>
+        <input type="date" [ngModel]="hasta()" (ngModelChange)="hasta.set($event)" />
+      </div>
+
+      <div class="form-field">
+        <label>&nbsp;</label>
+        <button type="button" class="action-btn save-btn" (click)="buscar()" [disabled]="loading()">
+          {{ loading() ? 'Buscando...' : '🔎 Buscar' }}
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="resultados-card glass-card">
+    <div class="card-header flex-header">
+      <div>
+        <h3>📋 Resultados</h3>
+        <p class="subtitle">{{ sesiones().length }} sesión(es) encontradas.</p>
+      </div>
+      <button
+        type="button"
+        class="action-btn cancel-btn"
+        *ngIf="totalSeleccionadas() > 0"
+        [disabled]="cerrandoSesiones()"
+        (click)="cerrarSeleccionadas()"
+      >
+        {{ cerrandoSesiones() ? 'Cerrando...' : '🔒 Terminar sesiones (' + totalSeleccionadas() + ')' }}
+      </button>
+    </div>
+
+    <div *ngIf="loading()" class="loading-state">Cargando sesiones...</div>
+    <div *ngIf="!loading() && buscado() && sesiones().length === 0" class="empty-state">
+      No se encontraron sesiones para el filtro seleccionado.
+    </div>
+
+    <div class="table-scroll-container" *ngIf="!loading() && sesiones().length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-check">
+              <input type="checkbox" [disabled]="!hayEnCurso()" (change)="toggleSeleccionarTodas()" title="Seleccionar todas las sesiones en curso" />
+            </th>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Inicio de Sesión</th>
+            <th>Cierre de Sesión</th>
+            <th>Duración</th>
+            <th>Motivo</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of sesiones()">
+            <td class="col-check">
+              <input
+                type="checkbox"
+                *ngIf="esSeleccionable(s)"
+                [checked]="estaSeleccionada(s.id)"
+                (change)="toggleSeleccion(s.id)"
+              />
+            </td>
+            <td>
+              <strong>{{ s.usuario_nombre }}</strong><br>
+              <span class="cell-subtext">{{ s.usuario_email }}</span>
+            </td>
+            <td>{{ s.rol_nombre || s.rol_codigo || '-' }}</td>
+            <td>{{ s.login_en | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ s.logout_en ? (s.logout_en | date:'dd/MM/yyyy HH:mm') : '-' }}</td>
+            <td>{{ formatoDuracion(s.duracion_segundos) }}</td>
+            <td><span class="badge" [ngClass]="claseMotivo(s.motivo_salida)">{{ etiquetaMotivo(s.motivo_salida) }}</span></td>
+            <td>
+              <button
+                type="button"
+                class="action-btn cancel-btn"
+                *ngIf="esSeleccionable(s)"
+                [disabled]="cerrandoSesiones()"
+                (click)="cerrarSesionUnica(s)"
+              >
+                🔒 Terminar
+              </button>
+              <span *ngIf="!esSeleccionable(s)">-</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>

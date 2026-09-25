@@ -14,6 +14,7 @@ import { TipoEstadoLegalComponent } from './pages/tipo-estado-legal/tipo-estado-
 import { PaisesComponent } from './pages/paises/paises.component';
 import { FenomenosComponent } from './pages/fenomenos/fenomenos.component';
 import { MapaFincasComponent } from './pages/mapa-fincas/mapa-fincas.component';
+import { AuditoriaSesionesComponent } from './pages/auditoria-sesiones/auditoria-sesiones.component';
 import { PlaceholderComponent } from './pages/placeholder/placeholder.component';
 import { authGuard, publicGuard, adminGuard } from './core/guards/auth.guard';
 
@@ -40,6 +41,7 @@ export const routes: Routes = [
       // Solo administración
       { path: 'usuarios', component: UsuariosComponent, canActivate: [adminGuard] },
       { path: 'roles-permisos', component: MantenimientoComponent, canActivate: [adminGuard] },
+      { path: 'auditoria-sesiones', component: AuditoriaSesionesComponent, canActivate: [adminGuard] },
 
       // Secciones aún no implementadas (antes eran texto quemado en el dashboard)
       { path: 'productos', component: PlaceholderComponent, data: { titulo: 'Productos', descripcion: 'Gestión de productos disponibles.' } },
