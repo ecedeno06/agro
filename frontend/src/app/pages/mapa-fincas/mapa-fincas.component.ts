@@ -18,7 +18,7 @@ type FincaMapa = {
   mapa_logitud?: number | null;
 };
 
-type Criterio = 'ninguno' | 'asociado' | 'tipo_produccion' | 'tamano';
+type Criterio = 'ninguno' | 'asociado' | 'tipo_produccion' | 'pais' | 'provincia' | 'tamano';
 
 @Component({
   selector: 'app-mapa-fincas',
@@ -41,6 +41,8 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
   criterio = signal<Criterio>('ninguno');
   valorAsociado = signal('');
   valorTipoProduccion = signal('');
+  valorPais = signal('');
+  valorProvincia = signal('');
   tamanoMin = signal<number | null>(null);
   tamanoMax = signal<number | null>(null);
 
@@ -54,6 +56,20 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
   tiposProduccionDisponibles = computed(() => {
     const nombres = this.fincas()
       .map(f => f.nombre_tipo_produccion)
+      .filter((n): n is string => !!n && n.trim().length > 0);
+    return Array.from(new Set(nombres)).sort((a, b) => a.localeCompare(b));
+  });
+
+  paisesDisponibles = computed(() => {
+    const nombres = this.fincas()
+      .map(f => f.nombre_pais)
+      .filter((n): n is string => !!n && n.trim().length > 0);
+    return Array.from(new Set(nombres)).sort((a, b) => a.localeCompare(b));
+  });
+
+  provinciasDisponibles = computed(() => {
+    const nombres = this.fincas()
+      .map(f => f.id_privincia)
       .filter((n): n is string => !!n && n.trim().length > 0);
     return Array.from(new Set(nombres)).sort((a, b) => a.localeCompare(b));
   });
@@ -72,6 +88,18 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
       const valor = this.valorTipoProduccion();
       if (!valor) return list;
       return list.filter(f => f.nombre_tipo_produccion === valor);
+    }
+
+    if (criterio === 'pais') {
+      const valor = this.valorPais();
+      if (!valor) return list;
+      return list.filter(f => f.nombre_pais === valor);
+    }
+
+    if (criterio === 'provincia') {
+      const valor = this.valorProvincia();
+      if (!valor) return list;
+      return list.filter(f => f.id_privincia === valor);
     }
 
     if (criterio === 'tamano') {
@@ -96,6 +124,8 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
     switch (this.criterio()) {
       case 'asociado': return 'Asociado';
       case 'tipo_produccion': return 'Tipo de Producción';
+      case 'pais': return 'País';
+      case 'provincia': return 'Provincia';
       case 'tamano': return 'Tamaño (Hectáreas)';
       default: return 'Sin filtro';
     }
@@ -105,6 +135,8 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
     switch (this.criterio()) {
       case 'asociado': return f.nombre_propietario || '-';
       case 'tipo_produccion': return f.nombre_tipo_produccion || '-';
+      case 'pais': return f.nombre_pais || '-';
+      case 'provincia': return f.id_privincia || '-';
       case 'tamano': return `${f.tamano} Ha`;
       default: return '-';
     }
@@ -203,6 +235,8 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
     this.criterio.set(nuevo);
     this.valorAsociado.set('');
     this.valorTipoProduccion.set('');
+    this.valorPais.set('');
+    this.valorProvincia.set('');
     this.tamanoMin.set(null);
     this.tamanoMax.set(null);
   }
