@@ -27,6 +27,11 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Render (y Vercel) sirven detrás de un proxy inverso: sin esto, req.ip
+// devuelve la IP interna del proxy en vez de la IP real del cliente,
+// necesaria para la geolocalización de sesiones (ver helpers/geoip.helper.js).
+app.set('trust proxy', true);
+
 // Middlewares
 app.use(cors());
 // Default de Express es 100kb — insuficiente para el avatar de usuario (hasta

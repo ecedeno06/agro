@@ -4,6 +4,7 @@ import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
 import { query } from '../db.js';
 import { createSession } from './session.helper.js';
+import { obtenerIpCliente } from '../helpers/geoip.helper.js';
 import { esSuperadmin } from '../security/superuser.service.js';
 import { registrarAuditoria } from '../security/auditoria.service.js';
 
@@ -186,7 +187,8 @@ export const login = async (req, res, next) => {
     const { token, expiresIn } = await createSession(
       usuario.idUsuario,
       activeRoleCode,
-      activeRole ? activeRole.idCapitulo : null
+      activeRole ? activeRole.idCapitulo : null,
+      obtenerIpCliente(req)
     );
 
     return res.status(200).json({
@@ -428,7 +430,8 @@ export const verifyLogin2FA = async (req, res, next) => {
     const { token, expiresIn } = await createSession(
       user.idUsuario,
       activeRoleCode,
-      activeRole ? activeRole.idCapitulo : null
+      activeRole ? activeRole.idCapitulo : null,
+      obtenerIpCliente(req)
     );
 
     return res.json({
@@ -507,7 +510,8 @@ export const selectRol = async (req, res, next) => {
     const { token, expiresIn } = await createSession(
       usuario.idUsuario,
       chosenRoleCode,
-      selectedRole ? selectedRole.idCapitulo : null
+      selectedRole ? selectedRole.idCapitulo : null,
+      obtenerIpCliente(req)
     );
 
     return res.status(200).json({

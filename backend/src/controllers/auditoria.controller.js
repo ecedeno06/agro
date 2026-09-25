@@ -70,6 +70,10 @@ export const listarSesiones = async (req, res, next) => {
          u.email AS usuario_email,
          s.rol_codigo,
          cr.descripcion AS rol_nombre,
+         s.ip_address,
+         s.geo_pais,
+         s.geo_region,
+         s.geo_ciudad,
          s.creado_en AS login_en,
          s.activo,
          CASE WHEN s.activo = false

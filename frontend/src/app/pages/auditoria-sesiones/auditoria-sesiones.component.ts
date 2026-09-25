@@ -14,6 +14,10 @@ type SesionAuditoria = {
   usuario_email: string;
   rol_codigo: string | null;
   rol_nombre: string | null;
+  ip_address: string | null;
+  geo_pais: string | null;
+  geo_region: string | null;
+  geo_ciudad: string | null;
   login_en: string;
   logout_en: string | null;
   duracion_segundos: number | null;
@@ -173,6 +177,11 @@ export class AuditoriaSesionesComponent implements OnInit {
     } finally {
       this.cerrandoSesiones.set(false);
     }
+  }
+
+  ubicacionTexto(s: SesionAuditoria): string {
+    const partes = [s.geo_ciudad, s.geo_region, s.geo_pais].filter(p => !!p && p.trim().length > 0);
+    return partes.length > 0 ? partes.join(', ') : '-';
   }
 
   formatoDuracion(segundos: number | null): string {

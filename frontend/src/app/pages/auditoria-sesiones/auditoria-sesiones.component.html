@@ -69,6 +69,7 @@
             </th>
             <th>Usuario</th>
             <th>Rol</th>
+            <th>IP / Ubicación</th>
             <th>Inicio de Sesión</th>
             <th>Cierre de Sesión</th>
             <th>Duración</th>
@@ -91,6 +92,10 @@
               <span class="cell-subtext">{{ s.usuario_email }}</span>
             </td>
             <td>{{ s.rol_nombre || s.rol_codigo || '-' }}</td>
+            <td>
+              {{ s.ip_address || '-' }}<br>
+              <span class="cell-subtext">{{ ubicacionTexto(s) }}</span>
+            </td>
             <td>{{ s.login_en | date:'dd/MM/yyyy HH:mm' }}</td>
             <td>{{ s.logout_en ? (s.logout_en | date:'dd/MM/yyyy HH:mm') : '-' }}</td>
             <td>{{ formatoDuracion(s.duracion_segundos) }}</td>
