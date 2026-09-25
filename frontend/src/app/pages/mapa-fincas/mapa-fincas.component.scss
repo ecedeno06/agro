@@ -109,7 +109,7 @@
 
   tbody td {
     font-weight: 400;
-    color: var(--text-color, #e2e8f0);
+    color: var(--text-main);
   }
 
   tbody td strong {
@@ -121,11 +121,11 @@
   }
 
   tbody tr:nth-child(odd) {
-    background: rgba(255, 255, 255, 0.02);
+    background: transparent;
   }
 
   tbody tr:nth-child(even) {
-    background: rgba(255, 255, 255, 0.09);
+    background: rgba(128, 128, 128, 0.12);
   }
 
   .row-clickable {
