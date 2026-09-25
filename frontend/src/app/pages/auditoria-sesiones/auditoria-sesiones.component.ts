@@ -1,8 +1,9 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as L from 'leaflet';
 import { environment } from '../../../environments/environment';
+import { SessionService } from '../../core/services/session.service';
 
 type MotivoSalida =
   | 'logout_usuario' | 'inactividad' | 'token_invalido' | 'expiracion_token'
@@ -49,6 +50,7 @@ function haceDiasISO(dias: number): string {
 })
 export class AuditoriaSesionesComponent implements OnInit {
   private readonly apiBaseUrl = environment.apiUrl;
+  private readonly sessionService = inject(SessionService);
   private mapaPopup: L.Map | null = null;
 
   sesionMapaAbierta = signal<SesionAuditoria | null>(null);
@@ -138,9 +140,25 @@ export class AuditoriaSesionesComponent implements OnInit {
     await this.buscar();
   }
 
+  /**
+   * Si el propio usuario cierra (a la fuerza) su sesión actual desde esta
+   * misma pantalla, el token con el que se hicieron estas peticiones queda
+   * inválido de inmediato: cualquier llamada siguiente responde 401. En vez
+   * de dejar la pantalla "pegada" mostrando un error, se cierra la sesión
+   * localmente y se redirige al login, igual que en el resto de la app.
+   */
+  private manejarSesionExpirada(status: number): boolean {
+    if (status === 401) {
+      this.sessionService.cerrarSesion('token_invalido');
+      return true;
+    }
+    return false;
+  }
+
   async cargarUsuarios(): Promise<void> {
     try {
       const res = await fetch(`${this.apiBaseUrl}/usuarios`, { headers: this.getAuthHeaders() });
+      if (this.manejarSesionExpirada(res.status)) return;
       if (!res.ok) return;
       const data = await res.json();
       const lista = Array.isArray(data) ? data : (data.usuarios || []);
@@ -169,6 +187,9 @@ export class AuditoriaSesionesComponent implements OnInit {
       const res = await fetch(`${this.apiBaseUrl}/auditoria/sesiones?${params.toString()}`, {
         headers: this.getAuthHeaders()
       });
+
+      if (this.manejarSesionExpirada(res.status)) return;
+
       const data = await res.json();
 
       if (!res.ok) {
@@ -209,15 +230,29 @@ export class AuditoriaSesionesComponent implements OnInit {
     this.seleccionadas.set(todasSeleccionadas ? new Set() : new Set(seleccionables));
   }
 
+  private esSesionPropia(s: SesionAuditoria): boolean {
+    const idPropio = this.sessionService.user()?.idUsuario;
+    return idPropio != null && Number(idPropio) === Number(s.id_usuario);
+  }
+
   async cerrarSeleccionadas(): Promise<void> {
     const ids = Array.from(this.seleccionadas());
     if (ids.length === 0) return;
-    if (!confirm(`¿Cerrar ${ids.length} sesión(es) activa(s)? El usuario deberá iniciar sesión nuevamente.`)) return;
+
+    const incluyeLaPropia = this.sesionesFiltradas().some(s => ids.includes(s.id) && this.esSesionPropia(s));
+    const advertencia = incluyeLaPropia
+      ? ' ⚠️ Entre ellas está tu propia sesión: si la cierras, se cerrará tu sesión actual y deberás iniciar sesión de nuevo.'
+      : '';
+
+    if (!confirm(`¿Cerrar ${ids.length} sesión(es) activa(s)? El usuario deberá iniciar sesión nuevamente.${advertencia}`)) return;
     await this.ejecutarCierre(ids);
   }
 
   async cerrarSesionUnica(s: SesionAuditoria): Promise<void> {
-    if (!confirm(`¿Cerrar la sesión activa de ${s.usuario_nombre}?`)) return;
+    const advertencia = this.esSesionPropia(s)
+      ? ' ⚠️ Es tu propia sesión actual: se cerrará y deberás iniciar sesión de nuevo.'
+      : '';
+    if (!confirm(`¿Cerrar la sesión activa de ${s.usuario_nombre}?${advertencia}`)) return;
     await this.ejecutarCierre([s.id]);
   }
 
@@ -230,6 +265,9 @@ export class AuditoriaSesionesComponent implements OnInit {
         headers: this.getAuthHeaders(),
         body: JSON.stringify({ ids })
       });
+
+      if (this.manejarSesionExpirada(res.status)) return;
+
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.message || 'No se pudieron cerrar las sesiones.');
