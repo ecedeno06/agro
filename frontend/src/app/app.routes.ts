@@ -13,6 +13,7 @@ import { TipoGeografiaComponent } from './pages/tipo-geografia/tipo-geografia.co
 import { TipoEstadoLegalComponent } from './pages/tipo-estado-legal/tipo-estado-legal.component';
 import { PaisesComponent } from './pages/paises/paises.component';
 import { FenomenosComponent } from './pages/fenomenos/fenomenos.component';
+import { MapaFincasComponent } from './pages/mapa-fincas/mapa-fincas.component';
 import { PlaceholderComponent } from './pages/placeholder/placeholder.component';
 import { authGuard, publicGuard, adminGuard } from './core/guards/auth.guard';
 
@@ -34,6 +35,7 @@ export const routes: Routes = [
       { path: 'tipo-estado-legal', component: TipoEstadoLegalComponent },
       { path: 'paises', component: PaisesComponent },
       { path: 'fenomenos', component: FenomenosComponent },
+      { path: 'mapafincas', component: MapaFincasComponent },
 
       // Solo administración
       { path: 'usuarios', component: UsuariosComponent, canActivate: [adminGuard] },

@@ -284,6 +284,20 @@
                 <option value="Inutilizada">Inutilizada</option>
               </select>
             </div>
+
+            <div class="form-field">
+              <label>Tipo de Producción</label>
+              <select
+                [(ngModel)]="finca.id_tipo_produccion"
+                name="id_tipo_produccion"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              >
+                <option [ngValue]="null">-- Seleccione Tipo de Producción --</option>
+                <option *ngFor="let tp of tiposProduccion()" [ngValue]="+tp.id_tipo">
+                  {{ tp.nombre }}
+                </option>
+              </select>
+            </div>
           </div>
 
           <!-- 2. SUB-TAB: GEOGRAFIA Y TERRENO -->

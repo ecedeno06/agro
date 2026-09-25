@@ -1,0 +1,64 @@
+<div class="mapa-fincas-container animate-in">
+
+  <section class="mapa-header-card glass-card">
+    <div class="card-header flex-header">
+      <div>
+        <h2>🗺️ Mapa de Fincas</h2>
+        <p class="subtitle">Ubicación geográfica de las fincas registradas. Usa el filtro para acotar la vista.</p>
+      </div>
+      <div class="contador-fincas">
+        📍 {{ fincasConUbicacion().length }} de {{ fincasFiltradas().length }} fincas con ubicación
+      </div>
+    </div>
+
+    <div *ngIf="errorMsg()" class="alert danger animate-in">{{ errorMsg() }}</div>
+
+    <div class="filtro-bar">
+      <div class="form-field">
+        <label>Filtrar por</label>
+        <select [ngModel]="criterio()" (ngModelChange)="cambiarCriterio($event)">
+          <option value="ninguno">-- Sin filtro --</option>
+          <option value="asociado">Asociado</option>
+          <option value="tipo_produccion">Tipo de Producción</option>
+          <option value="tamano">Tamaño (Hectáreas)</option>
+        </select>
+      </div>
+
+      <div class="form-field" *ngIf="criterio() === 'asociado'">
+        <label>Asociado</label>
+        <select [ngModel]="valorAsociado()" (ngModelChange)="valorAsociado.set($event)">
+          <option value="">-- Todos --</option>
+          <option *ngFor="let a of asociadosDisponibles()" [value]="a">{{ a }}</option>
+        </select>
+      </div>
+
+      <div class="form-field" *ngIf="criterio() === 'tipo_produccion'">
+        <label>Tipo de Producción</label>
+        <select [ngModel]="valorTipoProduccion()" (ngModelChange)="valorTipoProduccion.set($event)">
+          <option value="">-- Todos --</option>
+          <option *ngFor="let t of tiposProduccionDisponibles()" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+
+      <ng-container *ngIf="criterio() === 'tamano'">
+        <div class="form-field">
+          <label>Mínimo (Ha)</label>
+          <input type="number" [ngModel]="tamanoMin()" (ngModelChange)="tamanoMin.set($event)" placeholder="Ej. 5" />
+        </div>
+        <div class="form-field">
+          <label>Máximo (Ha)</label>
+          <input type="number" [ngModel]="tamanoMax()" (ngModelChange)="tamanoMax.set($event)" placeholder="Ej. 100" />
+        </div>
+      </ng-container>
+    </div>
+  </section>
+
+  <section class="mapa-card glass-card">
+    <div *ngIf="loading()" class="loading-state">Cargando fincas...</div>
+    <div id="mapa-fincas-container" class="mapa-leaflet"></div>
+    <div *ngIf="!loading() && fincasConUbicacion().length === 0" class="empty-state">
+      No hay fincas con coordenadas registradas para el filtro seleccionado.
+    </div>
+  </section>
+
+</div>

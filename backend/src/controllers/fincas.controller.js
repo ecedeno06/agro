@@ -112,14 +112,16 @@ export const getFincas = async (req, res, next) => {
          tt.nombre AS nombre_tipo_terreno,
          ts.nombre AS nombre_tipo_suelo,
          tg.descripcion AS nombre_tipo_geografia,
-         tel.descripcion AS nombre_estado_legal
+         tel.descripcion AS nombre_estado_legal,
+         tp.nombre AS nombre_tipo_produccion
        FROM public.fincas f
        LEFT JOIN public.usuarios u ON f.id_propietario = u."idUsuario"
        LEFT JOIN public.usuarios ul ON f.id_propietario_legal = ul."idUsuario"
        LEFT JOIN public.tipo_terreno tt ON f.tipo_terreno = tt.id
        LEFT JOIN public.tipo_suelos ts ON f.tipo_suelo = ts.id
        LEFT JOIN public.tipo_geografia tg ON f.tipo_geografia = tg.id_tipo_geografia
-       LEFT JOIN public.tipo_estado_legal tel ON f.estado_legal = tel.id_estado_legal`;
+       LEFT JOIN public.tipo_estado_legal tel ON f.estado_legal = tel.id_estado_legal
+       LEFT JOIN public.tipo_produccion tp ON f.id_tipo_produccion = tp.id_tipo`;
     let queryParams = [];
     const conditions = [];
 
@@ -169,7 +171,8 @@ export const getFincaById = async (req, res, next) => {
          tt.nombre AS nombre_tipo_terreno,
          ts.nombre AS nombre_tipo_suelo,
          tg.descripcion AS nombre_tipo_geografia,
-         tel.descripcion AS nombre_estado_legal
+         tel.descripcion AS nombre_estado_legal,
+         tp.nombre AS nombre_tipo_produccion
        FROM public.fincas f
        LEFT JOIN public.usuarios u ON f.id_propietario = u."idUsuario"
        LEFT JOIN public.usuarios ul ON f.id_propietario_legal = ul."idUsuario"
@@ -177,6 +180,7 @@ export const getFincaById = async (req, res, next) => {
        LEFT JOIN public.tipo_suelos ts ON f.tipo_suelo = ts.id
        LEFT JOIN public.tipo_geografia tg ON f.tipo_geografia = tg.id_tipo_geografia
        LEFT JOIN public.tipo_estado_legal tel ON f.estado_legal = tel.id_estado_legal
+       LEFT JOIN public.tipo_produccion tp ON f.id_tipo_produccion = tp.id_tipo
        WHERE f.id_finca = $1`,
       [id]
     );
@@ -279,7 +283,8 @@ export const crearFinca = async (req, res, next) => {
       estado_legal,
       titulo_finca,
       id_propietario_legal,
-      notas
+      notas,
+      id_tipo_produccion
     } = req.body;
 
     if (!nombre_finca || tamano === undefined || tamano === null) {
@@ -294,13 +299,15 @@ export const crearFinca = async (req, res, next) => {
         ubicacion_mapa, estado, tipo_geografia, distribcion_geografia, area_terreno,
         clima, id_pais, id_privincia, id_distrito, id_corregimiento,
         mapa_logitud, mapa_latitud, tomo, folio, no_finca,
-        estado_legal, titulo_finca, nombre_finca, id_propietario_legal, notas
+        estado_legal, titulo_finca, nombre_finca, id_propietario_legal, notas,
+        id_tipo_produccion
       ) VALUES (
         $1, $2, $3, $4, $5,
         $6, $7, $8, $9, $10,
         $11, $12, $13, $14, $15,
         $16, $17, $18, $19, $20,
-        $21, $22, $23, $24, $25
+        $21, $22, $23, $24, $25,
+        $26
       ) RETURNING *`,
       [
         propietarioFinal,
@@ -327,7 +334,8 @@ export const crearFinca = async (req, res, next) => {
         titulo_finca || null,
         nombre_finca,
         id_propietario_legal ? Number(id_propietario_legal) : null,
-        notas || null
+        notas || null,
+        id_tipo_produccion ? Number(id_tipo_produccion) : null
       ]
     );
 
@@ -341,7 +349,8 @@ export const crearFinca = async (req, res, next) => {
          tt.nombre AS nombre_tipo_terreno,
          ts.nombre AS nombre_tipo_suelo,
          tg.descripcion AS nombre_tipo_geografia,
-         tel.descripcion AS nombre_estado_legal
+         tel.descripcion AS nombre_estado_legal,
+         tp.nombre AS nombre_tipo_produccion
        FROM public.fincas f
        LEFT JOIN public.usuarios u ON f.id_propietario = u."idUsuario"
        LEFT JOIN public.usuarios ul ON f.id_propietario_legal = ul."idUsuario"
@@ -349,6 +358,7 @@ export const crearFinca = async (req, res, next) => {
        LEFT JOIN public.tipo_suelos ts ON f.tipo_suelo = ts.id
        LEFT JOIN public.tipo_geografia tg ON f.tipo_geografia = tg.id_tipo_geografia
        LEFT JOIN public.tipo_estado_legal tel ON f.estado_legal = tel.id_estado_legal
+       LEFT JOIN public.tipo_produccion tp ON f.id_tipo_produccion = tp.id_tipo
        WHERE f.id_finca = $1`,
       [result.rows[0].id_finca]
     );
@@ -427,7 +437,8 @@ export const actualizarFinca = async (req, res, next) => {
       estado_legal,
       titulo_finca,
       id_propietario_legal,
-      notas
+      notas,
+      id_tipo_produccion
     } = req.body;
 
     const valTipoTerreno = (tipo_terreno !== undefined && tipo_terreno !== null && tipo_terreno !== '') ? Number(tipo_terreno) : null;
@@ -435,6 +446,7 @@ export const actualizarFinca = async (req, res, next) => {
     const valTipoGeografia = (tipo_geografia !== undefined && tipo_geografia !== null && tipo_geografia !== '') ? Number(tipo_geografia) : null;
     const valEstadoLegal = (estado_legal !== undefined && estado_legal !== null && estado_legal !== '') ? Number(estado_legal) : null;
     const valPropietarioLegal = (id_propietario_legal !== undefined && id_propietario_legal !== null && id_propietario_legal !== '') ? Number(id_propietario_legal) : null;
+    const valTipoProduccion = (id_tipo_produccion !== undefined && id_tipo_produccion !== null && id_tipo_produccion !== '') ? Number(id_tipo_produccion) : null;
 
     await query(
       `UPDATE public.fincas SET
@@ -461,8 +473,9 @@ export const actualizarFinca = async (req, res, next) => {
         estado_legal = $21,
         titulo_finca = COALESCE($22, titulo_finca),
         id_propietario_legal = $23,
-        notas = $24
-      WHERE id_finca = $25`,
+        notas = $24,
+        id_tipo_produccion = $25
+      WHERE id_finca = $26`,
       [
         nombre_finca,
         tamano,
@@ -488,6 +501,7 @@ export const actualizarFinca = async (req, res, next) => {
         titulo_finca,
         valPropietarioLegal,
         notas || null,
+        valTipoProduccion,
         id
       ]
     );
@@ -502,7 +516,8 @@ export const actualizarFinca = async (req, res, next) => {
          tt.nombre AS nombre_tipo_terreno,
          ts.nombre AS nombre_tipo_suelo,
          tg.descripcion AS nombre_tipo_geografia,
-         tel.descripcion AS nombre_estado_legal
+         tel.descripcion AS nombre_estado_legal,
+         tp.nombre AS nombre_tipo_produccion
        FROM public.fincas f
        LEFT JOIN public.usuarios u ON f.id_propietario = u."idUsuario"
        LEFT JOIN public.usuarios ul ON f.id_propietario_legal = ul."idUsuario"
@@ -510,6 +525,7 @@ export const actualizarFinca = async (req, res, next) => {
        LEFT JOIN public.tipo_suelos ts ON f.tipo_suelo = ts.id
        LEFT JOIN public.tipo_geografia tg ON f.tipo_geografia = tg.id_tipo_geografia
        LEFT JOIN public.tipo_estado_legal tel ON f.estado_legal = tel.id_estado_legal
+       LEFT JOIN public.tipo_produccion tp ON f.id_tipo_produccion = tp.id_tipo
        WHERE f.id_finca = $1`,
       [id]
     );

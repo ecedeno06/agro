@@ -1,0 +1,64 @@
+.mapa-fincas-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.mapa-header-card {
+  padding: 1.5rem;
+}
+
+.contador-fincas {
+  font-size: 0.9rem;
+  color: var(--text-muted, #94a3b8);
+  white-space: nowrap;
+}
+
+.filtro-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  align-items: flex-end;
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 220px;
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted, #94a3b8);
+    }
+
+    select,
+    input {
+      padding: 0.55rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+      background: var(--surface-color, #06151a);
+      color: inherit;
+    }
+  }
+}
+
+.mapa-card {
+  padding: 1rem;
+  position: relative;
+}
+
+.mapa-leaflet {
+  width: 100%;
+  height: 600px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted, #94a3b8);
+}

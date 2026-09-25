@@ -37,9 +37,11 @@ type Finca = {
   estado_legal?: number;
   nombre_estado_legal?: string;
   titulo_finca?: string;
+  id_tipo_produccion?: number | null;
+  nombre_tipo_produccion?: string;
 };
 
-declare const L: any;
+import * as L from 'leaflet';
 
 import { FincaFenomenosComponent  } from '../finca-fenomenos/finca-fenomenos.component';
 import { FincaProduccionComponent } from '../finca-produccion/finca-produccion.component';
@@ -463,7 +465,8 @@ export class MisFincasComponent implements OnInit {
       tomo: '',
       folio: '',
       estado_legal: undefined,
-      notas: ''
+      notas: '',
+      id_tipo_produccion: null
     };
   }
 
@@ -487,6 +490,7 @@ export class MisFincasComponent implements OnInit {
   tiposGeografia = signal<{ id: number; nombre: string; descripcion?: string }[]>([]);
   tiposEstadoLegal = signal<{ id: number; nombre: string; descripcion?: string }[]>([]);
   paises = signal<{ id: number; nombre: string; codigo_iso2: string; codigo_iso3: string }[]>([]);
+  tiposProduccion = signal<{ id_tipo: number; nombre: string; descripcion?: string }[]>([]);
 
   ngOnInit(): void {
     this.cargarUsuarioSesion();
@@ -497,6 +501,21 @@ export class MisFincasComponent implements OnInit {
     this.cargarTiposGeografia();
     this.cargarTiposEstadoLegal();
     this.cargarPaises();
+    this.cargarTiposProduccion();
+  }
+
+  async cargarTiposProduccion(): Promise<void> {
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/tipo-produccion`, {
+        headers: this.getAuthHeaders()
+      });
+      if (res.ok) {
+        const data = await res.json();
+        this.tiposProduccion.set(Array.isArray(data) ? data : []);
+      }
+    } catch (e) {
+      console.error('Error al cargar tipos de producción:', e);
+    }
   }
 
   async cargarTiposTerreno(): Promise<void> {
@@ -631,7 +650,8 @@ export class MisFincasComponent implements OnInit {
       mapa_logitud: (finca.mapa_logitud != null && finca.mapa_logitud !== '') ? Number(finca.mapa_logitud) : undefined,
       estado_legal: (finca.estado_legal != null && finca.estado_legal !== '') ? Number(finca.estado_legal) : undefined,
       id_propietario_legal: (finca.id_propietario_legal != null && finca.id_propietario_legal !== '') ? Number(finca.id_propietario_legal) : null,
-      notas: finca.notas || ''
+      notas: finca.notas || '',
+      id_tipo_produccion: (finca.id_tipo_produccion != null && finca.id_tipo_produccion !== '') ? Number(finca.id_tipo_produccion) : null
     };
   }
 
@@ -725,7 +745,8 @@ export class MisFincasComponent implements OnInit {
       estado_legal: ((finca.estado_legal as any) != null && (finca.estado_legal as any) !== '') ? Number(finca.estado_legal) : null,
       titulo_finca: (finca.titulo_finca || '').trim(),
       id_propietario_legal: ((finca.id_propietario_legal as any) != null && (finca.id_propietario_legal as any) !== '') ? Number(finca.id_propietario_legal) : null,
-      notas: (finca.notas || '').trim()
+      notas: (finca.notas || '').trim(),
+      id_tipo_produccion: ((finca.id_tipo_produccion as any) != null && (finca.id_tipo_produccion as any) !== '') ? Number(finca.id_tipo_produccion) : null
     };
 
     try {
