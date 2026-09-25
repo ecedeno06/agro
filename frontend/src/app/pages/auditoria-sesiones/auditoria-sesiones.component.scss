@@ -139,3 +139,109 @@ tbody tr:nth-child(even) {
   padding: 2rem;
   color: var(--text-muted);
 }
+
+.ip-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+
+.icon-btn {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-main);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+
+  &:hover:not(:disabled) {
+    background: rgba(6, 182, 212, 0.15);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.icon-btn-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--danger-color, #f87171);
+}
+
+/* Modal de ubicación */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(2, 10, 13, 0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 560px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--surface-color);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+  box-shadow: var(--shadow-lg, 0 20px 40px rgba(0, 0, 0, 0.4));
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+
+  h2 {
+    font-size: 1.1rem;
+    margin: 0;
+  }
+
+  .close-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--danger-color, #f87171);
+    }
+  }
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.mapa-modal-info {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.mapa-modal-mapa {
+  width: 100%;
+  height: 320px;
+  border-radius: 10px;
+  overflow: hidden;
+}

@@ -26,10 +26,10 @@ function esIpPrivada(ip) {
 
 /**
  * @param {string|null} ip
- * @returns {Promise<{ pais: string|null, region: string|null, ciudad: string|null }>}
+ * @returns {Promise<{ pais: string|null, region: string|null, ciudad: string|null, lat: number|null, lon: number|null }>}
  */
 export async function obtenerGeoIP(ip) {
-  const vacio = { pais: null, region: null, ciudad: null };
+  const vacio = { pais: null, region: null, ciudad: null, lat: null, lon: null };
   if (esIpPrivada(ip)) return vacio;
 
   try {
@@ -37,7 +37,7 @@ export async function obtenerGeoIP(ip) {
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
     const response = await fetch(
-      `${IP_API_URL}/${encodeURIComponent(ip)}?fields=status,country,regionName,city`,
+      `${IP_API_URL}/${encodeURIComponent(ip)}?fields=status,country,regionName,city,lat,lon`,
       { signal: controller.signal }
     );
     clearTimeout(timeoutId);
@@ -48,7 +48,9 @@ export async function obtenerGeoIP(ip) {
     return {
       pais: data.country || null,
       region: data.regionName || null,
-      ciudad: data.city || null
+      ciudad: data.city || null,
+      lat: typeof data.lat === 'number' ? data.lat : null,
+      lon: typeof data.lon === 'number' ? data.lon : null
     };
   } catch (error) {
     console.error('Error al geolocalizar IP:', error.message);

@@ -70,6 +70,7 @@
             <th>Usuario</th>
             <th>Rol</th>
             <th>IP / Ubicación</th>
+            <th>País</th>
             <th>Inicio de Sesión</th>
             <th>Cierre de Sesión</th>
             <th>Duración</th>
@@ -93,9 +94,23 @@
             </td>
             <td>{{ s.rol_nombre || s.rol_codigo || '-' }}</td>
             <td>
-              {{ s.ip_address || '-' }}<br>
-              <span class="cell-subtext">{{ ubicacionTexto(s) }}</span>
+              <div class="ip-cell">
+                <div>
+                  {{ s.ip_address || '-' }}<br>
+                  <span class="cell-subtext">{{ ubicacionTexto(s) }}</span>
+                </div>
+                <button
+                  type="button"
+                  class="icon-btn"
+                  [disabled]="!tieneCoordenadas(s)"
+                  [title]="tieneCoordenadas(s) ? 'Ver ubicación en el mapa' : 'Sin coordenadas disponibles'"
+                  (click)="abrirMapa(s)"
+                >
+                  🗺️
+                </button>
+              </div>
             </td>
+            <td>{{ s.geo_pais || '-' }}</td>
             <td>{{ s.login_en | date:'dd/MM/yyyy HH:mm' }}</td>
             <td>{{ s.logout_en ? (s.logout_en | date:'dd/MM/yyyy HH:mm') : '-' }}</td>
             <td>{{ formatoDuracion(s.duracion_segundos) }}</td>
@@ -103,12 +118,13 @@
             <td>
               <button
                 type="button"
-                class="action-btn cancel-btn"
+                class="icon-btn icon-btn-danger"
                 *ngIf="esSeleccionable(s)"
                 [disabled]="cerrandoSesiones()"
+                title="Terminar sesión"
                 (click)="cerrarSesionUnica(s)"
               >
-                🔒 Terminar
+                🔒
               </button>
               <span *ngIf="!esSeleccionable(s)">-</span>
             </td>
@@ -117,5 +133,21 @@
       </table>
     </div>
   </section>
+
+  <div class="modal-overlay" *ngIf="sesionMapaAbierta() as s" (click)="cerrarMapa()">
+    <div class="modal-card mapa-modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>📍 Ubicación de la Sesión</h2>
+        <button class="close-btn" type="button" (click)="cerrarMapa()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="mapa-modal-info">
+          <strong>{{ s.usuario_nombre }}</strong> — {{ ubicacionTexto(s) }}<br>
+          IP: {{ s.ip_address || '-' }}
+        </p>
+        <div id="auditoria-mapa-popup" class="mapa-modal-mapa"></div>
+      </div>
+    </div>
+  </div>
 
 </div>

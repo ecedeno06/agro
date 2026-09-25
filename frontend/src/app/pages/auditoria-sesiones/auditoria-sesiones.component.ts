@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import * as L from 'leaflet';
 import { environment } from '../../../environments/environment';
 
 type MotivoSalida =
@@ -18,6 +19,8 @@ type SesionAuditoria = {
   geo_pais: string | null;
   geo_region: string | null;
   geo_ciudad: string | null;
+  geo_lat: number | null;
+  geo_lon: number | null;
   login_en: string;
   logout_en: string | null;
   duracion_segundos: number | null;
@@ -46,6 +49,9 @@ function haceDiasISO(dias: number): string {
 })
 export class AuditoriaSesionesComponent implements OnInit {
   private readonly apiBaseUrl = environment.apiUrl;
+  private mapaPopup: L.Map | null = null;
+
+  sesionMapaAbierta = signal<SesionAuditoria | null>(null);
 
   usuarios = signal<UsuarioOpcion[]>([]);
   sesiones = signal<SesionAuditoria[]>([]);
@@ -182,6 +188,52 @@ export class AuditoriaSesionesComponent implements OnInit {
   ubicacionTexto(s: SesionAuditoria): string {
     const partes = [s.geo_ciudad, s.geo_region, s.geo_pais].filter(p => !!p && p.trim().length > 0);
     return partes.length > 0 ? partes.join(', ') : '-';
+  }
+
+  tieneCoordenadas(s: SesionAuditoria): boolean {
+    return s.geo_lat != null && s.geo_lon != null;
+  }
+
+  abrirMapa(s: SesionAuditoria): void {
+    if (!this.tieneCoordenadas(s)) return;
+    this.sesionMapaAbierta.set(s);
+
+    setTimeout(() => {
+      if (this.mapaPopup) {
+        this.mapaPopup.remove();
+        this.mapaPopup = null;
+      }
+
+      const lat = Number(s.geo_lat);
+      const lon = Number(s.geo_lon);
+
+      this.mapaPopup = L.map('auditoria-mapa-popup').setView([lat, lon], 9);
+
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(this.mapaPopup);
+
+      L.circleMarker([lat, lon], {
+        radius: 10,
+        color: '#06b6d4',
+        fillColor: '#06b6d4',
+        fillOpacity: 0.85
+      })
+        .bindPopup(`<b>${this.ubicacionTexto(s)}</b><br>IP: ${s.ip_address || '-'}`)
+        .addTo(this.mapaPopup)
+        .openPopup();
+
+      setTimeout(() => this.mapaPopup?.invalidateSize(), 150);
+    }, 50);
+  }
+
+  cerrarMapa(): void {
+    if (this.mapaPopup) {
+      this.mapaPopup.remove();
+      this.mapaPopup = null;
+    }
+    this.sesionMapaAbierta.set(null);
   }
 
   formatoDuracion(segundos: number | null): string {

@@ -74,6 +74,8 @@ export const listarSesiones = async (req, res, next) => {
          s.geo_pais,
          s.geo_region,
          s.geo_ciudad,
+         s.geo_lat,
+         s.geo_lon,
          s.creado_en AS login_en,
          s.activo,
          CASE WHEN s.activo = false

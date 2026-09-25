@@ -25,9 +25,9 @@ export async function createSession(idUsuario, rolCodigo = null, idCapitulo = nu
 
   await query(
     `INSERT INTO public.sesiones
-       (token, id_usuario, rol_codigo, id_capitulo, expira_en, ip_address, geo_pais, geo_region, geo_ciudad)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-    [token, idUsuario, rolCodigo, idCapitulo ?? null, expiresAt.toISOString(), ipAddress, geo.pais, geo.region, geo.ciudad]
+       (token, id_usuario, rol_codigo, id_capitulo, expira_en, ip_address, geo_pais, geo_region, geo_ciudad, geo_lat, geo_lon)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+    [token, idUsuario, rolCodigo, idCapitulo ?? null, expiresAt.toISOString(), ipAddress, geo.pais, geo.region, geo.ciudad, geo.lat, geo.lon]
   );
 
   // expiresIn en milisegundos
