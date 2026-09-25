@@ -11,8 +11,16 @@
 .profile-header {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.profile-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 .user-avatar-large {
@@ -335,7 +343,12 @@
   gap: 0.75rem;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
   width: 100%;
+}
+
+.tab-content {
+  padding-top: 0.25rem;
 }
 
 .profile-tab-btn {
@@ -564,6 +577,162 @@
     justify-content: flex-end;
     margin-top: 1.5rem;
   }
+}
+
+/* MODAL: EDITAR DATOS PERSONALES */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(2, 10, 13, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--glass-border);
+  position: sticky;
+  top: 0;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  z-index: 1;
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-main);
+  }
+
+  .close-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: var(--danger-color, #ef4444);
+    }
+  }
+}
+
+.modal-body {
+  padding: 1rem;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+
+    span {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    input, select {
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--text-main);
+      outline: none;
+      font-size: 0.92rem;
+      transition: border-color 0.2s ease;
+      width: 100%;
+      box-sizing: border-box;
+
+      &:focus {
+        border-color: var(--primary-color);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+.locked-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  input {
+    width: 100%;
+    padding-right: 2.5rem;
+  }
+
+  .lock-icon {
+    position: absolute;
+    right: 0.85rem;
+    font-size: 0.95rem;
+    opacity: 0.7;
+  }
+}
+
+.readonly-input {
+  background: rgba(255, 255, 255, 0.02) !important;
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease;
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .read-only-notice {

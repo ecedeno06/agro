@@ -56,6 +56,72 @@ export class PerfilComponent implements OnInit {
     observaciones: ''
   };
 
+  // --- Pestañas de la página de perfil ---
+  readonly activeTab = signal<'perfil' | 'cuotas'>('perfil');
+
+  // --- Edición de datos personales (ahora inline en la pestaña "Perfil", sin modal) ---
+  readonly editLoading = signal(false);
+  readonly editError = signal('');
+  readonly editSuccess = signal('');
+
+  readonly editForm = {
+    nombre: '',
+    telefono: '',
+    direccion: '',
+    ocupacion: '',
+    fecha_nacimiento: '',
+    tipo_sangre: '',
+    tipo_persona: 'natural',
+    dni: ''
+  };
+
+  readonly tiposSangre = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
+  /** Carga (o recarga) el formulario con los datos actuales de la sesión. */
+  inicializarFormularioPerfil(): void {
+    const u = this.user();
+    this.editForm.nombre = u?.nombre || '';
+    this.editForm.telefono = u?.telefono || '';
+    this.editForm.direccion = u?.direccion || '';
+    this.editForm.ocupacion = u?.ocupacion || '';
+    this.editForm.fecha_nacimiento = (u?.fechaNacimiento || '').toString().substring(0, 10);
+    this.editForm.tipo_sangre = u?.tipoSangre || '';
+    this.editForm.tipo_persona = u?.tipoPersona || 'natural';
+    this.editForm.dni = u?.dni || '';
+    this.editError.set('');
+    this.editSuccess.set('');
+  }
+
+  async guardarPerfil(): Promise<void> {
+    if (!this.editForm.nombre.trim() || this.editLoading()) return;
+
+    this.editLoading.set(true);
+    this.editError.set('');
+    this.editSuccess.set('');
+
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/usuarios/perfil`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(this.editForm)
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al actualizar el perfil.');
+      }
+
+      // Fusiona lo devuelto por el backend con el usuario en sesión (conserva
+      // campos que este formulario no toca, ej. avatar, twoFactorEnabled).
+      this.sessionService.setUser({ ...this.user(), ...data.usuario });
+      this.editSuccess.set('Perfil actualizado exitosamente.');
+    } catch (error: any) {
+      this.editError.set(error.message || 'Error de conexión.');
+    } finally {
+      this.editLoading.set(false);
+    }
+  }
+
   // Determinar si el usuario logueado tiene el rol de Asociado ('aso')
   readonly esAsociado = computed(() => {
     const activeUser = this.user();
@@ -89,6 +155,7 @@ export class PerfilComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.inicializarFormularioPerfil();
     if (this.esAsociado()) {
       this.cargarCapitulos();
     }

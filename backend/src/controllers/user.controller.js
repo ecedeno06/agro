@@ -535,6 +535,76 @@ export const eliminarRolUsuario = async (req, res, next) => {
 };
 
 /**
+ * Actualizar los datos de contacto/personales del usuario autenticado.
+ * No permite tocar email, contraseña ni rol (eso pasa por otros flujos).
+ */
+export const actualizarPerfilPropio = async (req, res, next) => {
+  const { nombre, telefono, direccion, ocupacion, fecha_nacimiento, tipo_sangre, tipo_persona, dni } = req.body;
+  const userId = req.userId;
+
+  try {
+    if (!nombre || !nombre.trim()) {
+      return res.status(400).json({ message: 'El nombre es obligatorio.' });
+    }
+
+    const result = await query(
+      `UPDATE public.usuarios SET
+         nombre = $1,
+         telefono = $2,
+         direccion = $3,
+         ocupacion = $4,
+         fecha_nacimiento = $5,
+         tipo_sangre = $6,
+         tipo_persona = $7,
+         dni = $8
+       WHERE "idUsuario" = $9
+       RETURNING "idUsuario", nombre, email, rol, telefono, direccion, ocupacion,
+                 fecha_nacimiento, tipo_sangre, tipo_persona, dni, activo,
+                 debe_cambiar_password, two_factor_enabled, avatar`,
+      [
+        nombre.trim(),
+        telefono || null,
+        JSON.stringify(direccion || ''),
+        ocupacion || null,
+        fecha_nacimiento || null,
+        tipo_sangre || null,
+        tipo_persona || null,
+        dni || null,
+        userId
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+
+    const usuario = result.rows[0];
+
+    return res.status(200).json({
+      message: 'Perfil actualizado exitosamente.',
+      usuario: {
+        idUsuario: usuario.idUsuario,
+        nombre: usuario.nombre,
+        email: usuario.email,
+        rol: usuario.rol,
+        telefono: usuario.telefono,
+        direccion: usuario.direccion,
+        ocupacion: usuario.ocupacion,
+        fechaNacimiento: usuario.fecha_nacimiento,
+        tipoSangre: usuario.tipo_sangre,
+        tipoPersona: usuario.tipo_persona,
+        dni: usuario.dni,
+        debeCambiarPassword: usuario.debe_cambiar_password,
+        twoFactorEnabled: usuario.two_factor_enabled,
+        avatar: usuario.avatar || null
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Actualizar avatar del usuario autenticado (base64)
  */
 export const actualizarAvatar = async (req, res, next) => {

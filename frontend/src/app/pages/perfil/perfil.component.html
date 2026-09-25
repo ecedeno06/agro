@@ -1,31 +1,119 @@
 <section class="glass-card profile-card">
+  @if (editSuccess()) {
+    <div class="alert success animate-in" style="margin-bottom: 1.5rem;">{{ editSuccess() }}</div>
+  }
   <div class="profile-header">
-    <span class="user-avatar-large">🚜</span>
-    <div class="profile-info">
-      <h2>{{ user()?.nombre }}</h2>
-      <span class="badge" [class.admin]="user()?.rol === 'admin'">{{ user()?.rol }}</span>
+    <div class="profile-header-left">
+      <span class="user-avatar-large">🚜</span>
+      <div class="profile-info">
+        <h2>{{ user()?.nombre }}</h2>
+        <span class="badge" [class.admin]="user()?.rol === 'admin'">{{ user()?.rol }}</span>
+      </div>
     </div>
   </div>
+
   <hr class="divider">
-  <div class="profile-details">
-    <div class="detail-row">
-      <span class="label">Correo Electrónico:</span>
-      <span class="value">{{ user()?.email }}</span>
+
+  <!-- ============================================== -->
+  <!-- PESTAÑAS: Perfil / Cuotas                       -->
+  <!-- ============================================== -->
+  <nav class="profile-tabs-nav">
+    <button
+      type="button"
+      class="profile-tab-btn"
+      [class.active]="activeTab() === 'perfil'"
+      (click)="activeTab.set('perfil')"
+    >
+      👤 Perfil
+    </button>
+    <button
+      type="button"
+      class="profile-tab-btn"
+      [class.active]="activeTab() === 'cuotas'"
+      (click)="activeTab.set('cuotas')"
+    >
+      💰 Cuotas
+    </button>
+  </nav>
+
+  @if (activeTab() === 'perfil') {
+    <div class="tab-content animate-in">
+      @if (editError()) {
+        <div class="alert danger animate-in" style="margin-bottom: 1.25rem;">{{ editError() }}</div>
+      }
+
+      <form (ngSubmit)="guardarPerfil()" class="modal-form">
+        <label class="form-field">
+          <span>Nombre</span>
+          <input type="text" [(ngModel)]="editForm.nombre" name="editNombre" required [disabled]="editLoading()" />
+        </label>
+
+        <label class="form-field">
+          <span>Correo Electrónico</span>
+          <div class="locked-input-wrapper">
+            <input type="email" [value]="user()?.email" name="editEmail" disabled readonly class="readonly-input" />
+            <span class="lock-icon" title="El correo no se puede modificar">🔒</span>
+          </div>
+        </label>
+
+        <label class="form-field">
+          <span>Teléfono</span>
+          <input type="text" [(ngModel)]="editForm.telefono" name="editTelefono" [disabled]="editLoading()" />
+        </label>
+
+        <label class="form-field">
+          <span>Dirección</span>
+          <input type="text" [(ngModel)]="editForm.direccion" name="editDireccion" placeholder="Ej. Ciudad de Panamá, Calle 50" [disabled]="editLoading()" />
+        </label>
+
+        <label class="form-field">
+          <span>Ocupación</span>
+          <input type="text" [(ngModel)]="editForm.ocupacion" name="editOcupacion" placeholder="Ej. Agricultor" [disabled]="editLoading()" />
+        </label>
+
+        <label class="form-field">
+          <span>Fecha de Nacimiento</span>
+          <input type="date" [(ngModel)]="editForm.fecha_nacimiento" name="editFechaNacimiento" [disabled]="editLoading()" />
+        </label>
+
+        <label class="form-field">
+          <span>Tipo de Sangre</span>
+          <select [(ngModel)]="editForm.tipo_sangre" name="editTipoSangre" [disabled]="editLoading()">
+            <option value="">Seleccione...</option>
+            <option *ngFor="let ts of tiposSangre" [value]="ts">{{ ts }}</option>
+          </select>
+        </label>
+
+        <label class="form-field">
+          <span>Tipo de Persona</span>
+          <select [(ngModel)]="editForm.tipo_persona" name="editTipoPersona" [disabled]="editLoading()">
+            <option value="natural">Natural</option>
+            <option value="juridica">Jurídica</option>
+          </select>
+        </label>
+
+        <label class="form-field">
+          <span>DNI</span>
+          <input type="text" [(ngModel)]="editForm.dni" name="editDni" placeholder="Ej. 8-888-1234" [disabled]="editLoading()" />
+        </label>
+
+        <div class="modal-actions">
+          <button type="submit" class="primary-btn save-btn" [disabled]="editLoading() || !editForm.nombre.trim()">
+            {{ editLoading() ? 'Guardando...' : '💾 Guardar' }}
+          </button>
+          <button type="button" class="secondary-btn cancel-btn" (click)="inicializarFormularioPerfil()" [disabled]="editLoading()">
+            Descartar Cambios
+          </button>
+        </div>
+      </form>
     </div>
-    <div class="detail-row">
-      <span class="label">Teléfono:</span>
-      <span class="value">{{ user()?.telefono || 'No registrado' }}</span>
-    </div>
-    <div class="detail-row">
-      <span class="label">Estado de Cuenta:</span>
-      <span class="value active">● Activo</span>
-    </div>
-  </div>
+  }
 </section>
 
 <!-- ============================================== -->
 <!-- SECCIÓN: HISTORIAL DE CUOTAS DE ASOCIADO        -->
 <!-- ============================================== -->
+@if (activeTab() === 'cuotas') {
 <section class="glass-card m-top-md animate-in">
   <div class="cuotas-header-row">
     <div>
@@ -186,3 +274,4 @@
     </div>
   </div>
 </section>
+}

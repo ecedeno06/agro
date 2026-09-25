@@ -13,6 +13,9 @@ router.post('/', authMiddleware, userController.crearUsuario);
 // Cambiar contraseña (Requiere estar autenticado)
 router.put('/cambiar-password', authMiddleware, userController.cambiarPassword);
 
+// Actualizar datos de contacto/personales propios (Requiere estar autenticado)
+router.put('/perfil', authMiddleware, userController.actualizarPerfilPropio);
+
 // Generar una contraseña segura según políticas de .env
 router.get('/generar-password', authMiddleware, userController.generarPassword);
 
