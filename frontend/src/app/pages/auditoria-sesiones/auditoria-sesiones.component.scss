@@ -102,7 +102,7 @@ thead tr:first-child th {
 }
 
 thead tr.fila-filtros th {
-  top: 48px;
+  top: var(--fila-filtros-top, 48px);
   z-index: 1;
 }
 

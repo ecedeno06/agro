@@ -94,7 +94,7 @@
             <th>Motivo</th>
             <th>Acción</th>
           </tr>
-          <tr class="fila-filtros">
+          <tr class="fila-filtros" [style.--fila-filtros-top.px]="alturaEncabezado()">
             <th class="col-check"></th>
             <th><input type="text" [ngModel]="filtroUsuario()" (ngModelChange)="filtroUsuario.set($event)" placeholder="Filtrar..." /></th>
             <th><input type="text" [ngModel]="filtroRol()" (ngModelChange)="filtroRol.set($event)" placeholder="Filtrar..." /></th>

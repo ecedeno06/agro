@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as L from 'leaflet';
@@ -47,9 +47,16 @@ function haceDiasISO(dias: number): string {
   templateUrl: './auditoria-sesiones.component.html',
   styleUrls: ['./auditoria-sesiones.component.scss']
 })
-export class AuditoriaSesionesComponent implements OnInit {
+export class AuditoriaSesionesComponent implements OnInit, OnDestroy {
   private readonly apiBaseUrl = environment.apiUrl;
   private mapaPopup: L.Map | null = null;
+  private resizeObserver: ResizeObserver | null = null;
+
+  // Altura real del encabezado de la tabla, medida en el DOM (no fija):
+  // el texto de columnas como "Cierre de Sesión" puede envolver a 2 líneas
+  // según el ancho de pantalla/zoom, así que un valor fijo en px desalinea
+  // la fila de filtros (que debe ir pegada justo debajo).
+  alturaEncabezado = signal(48);
 
   sesionMapaAbierta = signal<SesionAuditoria | null>(null);
 
@@ -182,7 +189,26 @@ export class AuditoriaSesionesComponent implements OnInit {
       this.sesiones.set([]);
     } finally {
       this.loading.set(false);
+      setTimeout(() => this.observarAlturaEncabezado(), 0);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
+  }
+
+  private observarAlturaEncabezado(): void {
+    const headerRow = document.querySelector('.resultados-card thead tr:first-child') as HTMLElement | null;
+    if (!headerRow) return;
+
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const alto = Math.ceil(entry.contentRect.height);
+        if (alto > 0) this.alturaEncabezado.set(alto);
+      }
+    });
+    this.resizeObserver.observe(headerRow);
   }
 
   esSeleccionable(s: SesionAuditoria): boolean {
