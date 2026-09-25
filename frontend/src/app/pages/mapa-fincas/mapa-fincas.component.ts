@@ -12,6 +12,8 @@ type FincaMapa = {
   estado?: string;
   id_tipo_produccion?: number | null;
   nombre_tipo_produccion?: string;
+  nombre_pais?: string;
+  id_privincia?: number | null;
   mapa_latitud?: number | null;
   mapa_logitud?: number | null;
 };
@@ -183,6 +185,8 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
         estado: f.estado,
         id_tipo_produccion: (f.id_tipo_produccion != null && f.id_tipo_produccion !== '') ? Number(f.id_tipo_produccion) : null,
         nombre_tipo_produccion: f.nombre_tipo_produccion,
+        nombre_pais: f.nombre_pais,
+        id_privincia: (f.id_privincia != null && f.id_privincia !== '') ? Number(f.id_privincia) : null,
         mapa_latitud: (f.mapa_latitud != null && f.mapa_latitud !== '') ? Number(f.mapa_latitud) : null,
         mapa_logitud: (f.mapa_logitud != null && f.mapa_logitud !== '') ? Number(f.mapa_logitud) : null
       })) : [];
@@ -252,14 +256,23 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
     document.getElementById('mapa-fincas-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  paisProvinciaTexto(f: FincaMapa): string {
+    const partes: string[] = [];
+    if (f.nombre_pais) partes.push(f.nombre_pais);
+    if (f.id_privincia != null) partes.push(`Provincia #${f.id_privincia}`);
+    return partes.length > 0 ? partes.join(', ') : '-';
+  }
+
   private crearPopup(f: FincaMapa): string {
     const urlMaps = `https://www.google.com/maps?q=${f.mapa_latitud},${f.mapa_logitud}`;
+    const ubicacionTexto = this.paisProvinciaTexto(f);
     return `
       <div style="min-width:190px">
         <b>${f.nombre_finca}</b><br>
         ${f.nombre_propietario ? `👤 ${f.nombre_propietario}<br>` : ''}
         📐 ${f.tamano} Ha<br>
         ${f.nombre_tipo_produccion ? `🌾 ${f.nombre_tipo_produccion}<br>` : ''}
+        ${ubicacionTexto !== '-' ? `🌎 ${ubicacionTexto}<br>` : ''}
         ${f.estado ? `📌 ${f.estado}<br>` : ''}
         <a href="${urlMaps}" target="_blank" rel="noopener">📍 Abrir en Google Maps</a>
       </div>

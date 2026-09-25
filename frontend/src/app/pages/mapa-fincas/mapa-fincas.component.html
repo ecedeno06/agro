@@ -79,6 +79,8 @@
           <tr>
             <th>Finca</th>
             <th>Propietario</th>
+            <th>País</th>
+            <th>Provincia</th>
             <th>Criterio</th>
             <th>Valor</th>
             <th>Tamaño</th>
@@ -93,6 +95,8 @@
           >
             <td><strong>{{ f.nombre_finca }}</strong></td>
             <td>{{ f.nombre_propietario || '-' }}</td>
+            <td>{{ f.nombre_pais || '-' }}</td>
+            <td>{{ f.id_privincia ?? '-' }}</td>
             <td>{{ criterioLabel() }}</td>
             <td>{{ valorParaFinca(f) }}</td>
             <td>{{ f.tamano }} Ha</td>

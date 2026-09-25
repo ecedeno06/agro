@@ -52,12 +52,88 @@
 .detalle-filtro-card {
   padding: 1.5rem;
 
+  .table-scroll-container {
+    max-height: 360px;
+    overflow-y: auto;
+    border-radius: 10px;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: var(--glass-border, rgba(255, 255, 255, 0.15));
+      border-radius: 3px;
+    }
+  }
+
+  table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+
+  th, td {
+    padding: 0.5rem 0.85rem;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  th:nth-child(1), td:nth-child(1) { width: 20%; }
+  th:nth-child(2), td:nth-child(2) { width: 19%; }
+  th:nth-child(3), td:nth-child(3) { width: 11%; }
+  th:nth-child(4), td:nth-child(4) { width: 11%; }
+  th:nth-child(5), td:nth-child(5) { width: 15%; }
+  th:nth-child(6), td:nth-child(6) { width: 14%; }
+  th:nth-child(7), td:nth-child(7) { width: 10%; text-align: right; }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface-color, #06151a);
+    color: var(--text-muted, #94a3b8);
+    font-weight: 500;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+  }
+
+  tbody td {
+    font-weight: 400;
+    color: var(--text-color, #e2e8f0);
+  }
+
+  tbody td strong {
+    font-weight: 500;
+  }
+
+  tbody tr {
+    transition: background 0.15s ease;
+  }
+
+  tbody tr:nth-child(odd) {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.09);
+  }
+
   .row-clickable {
     cursor: pointer;
   }
 
   .row-clickable:hover {
-    background: rgba(16, 185, 129, 0.08);
+    background: rgba(16, 185, 129, 0.12) !important;
   }
 }
 

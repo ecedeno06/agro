@@ -113,7 +113,8 @@ export const getFincas = async (req, res, next) => {
          ts.nombre AS nombre_tipo_suelo,
          tg.descripcion AS nombre_tipo_geografia,
          tel.descripcion AS nombre_estado_legal,
-         tp.nombre AS nombre_tipo_produccion
+         tp.nombre AS nombre_tipo_produccion,
+         pc.nombre AS nombre_pais
        FROM public.fincas f
        LEFT JOIN public.usuarios u ON f.id_propietario = u."idUsuario"
        LEFT JOIN public.usuarios ul ON f.id_propietario_legal = ul."idUsuario"
@@ -121,7 +122,8 @@ export const getFincas = async (req, res, next) => {
        LEFT JOIN public.tipo_suelos ts ON f.tipo_suelo = ts.id
        LEFT JOIN public.tipo_geografia tg ON f.tipo_geografia = tg.id_tipo_geografia
        LEFT JOIN public.tipo_estado_legal tel ON f.estado_legal = tel.id_estado_legal
-       LEFT JOIN public.tipo_produccion tp ON f.id_tipo_produccion = tp.id_tipo`;
+       LEFT JOIN public.tipo_produccion tp ON f.id_tipo_produccion = tp.id_tipo
+       LEFT JOIN public.catalogo_paises pc ON f.id_pais = pc.codigo_iso2`;
     let queryParams = [];
     const conditions = [];
 
@@ -172,7 +174,8 @@ export const getFincaById = async (req, res, next) => {
          ts.nombre AS nombre_tipo_suelo,
          tg.descripcion AS nombre_tipo_geografia,
          tel.descripcion AS nombre_estado_legal,
-         tp.nombre AS nombre_tipo_produccion
+         tp.nombre AS nombre_tipo_produccion,
+         pc.nombre AS nombre_pais
        FROM public.fincas f
        LEFT JOIN public.usuarios u ON f.id_propietario = u."idUsuario"
        LEFT JOIN public.usuarios ul ON f.id_propietario_legal = ul."idUsuario"
@@ -181,6 +184,7 @@ export const getFincaById = async (req, res, next) => {
        LEFT JOIN public.tipo_geografia tg ON f.tipo_geografia = tg.id_tipo_geografia
        LEFT JOIN public.tipo_estado_legal tel ON f.estado_legal = tel.id_estado_legal
        LEFT JOIN public.tipo_produccion tp ON f.id_tipo_produccion = tp.id_tipo
+       LEFT JOIN public.catalogo_paises pc ON f.id_pais = pc.codigo_iso2
        WHERE f.id_finca = $1`,
       [id]
     );
@@ -350,7 +354,8 @@ export const crearFinca = async (req, res, next) => {
          ts.nombre AS nombre_tipo_suelo,
          tg.descripcion AS nombre_tipo_geografia,
          tel.descripcion AS nombre_estado_legal,
-         tp.nombre AS nombre_tipo_produccion
+         tp.nombre AS nombre_tipo_produccion,
+         pc.nombre AS nombre_pais
        FROM public.fincas f
        LEFT JOIN public.usuarios u ON f.id_propietario = u."idUsuario"
        LEFT JOIN public.usuarios ul ON f.id_propietario_legal = ul."idUsuario"
@@ -359,6 +364,7 @@ export const crearFinca = async (req, res, next) => {
        LEFT JOIN public.tipo_geografia tg ON f.tipo_geografia = tg.id_tipo_geografia
        LEFT JOIN public.tipo_estado_legal tel ON f.estado_legal = tel.id_estado_legal
        LEFT JOIN public.tipo_produccion tp ON f.id_tipo_produccion = tp.id_tipo
+       LEFT JOIN public.catalogo_paises pc ON f.id_pais = pc.codigo_iso2
        WHERE f.id_finca = $1`,
       [result.rows[0].id_finca]
     );
@@ -517,7 +523,8 @@ export const actualizarFinca = async (req, res, next) => {
          ts.nombre AS nombre_tipo_suelo,
          tg.descripcion AS nombre_tipo_geografia,
          tel.descripcion AS nombre_estado_legal,
-         tp.nombre AS nombre_tipo_produccion
+         tp.nombre AS nombre_tipo_produccion,
+         pc.nombre AS nombre_pais
        FROM public.fincas f
        LEFT JOIN public.usuarios u ON f.id_propietario = u."idUsuario"
        LEFT JOIN public.usuarios ul ON f.id_propietario_legal = ul."idUsuario"
@@ -526,6 +533,7 @@ export const actualizarFinca = async (req, res, next) => {
        LEFT JOIN public.tipo_geografia tg ON f.tipo_geografia = tg.id_tipo_geografia
        LEFT JOIN public.tipo_estado_legal tel ON f.estado_legal = tel.id_estado_legal
        LEFT JOIN public.tipo_produccion tp ON f.id_tipo_produccion = tp.id_tipo
+       LEFT JOIN public.catalogo_paises pc ON f.id_pais = pc.codigo_iso2
        WHERE f.id_finca = $1`,
       [id]
     );
