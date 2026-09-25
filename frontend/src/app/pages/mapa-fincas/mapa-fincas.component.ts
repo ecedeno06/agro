@@ -29,6 +29,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
   private readonly apiBaseUrl = environment.apiUrl;
   private map: L.Map | null = null;
   private markers: L.CircleMarker[] = [];
+  private markersPorFinca = new Map<number, L.CircleMarker>();
   private vistaInicializada = false;
 
   fincas = signal<FincaMapa[]>([]);
@@ -88,6 +89,24 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
   fincasConUbicacion = computed(() =>
     this.fincasFiltradas().filter(f => f.mapa_latitud != null && f.mapa_logitud != null)
   );
+
+  criterioLabel = computed(() => {
+    switch (this.criterio()) {
+      case 'asociado': return 'Asociado';
+      case 'tipo_produccion': return 'Tipo de Producción';
+      case 'tamano': return 'Tamaño (Hectáreas)';
+      default: return 'Sin filtro';
+    }
+  });
+
+  valorParaFinca(f: FincaMapa): string {
+    switch (this.criterio()) {
+      case 'asociado': return f.nombre_propietario || '-';
+      case 'tipo_produccion': return f.nombre_tipo_produccion || '-';
+      case 'tamano': return `${f.tamano} Ha`;
+      default: return '-';
+    }
+  }
 
   constructor() {
     effect(() => {
@@ -189,6 +208,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
 
     this.markers.forEach(m => m.remove());
     this.markers = [];
+    this.markersPorFinca.clear();
 
     if (fincas.length === 0) return;
 
@@ -212,10 +232,24 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
 
       marker.addTo(this.map as L.Map);
       this.markers.push(marker);
+      this.markersPorFinca.set(f.id_finca, marker);
     });
 
     const bounds = L.latLngBounds(puntos);
     this.map.fitBounds(bounds, { padding: [40, 40] });
+  }
+
+  enfocarFinca(f: FincaMapa): void {
+    if (!this.map || f.mapa_latitud == null || f.mapa_logitud == null) return;
+
+    this.map.setView([Number(f.mapa_latitud), Number(f.mapa_logitud)], 15, { animate: true });
+
+    const marker = this.markersPorFinca.get(f.id_finca);
+    if (marker) {
+      marker.openPopup();
+    }
+
+    document.getElementById('mapa-fincas-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   private crearPopup(f: FincaMapa): string {

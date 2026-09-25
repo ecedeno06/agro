@@ -61,4 +61,45 @@
     </div>
   </section>
 
+  <section class="detalle-filtro-card glass-card">
+    <div class="card-header flex-header">
+      <div>
+        <h3>📋 Detalle del Filtro</h3>
+        <p class="subtitle">Fincas que coinciden con el criterio seleccionado.</p>
+      </div>
+    </div>
+
+    <div *ngIf="!loading() && fincasFiltradas().length === 0" class="empty-state">
+      No hay fincas que coincidan con el filtro seleccionado.
+    </div>
+
+    <div class="table-scroll-container" *ngIf="fincasFiltradas().length > 0">
+      <table class="usuarios-table">
+        <thead>
+          <tr>
+            <th>Finca</th>
+            <th>Propietario</th>
+            <th>Criterio</th>
+            <th>Valor</th>
+            <th>Tamaño</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let f of fincasFiltradas()"
+            [class.row-clickable]="f.mapa_latitud != null && f.mapa_logitud != null"
+            [title]="f.mapa_latitud != null && f.mapa_logitud != null ? 'Ver en el mapa' : 'Esta finca no tiene coordenadas registradas'"
+            (click)="enfocarFinca(f)"
+          >
+            <td><strong>{{ f.nombre_finca }}</strong></td>
+            <td>{{ f.nombre_propietario || '-' }}</td>
+            <td>{{ criterioLabel() }}</td>
+            <td>{{ valorParaFinca(f) }}</td>
+            <td>{{ f.tamano }} Ha</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
 </div>

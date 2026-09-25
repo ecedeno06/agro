@@ -49,6 +49,18 @@
   position: relative;
 }
 
+.detalle-filtro-card {
+  padding: 1.5rem;
+
+  .row-clickable {
+    cursor: pointer;
+  }
+
+  .row-clickable:hover {
+    background: rgba(16, 185, 129, 0.08);
+  }
+}
+
 .mapa-leaflet {
   width: 100%;
   height: 600px;
