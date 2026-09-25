@@ -87,23 +87,26 @@ th, td {
 
 thead th {
   position: sticky;
+  top: 0;
   z-index: 2;
   background: var(--surface-color);
+  border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+  vertical-align: top;
+  // Fuerza la promoción a su propia capa de composición GPU: sin esto, en
+  // Chrome/Blink el elemento sticky puede repintarse un frame más tarde que
+  // el contenido que se desplaza debajo, dejando ver por una fracción de
+  // segundo la fila que estaba detrás mientras se hace scroll activamente.
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.col-titulo {
   color: var(--text-muted);
   font-weight: 500;
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
-}
-
-thead tr:first-child th {
-  top: 0;
-}
-
-thead tr.fila-filtros th {
-  top: var(--fila-filtros-top, 48px);
-  z-index: 1;
+  margin-bottom: 0.4rem;
 }
 
 tbody td {
@@ -215,27 +218,22 @@ tbody tr:nth-child(even) {
   flex-wrap: wrap;
 }
 
-.fila-filtros th {
-  padding: 0.4rem 0.65rem;
-  background: var(--surface-color);
+thead th input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-main);
+  font-size: 0.78rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
 
-  input {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 0.35rem 0.5rem;
-    border-radius: 6px;
-    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--text-main);
-    font-size: 0.78rem;
-    font-weight: 400;
-    text-transform: none;
-    letter-spacing: normal;
-
-    &:focus {
-      outline: none;
-      border-color: var(--primary-color);
-    }
+  &:focus {
+    outline: none;
+    border-color: var(--primary-color);
   }
 }
 

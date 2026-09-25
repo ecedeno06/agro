@@ -84,27 +84,41 @@
             <th class="col-check">
               <input type="checkbox" [disabled]="!hayEnCurso()" (change)="toggleSeleccionarTodas()" title="Seleccionar todas las sesiones en curso" />
             </th>
-            <th>Usuario</th>
-            <th>Rol</th>
-            <th>IP / Ubicación</th>
-            <th>País</th>
-            <th>Inicio de Sesión</th>
-            <th>Cierre de Sesión</th>
-            <th>Duración</th>
-            <th>Motivo</th>
-            <th>Acción</th>
-          </tr>
-          <tr class="fila-filtros" [style.--fila-filtros-top.px]="alturaEncabezado()">
-            <th class="col-check"></th>
-            <th><input type="text" [ngModel]="filtroUsuario()" (ngModelChange)="filtroUsuario.set($event)" placeholder="Filtrar..." /></th>
-            <th><input type="text" [ngModel]="filtroRol()" (ngModelChange)="filtroRol.set($event)" placeholder="Filtrar..." /></th>
-            <th><input type="text" [ngModel]="filtroIpUbicacion()" (ngModelChange)="filtroIpUbicacion.set($event)" placeholder="Filtrar..." /></th>
-            <th><input type="text" [ngModel]="filtroPais()" (ngModelChange)="filtroPais.set($event)" placeholder="Filtrar..." /></th>
-            <th><input type="text" [ngModel]="filtroInicio()" (ngModelChange)="filtroInicio.set($event)" placeholder="Filtrar..." /></th>
-            <th><input type="text" [ngModel]="filtroCierre()" (ngModelChange)="filtroCierre.set($event)" placeholder="Filtrar..." /></th>
-            <th><input type="text" [ngModel]="filtroDuracion()" (ngModelChange)="filtroDuracion.set($event)" placeholder="Filtrar..." /></th>
-            <th><input type="text" [ngModel]="filtroMotivo()" (ngModelChange)="filtroMotivo.set($event)" placeholder="Filtrar..." /></th>
-            <th></th>
+            <th>
+              <div class="col-titulo">Usuario</div>
+              <input type="text" [ngModel]="filtroUsuario()" (ngModelChange)="filtroUsuario.set($event)" placeholder="Filtrar..." />
+            </th>
+            <th>
+              <div class="col-titulo">Rol</div>
+              <input type="text" [ngModel]="filtroRol()" (ngModelChange)="filtroRol.set($event)" placeholder="Filtrar..." />
+            </th>
+            <th>
+              <div class="col-titulo">IP / Ubicación</div>
+              <input type="text" [ngModel]="filtroIpUbicacion()" (ngModelChange)="filtroIpUbicacion.set($event)" placeholder="Filtrar..." />
+            </th>
+            <th>
+              <div class="col-titulo">País</div>
+              <input type="text" [ngModel]="filtroPais()" (ngModelChange)="filtroPais.set($event)" placeholder="Filtrar..." />
+            </th>
+            <th>
+              <div class="col-titulo">Inicio de Sesión</div>
+              <input type="text" [ngModel]="filtroInicio()" (ngModelChange)="filtroInicio.set($event)" placeholder="Filtrar..." />
+            </th>
+            <th>
+              <div class="col-titulo">Cierre de Sesión</div>
+              <input type="text" [ngModel]="filtroCierre()" (ngModelChange)="filtroCierre.set($event)" placeholder="Filtrar..." />
+            </th>
+            <th>
+              <div class="col-titulo">Duración</div>
+              <input type="text" [ngModel]="filtroDuracion()" (ngModelChange)="filtroDuracion.set($event)" placeholder="Filtrar..." />
+            </th>
+            <th>
+              <div class="col-titulo">Motivo</div>
+              <input type="text" [ngModel]="filtroMotivo()" (ngModelChange)="filtroMotivo.set($event)" placeholder="Filtrar..." />
+            </th>
+            <th>
+              <div class="col-titulo">Acción</div>
+            </th>
           </tr>
         </thead>
         <tbody>

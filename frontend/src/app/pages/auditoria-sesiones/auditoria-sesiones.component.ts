@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as L from 'leaflet';
@@ -47,16 +47,9 @@ function haceDiasISO(dias: number): string {
   templateUrl: './auditoria-sesiones.component.html',
   styleUrls: ['./auditoria-sesiones.component.scss']
 })
-export class AuditoriaSesionesComponent implements OnInit, OnDestroy {
+export class AuditoriaSesionesComponent implements OnInit {
   private readonly apiBaseUrl = environment.apiUrl;
   private mapaPopup: L.Map | null = null;
-  private resizeObserver: ResizeObserver | null = null;
-
-  // Altura real del encabezado de la tabla, medida en el DOM (no fija):
-  // el texto de columnas como "Cierre de Sesión" puede envolver a 2 líneas
-  // según el ancho de pantalla/zoom, así que un valor fijo en px desalinea
-  // la fila de filtros (que debe ir pegada justo debajo).
-  alturaEncabezado = signal(48);
 
   sesionMapaAbierta = signal<SesionAuditoria | null>(null);
 
@@ -189,31 +182,7 @@ export class AuditoriaSesionesComponent implements OnInit, OnDestroy {
       this.sesiones.set([]);
     } finally {
       this.loading.set(false);
-      setTimeout(() => this.observarAlturaEncabezado(), 0);
     }
-  }
-
-  ngOnDestroy(): void {
-    this.resizeObserver?.disconnect();
-  }
-
-  private observarAlturaEncabezado(): void {
-    const headerRow = document.querySelector('.resultados-card thead tr:first-child') as HTMLElement | null;
-    if (!headerRow) return;
-
-    this.resizeObserver?.disconnect();
-    this.resizeObserver = new ResizeObserver(() => {
-      // entry.contentRect excluye el padding del <th> aunque el elemento use
-      // box-sizing:border-box (contentRect siempre es solo el área de
-      // contenido) -- por eso se recalcula con getBoundingClientRect, que sí
-      // incluye padding/borde. Se suma +2px de margen porque a ciertos
-      // niveles de zoom/escalado de pantalla el alto real cae en un valor
-      // fraccionario que Math.ceil no siempre redondea lo suficiente,
-      // dejando una línea del cuerpo de la tabla asomando por detrás.
-      const alto = Math.ceil(headerRow.getBoundingClientRect().height) + 2;
-      if (alto > 0) this.alturaEncabezado.set(alto);
-    });
-    this.resizeObserver.observe(headerRow);
   }
 
   esSeleccionable(s: SesionAuditoria): boolean {
