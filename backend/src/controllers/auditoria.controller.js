@@ -36,8 +36,13 @@ export const listarSesiones = async (req, res, next) => {
     const { esGlobal, idCapitulo } = resolverScope(req);
     const { desde, hasta, usuario } = req.query;
 
+    // Token de la sesión que hace esta misma petición (ya validado por
+    // authMiddleware): permite marcar en el resultado cuál fila es la
+    // sesión actual del usuario, sin exponer ningún token al frontend.
+    const tokenActual = (req.headers.authorization || '').split(' ')[1] || null;
+
     const condiciones = [];
-    const valores = [];
+    const valores = [tokenActual];
 
     if (!esGlobal) {
       if (idCapitulo == null) {
@@ -78,6 +83,7 @@ export const listarSesiones = async (req, res, next) => {
          s.geo_ciudad,
          s.geo_lat,
          s.geo_lon,
+         (s.token = $1) AS es_sesion_actual,
          s.creado_en AS login_en,
          s.activo,
          CASE WHEN s.activo = false

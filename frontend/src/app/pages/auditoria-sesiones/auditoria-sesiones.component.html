@@ -136,7 +136,9 @@
               />
             </td>
             <td>
-              <strong>{{ s.usuario_nombre }}</strong><br>
+              <strong>{{ s.usuario_nombre }}</strong>
+              <span *ngIf="s.es_sesion_actual" class="badge badge-en-curso" title="Esta es tu sesión actual">Tú</span>
+              <br>
               <span class="cell-subtext">{{ s.usuario_email }}</span>
             </td>
             <td>{{ s.rol_nombre || s.rol_codigo || '-' }}</td>

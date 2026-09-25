@@ -22,6 +22,7 @@ type SesionAuditoria = {
   geo_ciudad: string | null;
   geo_lat: number | null;
   geo_lon: number | null;
+  es_sesion_actual: boolean;
   login_en: string;
   logout_en: string | null;
   duracion_segundos: number | null;
@@ -186,7 +187,9 @@ export class AuditoriaSesionesComponent implements OnInit {
   }
 
   esSeleccionable(s: SesionAuditoria): boolean {
-    return s.motivo_salida === 'en_curso';
+    // La propia sesión actual nunca se puede seleccionar ni terminar desde
+    // aquí (cerrarla a mitad de uso deja la pantalla sin sesión válida).
+    return s.motivo_salida === 'en_curso' && !s.es_sesion_actual;
   }
 
   estaSeleccionada(id: number): boolean {
@@ -209,29 +212,15 @@ export class AuditoriaSesionesComponent implements OnInit {
     this.seleccionadas.set(todasSeleccionadas ? new Set() : new Set(seleccionables));
   }
 
-  private esSesionPropia(s: SesionAuditoria): boolean {
-    const idPropio = this.sessionService.user()?.idUsuario;
-    return idPropio != null && Number(idPropio) === Number(s.id_usuario);
-  }
-
   async cerrarSeleccionadas(): Promise<void> {
     const ids = Array.from(this.seleccionadas());
     if (ids.length === 0) return;
-
-    const incluyeLaPropia = this.sesionesFiltradas().some(s => ids.includes(s.id) && this.esSesionPropia(s));
-    const advertencia = incluyeLaPropia
-      ? ' ⚠️ Entre ellas está tu propia sesión: si la cierras, se cerrará tu sesión actual y deberás iniciar sesión de nuevo.'
-      : '';
-
-    if (!confirm(`¿Cerrar ${ids.length} sesión(es) activa(s)? El usuario deberá iniciar sesión nuevamente.${advertencia}`)) return;
+    if (!confirm(`¿Cerrar ${ids.length} sesión(es) activa(s)? El usuario deberá iniciar sesión nuevamente.`)) return;
     await this.ejecutarCierre(ids);
   }
 
   async cerrarSesionUnica(s: SesionAuditoria): Promise<void> {
-    const advertencia = this.esSesionPropia(s)
-      ? ' ⚠️ Es tu propia sesión actual: se cerrará y deberás iniciar sesión de nuevo.'
-      : '';
-    if (!confirm(`¿Cerrar la sesión activa de ${s.usuario_nombre}?${advertencia}`)) return;
+    if (!confirm(`¿Cerrar la sesión activa de ${s.usuario_nombre}?`)) return;
     await this.ejecutarCierre([s.id]);
   }
 
