@@ -62,7 +62,7 @@ async function tienePermisoEnMatriz(rolId, userId, codigoPermiso) {
        JOIN public.menus m ON rmp.menu_id = m.id
        JOIN public.permisos p ON rmp.permiso_id = p.id
        WHERE rmp.rol_id = $1 
-         AND (m.ruta = '/mis-fincas' OR m.ruta = 'mis-fincas' OR m.ruta = '/fincas')
+         AND (m.ruta = '/mis-fincas' OR m.ruta = 'mis-fincas' OR m.ruta = '/fincas' OR m.ruta = '/mapafincas' OR m.ruta = 'mapafincas')
          AND LOWER(p.codigo) = LOWER($2)`,
       [finalRolId, codigoPermiso]
     );
