@@ -21,6 +21,15 @@ export class SessionService implements OnDestroy {
     return isSuper || hasRole;
   });
 
+  /** Editar datos de otro usuario / resetear su contraseña: solo admin y superadmin (no secretaría). */
+  readonly puedeEditarUsuarios = computed(() => {
+    const u = this.user();
+    if (!u) return false;
+    const isSuper = u.isSuperadmin === true || u.email === 'superadmin@agro.com';
+    const esAdmin = u.rol === 'admin' || u.rol === 'adm' || u.rol === 'superadmin';
+    return isSuper || esAdmin;
+  });
+
   /** Carga el usuario desde localStorage (llamar al iniciar la app/dashboard). */
   loadUserFromStorage(): boolean {
     const userStr = localStorage.getItem('agro_session_user');

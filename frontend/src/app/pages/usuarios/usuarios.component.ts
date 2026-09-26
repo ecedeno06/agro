@@ -29,6 +29,7 @@ type Usuario = {
   email: string;
   password?: string;
   telefono?: string;
+  telefono_whatsapp?: boolean;
   /** Códigos de rol reales provenientes de catalogo_rol (puede ser "adm, sec"). */
   rol: string;
   /** Rol a asignar al crear: se envía como idRol al backend. */
@@ -239,6 +240,15 @@ export class UsuariosComponent implements OnInit {
     } else {
       this.juntaDirectiva.set([]);
     }
+  }
+
+  /** El hijo (usuario-tab) emite el usuario con los datos ya editados/reseteados en el backend. */
+  async onUsuarioActualizado(usuarioActualizado: any): Promise<void> {
+    const actual = this.selectedUser();
+    if (actual) {
+      this.selectedUser.set({ ...actual, ...usuarioActualizado });
+    }
+    await this.cargarUsuarios();
   }
 
   cerrarDetalle(): void {

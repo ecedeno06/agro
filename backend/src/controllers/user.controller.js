@@ -23,7 +23,7 @@ export const getUsuarios = async (req, res, next) => {
     // para usuarios que aún no tienen ninguna asignación en usuario_rol.
     const result = await query(
       `SELECT
-         u."idUsuario", u.nombre, u.apellidos, u.email, u.telefono, u.activo,
+         u."idUsuario", u.nombre, u.apellidos, u.email, u.telefono, u.telefono_whatsapp, u.activo,
          u.tipo_persona, u.dni, u.ruc, u.no_aviso_operacion, u.fecha_aviso_operacion,
          u.rep_legal, u.fecha_creacion,
          COALESCE(r.roles_codigos, u.rol)      AS rol,
@@ -287,51 +287,180 @@ export const cambiarPassword = async (req, res, next) => {
   }
 };
 
+/** Genera una contraseña aleatoria según las políticas de .env (largo, mayúsculas, números, especiales). */
+function generarPasswordSegura() {
+  const length = parseInt(process.env.PASSWORD_LENGTH || '12', 10);
+  const requireSpecial = process.env.PASSWORD_REQUIRE_SPECIAL === 'true';
+  const requireUpper = process.env.PASSWORD_REQUIRE_UPPERCASE === 'true';
+  const requireNumbers = process.env.PASSWORD_REQUIRE_NUMBERS === 'true';
+
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  const special = '!@#$%^&*()_+~|}{[]:;?><,./-=';
+
+  let pool = lowercase;
+  let password = '';
+
+  // Garantizar al menos uno de cada tipo requerido
+  if (requireUpper) {
+    pool += uppercase;
+    password += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
+  }
+  if (requireNumbers) {
+    pool += numbers;
+    password += numbers.charAt(Math.floor(Math.random() * numbers.length));
+  }
+  if (requireSpecial) {
+    pool += special;
+    password += special.charAt(Math.floor(Math.random() * special.length));
+  }
+  // Siempre al menos una minúscula
+  password += lowercase.charAt(Math.floor(Math.random() * lowercase.length));
+
+  // Completar el resto hasta el largo deseado
+  const remainingLength = length - password.length;
+  for (let i = 0; i < remainingLength; i++) {
+    password += pool.charAt(Math.floor(Math.random() * pool.length));
+  }
+
+  // Mezclar el password final para que los caracteres requeridos no queden siempre al inicio
+  const passwordArray = password.split('');
+  for (let i = passwordArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [passwordArray[i], passwordArray[j]] = [passwordArray[j], passwordArray[i]];
+  }
+
+  return passwordArray.join('');
+}
+
+/** Solo administrador de capítulo ('adm') o superadmin pueden editar datos/resetear contraseñas de otros usuarios. */
+function esAdminOSuperadmin(req) {
+  const rol = (req.userRol || '').toLowerCase();
+  return rol === 'adm' || rol === 'superadmin';
+}
+
 export const generarPassword = async (req, res, next) => {
   try {
-    const length = parseInt(process.env.PASSWORD_LENGTH || '12', 10);
-    const requireSpecial = process.env.PASSWORD_REQUIRE_SPECIAL === 'true';
-    const requireUpper = process.env.PASSWORD_REQUIRE_UPPERCASE === 'true';
-    const requireNumbers = process.env.PASSWORD_REQUIRE_NUMBERS === 'true';
+    return res.status(200).json({ password: generarPasswordSegura() });
+  } catch (error) {
+    next(error);
+  }
+};
 
-    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const numbers = '0123456789';
-    const special = '!@#$%^&*()_+~|}{[]:;?><,./-=';
+/**
+ * Actualizar los datos de un usuario (solo admin/superadmin). A diferencia
+ * de actualizarPerfilPropio, este endpoint opera sobre cualquier usuario
+ * indicado por :id, no sobre req.userId.
+ */
+export const actualizarUsuarioAdmin = async (req, res, next) => {
+  if (!esAdminOSuperadmin(req)) {
+    return res.status(403).json({ message: 'Solo un administrador puede editar los datos de un usuario.' });
+  }
 
-    let pool = lowercase;
-    let password = '';
+  const { id } = req.params;
+  const {
+    nombre,
+    apellidos,
+    email,
+    telefono,
+    telefono_whatsapp,
+    tipo_persona,
+    dni,
+    ruc,
+    no_aviso_operacion,
+    fecha_aviso_operacion,
+    rep_legal
+  } = req.body;
 
-    // Garantizar al menos uno de cada tipo requerido
-    if (requireUpper) {
-      pool += uppercase;
-      password += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
-    }
-    if (requireNumbers) {
-      pool += numbers;
-      password += numbers.charAt(Math.floor(Math.random() * numbers.length));
-    }
-    if (requireSpecial) {
-      pool += special;
-      password += special.charAt(Math.floor(Math.random() * special.length));
-    }
-    // Siempre al menos una minúscula
-    password += lowercase.charAt(Math.floor(Math.random() * lowercase.length));
-
-    // Completar el resto hasta el largo deseado
-    const remainingLength = length - password.length;
-    for (let i = 0; i < remainingLength; i++) {
-      password += pool.charAt(Math.floor(Math.random() * pool.length));
-    }
-
-    // Mezclar el password final para que los caracteres requeridos no queden siempre al inicio
-    const passwordArray = password.split('');
-    for (let i = passwordArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [passwordArray[i], passwordArray[j]] = [passwordArray[j], passwordArray[i]];
+  try {
+    if (!nombre || !nombre.trim() || !email || !email.trim()) {
+      return res.status(400).json({ message: 'Nombre y correo electrónico son obligatorios.' });
     }
 
-    return res.status(200).json({ password: passwordArray.join('') });
+    const result = await query(
+      `UPDATE public.usuarios SET
+         nombre = $1,
+         apellidos = $2,
+         email = $3,
+         telefono = $4,
+         telefono_whatsapp = $5,
+         tipo_persona = $6,
+         dni = $7,
+         ruc = $8,
+         no_aviso_operacion = $9,
+         fecha_aviso_operacion = $10,
+         rep_legal = $11
+       WHERE "idUsuario" = $12
+       RETURNING "idUsuario", nombre, apellidos, email, telefono, telefono_whatsapp,
+                 tipo_persona, dni, ruc, no_aviso_operacion, fecha_aviso_operacion, rep_legal, activo`,
+      [
+        nombre.trim(),
+        apellidos ? apellidos.trim() : null,
+        email.trim(),
+        telefono || null,
+        !!telefono_whatsapp,
+        tipo_persona || 'natural',
+        dni || null,
+        ruc || null,
+        no_aviso_operacion || null,
+        fecha_aviso_operacion || null,
+        rep_legal || null,
+        id
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+
+    return res.status(200).json({ message: 'Usuario actualizado correctamente.', usuario: result.rows[0] });
+  } catch (error) {
+    if (error.code === '23505') {
+      return res.status(409).json({ message: 'Ya existe un usuario con ese correo electrónico.' });
+    }
+    next(error);
+  }
+};
+
+/**
+ * Restablecer la contraseña de un usuario (solo admin/superadmin). Genera una
+ * nueva contraseña aleatoria, obliga a cambiarla en el próximo login, y
+ * devuelve la contraseña en texto plano junto al teléfono del usuario para
+ * que el frontend arme el enlace de WhatsApp (wa.me) que la comparte.
+ */
+export const resetPasswordAdmin = async (req, res, next) => {
+  if (!esAdminOSuperadmin(req)) {
+    return res.status(403).json({ message: 'Solo un administrador puede restablecer la contraseña de un usuario.' });
+  }
+
+  const { id } = req.params;
+
+  try {
+    const usuarioRes = await query(
+      'SELECT "idUsuario", nombre, telefono, telefono_whatsapp FROM public.usuarios WHERE "idUsuario" = $1',
+      [id]
+    );
+    if (usuarioRes.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+
+    const nuevaPassword = generarPasswordSegura();
+    const hash = await bcrypt.hash(nuevaPassword, 10);
+
+    await query(
+      'UPDATE public.usuarios SET password = $1, debe_cambiar_password = true WHERE "idUsuario" = $2',
+      [hash, id]
+    );
+
+    const usuario = usuarioRes.rows[0];
+    return res.status(200).json({
+      message: 'Contraseña restablecida correctamente.',
+      password: nuevaPassword,
+      nombre: usuario.nombre,
+      telefono: usuario.telefono,
+      telefonoWhatsapp: usuario.telefono_whatsapp
+    });
   } catch (error) {
     next(error);
   }

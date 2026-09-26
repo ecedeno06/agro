@@ -22,16 +22,103 @@
 
   <!-- 1. PESTAÑA: DATOS GENERALES -->
   <div class="tab-content-container" *ngIf="activeSubTab() === 'generales'">
-    <div class="detail-grid">
+
+    <!-- ACCIONES DE ADMINISTRADOR: editar datos / resetear contraseña -->
+    <div class="admin-actions-bar" *ngIf="sessionService.puedeEditarUsuarios()">
+      <button type="button" class="icon-btn" title="Editar datos del usuario" *ngIf="!editandoDatos()" (click)="activarEdicionDatos()">
+        ✏️
+      </button>
+      <button
+        type="button"
+        class="icon-btn"
+        title="Restablecer contraseña y enviar por WhatsApp"
+        [disabled]="reseteandoPassword()"
+        (click)="resetearPasswordWhatsapp()"
+      >
+        {{ reseteandoPassword() ? '⏳' : '🔑' }}
+      </button>
+    </div>
+
+    <div class="alert danger animate-in" *ngIf="resetErrorMsg()">{{ resetErrorMsg() }}</div>
+    <div class="alert success animate-in" *ngIf="resetSuccessMsg()">{{ resetSuccessMsg() }}</div>
+    <div class="password-generada-box" *ngIf="passwordGenerada()">
+      <span>🔑 Nueva contraseña temporal:</span>
+      <code>{{ passwordGenerada() }}</code>
+      <button type="button" class="icon-btn" title="Copiar" (click)="copiarPasswordGenerada()">📋</button>
+    </div>
+
+    <!-- FORMULARIO DE EDICIÓN -->
+    <div class="glass-card edit-form-card" *ngIf="editandoDatos()">
+      <div class="alert danger animate-in" *ngIf="datosErrorMsg()">{{ datosErrorMsg() }}</div>
+      <form (submit)="$event.preventDefault(); guardarDatosUsuario()" class="modal-form">
+        <div class="form-grid-2col">
+          <label class="form-field">
+            <span>Nombre *</span>
+            <input type="text" [ngModel]="editForm().nombre" (ngModelChange)="actualizarCampoEdicion('nombre', $event)" name="editNombre" required [disabled]="guardandoDatos()" />
+          </label>
+          <label class="form-field">
+            <span>Apellidos</span>
+            <input type="text" [ngModel]="editForm().apellidos" (ngModelChange)="actualizarCampoEdicion('apellidos', $event)" name="editApellidos" [disabled]="guardandoDatos()" />
+          </label>
+          <label class="form-field">
+            <span>Correo Electrónico *</span>
+            <input type="email" [ngModel]="editForm().email" (ngModelChange)="actualizarCampoEdicion('email', $event)" name="editEmail" required [disabled]="guardandoDatos()" />
+          </label>
+          <label class="form-field">
+            <span>Teléfono</span>
+            <input type="text" [ngModel]="editForm().telefono" (ngModelChange)="actualizarCampoEdicion('telefono', $event)" name="editTelefono" placeholder="Ej. +507 6123-4567" [disabled]="guardandoDatos()" />
+          </label>
+          <label class="form-field">
+            <span>Tipo de Persona</span>
+            <select [ngModel]="editForm().tipo_persona" (ngModelChange)="actualizarCampoEdicion('tipo_persona', $event)" name="editTipoPersona" [disabled]="guardandoDatos()">
+              <option value="natural">Natural</option>
+              <option value="juridica">Jurídica</option>
+            </select>
+          </label>
+          <label class="form-field">
+            <span>Cédula/DNI</span>
+            <input type="text" [ngModel]="editForm().dni" (ngModelChange)="actualizarCampoEdicion('dni', $event)" name="editDni" [disabled]="guardandoDatos()" />
+          </label>
+          <label class="form-field" *ngIf="editForm().tipo_persona === 'juridica'">
+            <span>RUC</span>
+            <input type="text" [ngModel]="editForm().ruc" (ngModelChange)="actualizarCampoEdicion('ruc', $event)" name="editRuc" [disabled]="guardandoDatos()" />
+          </label>
+          <label class="form-field" *ngIf="editForm().tipo_persona === 'juridica'">
+            <span>Aviso de Operación</span>
+            <input type="text" [ngModel]="editForm().no_aviso_operacion" (ngModelChange)="actualizarCampoEdicion('no_aviso_operacion', $event)" name="editAviso" [disabled]="guardandoDatos()" />
+          </label>
+          <label class="form-field" *ngIf="editForm().tipo_persona === 'juridica'">
+            <span>Fecha de Aviso</span>
+            <input type="date" [ngModel]="editForm().fecha_aviso_operacion" (ngModelChange)="actualizarCampoEdicion('fecha_aviso_operacion', $event)" name="editFechaAviso" [disabled]="guardandoDatos()" />
+          </label>
+        </div>
+
+        <label class="form-field checkbox-field">
+          <input type="checkbox" [ngModel]="editForm().telefono_whatsapp" (ngModelChange)="actualizarCampoEdicion('telefono_whatsapp', $event)" name="editTelefonoWhatsapp" [disabled]="guardandoDatos()" />
+          <span>📱 Este teléfono recibe mensajes de Whatsapp</span>
+        </label>
+
+        <div class="modal-actions">
+          <button type="submit" class="action-btn save-btn" [disabled]="guardandoDatos() || !editForm().nombre.trim() || !editForm().email.trim()">
+            {{ guardandoDatos() ? 'Guardando...' : '💾 Guardar' }}
+          </button>
+          <button type="button" class="action-btn cancel-btn" (click)="cancelarEdicionDatos()" [disabled]="guardandoDatos()">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="detail-grid" *ngIf="!editandoDatos()">
       <!-- Ficha de Datos del Usuario -->
       <div class="info-block">
         <h3>Datos Principales</h3>
         <div class="detail-row"><span class="label">Tipo Persona:</span> <span class="value">{{ user.tipo_persona === 'juridica' ? 'Jurídica' : 'Natural' }}</span></div>
         <div class="detail-row" *ngIf="user.apellidos"><span class="label">Apellidos:</span> <span class="value">{{ user.apellidos }}</span></div>
         <div class="detail-row"><span class="label">Email:</span> <span class="value">{{ user.email }}</span></div>
-        <div class="detail-row"><span class="label">Teléfono:</span> <span class="value">{{ user.telefono || 'No registrado' }}</span></div>
+        <div class="detail-row"><span class="label">Teléfono:</span> <span class="value">{{ user.telefono || 'No registrado' }}{{ user.telefono && user.telefono_whatsapp ? ' 📱' : '' }}</span></div>
         <div class="detail-row"><span class="label">Rol(es):</span> <span class="value uppercase">{{ user.rol }}</span></div>
-        <div class="detail-row"><span class="label">Estado de Acceso:</span> 
+        <div class="detail-row"><span class="label">Estado de Acceso:</span>
           <span class="value" [class.active]="user.activo !== false">
             {{ user.activo !== false ? 'Activo' : 'Inactivo (Solo Registro)' }}
           </span>

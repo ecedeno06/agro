@@ -30,4 +30,9 @@ router.delete('/roles/:idRegistro', authMiddleware, userController.eliminarRolUs
 router.put('/avatar', authMiddleware, userController.actualizarAvatar);
 router.delete('/avatar', authMiddleware, userController.eliminarAvatar);
 
+// Edición de datos y reseteo de contraseña por un administrador (van al final
+// para no chocar con las rutas literales de arriba, ej. /perfil, /avatar).
+router.put('/:id', authMiddleware, userController.actualizarUsuarioAdmin);
+router.post('/:id/reset-password', authMiddleware, userController.resetPasswordAdmin);
+
 export default router;

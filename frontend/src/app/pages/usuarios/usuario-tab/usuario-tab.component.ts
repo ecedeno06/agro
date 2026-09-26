@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, signal, computed, inject, ElementRef, Renderer2, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, signal, computed, inject, ElementRef, Renderer2, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../environments/environment';
@@ -45,7 +45,35 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
   @Input() nuevaJuntaRolId: any = null;
   @Input() loading: boolean = false;
 
+  /** Emite el usuario actualizado tras editar datos o resetear contraseña, para que el padre refresque tabla + selección. */
+  @Output() usuarioActualizado = new EventEmitter<any>();
+
   readonly activeSubTab = signal<'generales' | 'roles'>('generales');
+
+  // --- Edición de datos del usuario (solo admin/superadmin) ---
+  readonly editandoDatos = signal(false);
+  readonly guardandoDatos = signal(false);
+  readonly datosErrorMsg = signal('');
+  readonly datosSuccessMsg = signal('');
+  readonly editForm = signal({
+    nombre: '',
+    apellidos: '',
+    email: '',
+    telefono: '',
+    telefono_whatsapp: false,
+    tipo_persona: 'natural' as 'natural' | 'juridica',
+    dni: '',
+    ruc: '',
+    no_aviso_operacion: '',
+    fecha_aviso_operacion: '',
+    rep_legal: null as number | null
+  });
+
+  // --- Reseteo de contraseña (solo admin/superadmin) ---
+  readonly reseteandoPassword = signal(false);
+  readonly passwordGenerada = signal<string | null>(null);
+  readonly resetErrorMsg = signal('');
+  readonly resetSuccessMsg = signal('');
   readonly sessionService = inject(SessionService);
   private readonly renderer = inject(Renderer2);
 
@@ -107,6 +135,12 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['user'] && !changes['user'].firstChange) {
       this.cargarDatosRoles();
+      this.editandoDatos.set(false);
+      this.datosErrorMsg.set('');
+      this.datosSuccessMsg.set('');
+      this.passwordGenerada.set(null);
+      this.resetErrorMsg.set('');
+      this.resetSuccessMsg.set('');
     }
   }
 
@@ -317,6 +351,118 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
       this.rolesErrorMsg.set(error.message || 'Error al eliminar rol.');
     } finally {
       this.rolesLoading.set(false);
+    }
+  }
+
+  // ==============================================
+  // EDICIÓN DE DATOS DEL USUARIO (solo admin/superadmin)
+  // ==============================================
+
+  activarEdicionDatos(): void {
+    this.editForm.set({
+      nombre: this.user?.nombre || '',
+      apellidos: this.user?.apellidos || '',
+      email: this.user?.email || '',
+      telefono: this.user?.telefono || '',
+      telefono_whatsapp: !!this.user?.telefono_whatsapp,
+      tipo_persona: this.user?.tipo_persona === 'juridica' ? 'juridica' : 'natural',
+      dni: this.user?.dni || '',
+      ruc: this.user?.ruc || '',
+      no_aviso_operacion: this.user?.no_aviso_operacion || '',
+      fecha_aviso_operacion: (this.user?.fecha_aviso_operacion || '').toString().substring(0, 10),
+      rep_legal: this.user?.rep_legal ?? null
+    });
+    this.datosErrorMsg.set('');
+    this.datosSuccessMsg.set('');
+    this.editandoDatos.set(true);
+  }
+
+  cancelarEdicionDatos(): void {
+    this.editandoDatos.set(false);
+    this.datosErrorMsg.set('');
+  }
+
+  actualizarCampoEdicion<K extends keyof ReturnType<typeof this.editForm>>(campo: K, valor: ReturnType<typeof this.editForm>[K]): void {
+    this.editForm.set({ ...this.editForm(), [campo]: valor });
+  }
+
+  async guardarDatosUsuario(): Promise<void> {
+    if (!this.user?.idUsuario) return;
+    const f = this.editForm();
+    if (!f.nombre.trim() || !f.email.trim()) {
+      this.datosErrorMsg.set('Nombre y correo electrónico son obligatorios.');
+      return;
+    }
+
+    this.guardandoDatos.set(true);
+    this.datosErrorMsg.set('');
+    this.datosSuccessMsg.set('');
+
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/usuarios/${this.user.idUsuario}`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(f)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'No se pudieron guardar los datos del usuario.');
+
+      this.datosSuccessMsg.set('Datos del usuario actualizados correctamente.');
+      this.editandoDatos.set(false);
+      this.usuarioActualizado.emit(data.usuario);
+    } catch (error: any) {
+      this.datosErrorMsg.set(error.message || 'No se pudieron guardar los datos del usuario.');
+    } finally {
+      this.guardandoDatos.set(false);
+    }
+  }
+
+  // ==============================================
+  // RESETEO DE CONTRASEÑA POR WHATSAPP (solo admin/superadmin)
+  // ==============================================
+
+  async resetearPasswordWhatsapp(): Promise<void> {
+    if (!this.user?.idUsuario) return;
+    if (!confirm(`¿Restablecer la contraseña de ${this.user.nombre}? Deberá cambiarla en su próximo inicio de sesión.`)) return;
+
+    this.reseteandoPassword.set(true);
+    this.resetErrorMsg.set('');
+    this.resetSuccessMsg.set('');
+    this.passwordGenerada.set(null);
+
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/usuarios/${this.user.idUsuario}/reset-password`, {
+        method: 'POST',
+        headers: this.getAuthHeaders()
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'No se pudo restablecer la contraseña.');
+
+      this.passwordGenerada.set(data.password);
+
+      const digitos = (data.telefono || '').replace(/\D/g, '');
+      if (data.telefonoWhatsapp && digitos) {
+        const mensaje = `Hola ${data.nombre}, tu nueva contraseña temporal para AgroAzuero es: ${data.password}\nDeberás cambiarla al iniciar sesión.`;
+        window.open(`https://wa.me/${digitos}?text=${encodeURIComponent(mensaje)}`, '_blank');
+        this.resetSuccessMsg.set('Contraseña restablecida. Se abrió WhatsApp para enviarla al usuario.');
+      } else {
+        this.resetSuccessMsg.set('Contraseña restablecida. El usuario no tiene Whatsapp habilitado: compártela manualmente.');
+      }
+    } catch (error: any) {
+      this.resetErrorMsg.set(error.message || 'No se pudo restablecer la contraseña.');
+    } finally {
+      this.reseteandoPassword.set(false);
+    }
+  }
+
+  async copiarPasswordGenerada(): Promise<void> {
+    const pass = this.passwordGenerada();
+    if (!pass) return;
+    try {
+      await navigator.clipboard.writeText(pass);
+      this.resetSuccessMsg.set('Contraseña copiada al portapapeles.');
+    } catch {
+      // Clipboard API puede fallar sin HTTPS/permiso; el valor sigue visible en pantalla.
     }
   }
 }
