@@ -481,6 +481,51 @@ export const resetPasswordAdmin = async (req, res, next) => {
 };
 
 /**
+ * Activar/desactivar el acceso de un usuario (solo admin/superadmin). Un
+ * usuario con activo=false no puede iniciar sesión (ver auth.controller.js
+ * login, que filtra WHERE activo = true). Al bloquear el acceso, además se
+ * cierran de inmediato todas sus sesiones activas — pensado para el botón
+ * de "ubicación sospechosa" en Auditoría de Sesiones.
+ */
+export const toggleAccesoUsuario = async (req, res, next) => {
+  if (!esAdminOSuperadmin(req)) {
+    return res.status(403).json({ message: 'Solo un administrador puede activar/desactivar el acceso de un usuario.' });
+  }
+
+  const { id } = req.params;
+
+  if (String(id) === String(req.userId)) {
+    return res.status(400).json({ message: 'No puedes bloquear el acceso de tu propia cuenta.' });
+  }
+
+  try {
+    const actual = await query('SELECT activo FROM public.usuarios WHERE "idUsuario" = $1', [id]);
+    if (actual.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+
+    const nuevoEstado = !actual.rows[0].activo;
+    await query('UPDATE public.usuarios SET activo = $1 WHERE "idUsuario" = $2', [nuevoEstado, id]);
+
+    if (!nuevoEstado) {
+      await query(
+        `UPDATE public.sesiones SET activo = false, razon_salida = 'cerrada_por_admin',
+           duracion_segundos = EXTRACT(EPOCH FROM (NOW() - creado_en))::integer
+         WHERE id_usuario = $1 AND activo = true`,
+        [id]
+      );
+    }
+
+    return res.status(200).json({
+      message: nuevoEstado ? 'Acceso reactivado correctamente.' : 'Acceso bloqueado: el usuario ya no puede iniciar sesión y se cerraron sus sesiones activas.',
+      activo: nuevoEstado
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Obtener los roles asignados a un usuario específico
  */
 export const getRolesUsuario = async (req, res, next) => {

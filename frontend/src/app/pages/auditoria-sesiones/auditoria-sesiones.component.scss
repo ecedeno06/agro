@@ -316,6 +316,13 @@ thead th input {
   padding: 1.5rem;
 }
 
+.mapa-modal-info-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .mapa-modal-info {
   margin: 0 0 1rem;
   font-size: 0.9rem;

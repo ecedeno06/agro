@@ -9,6 +9,7 @@
     </div>
 
     <div *ngIf="errorMsg()" class="alert danger animate-in">{{ errorMsg() }}</div>
+    <div *ngIf="successMsg()" class="alert success animate-in">{{ successMsg() }}</div>
 
     <div class="filtro-bar">
       <div class="form-field">
@@ -190,10 +191,22 @@
         <button class="close-btn" type="button" (click)="cerrarMapa()">✕</button>
       </div>
       <div class="modal-body">
-        <p class="mapa-modal-info">
-          <strong>{{ s.usuario_nombre }}</strong> — {{ ubicacionTexto(s) }}<br>
-          IP: {{ s.ip_address || '-' }}
-        </p>
+        <div class="mapa-modal-info-row">
+          <p class="mapa-modal-info">
+            <strong>{{ s.usuario_nombre }}</strong> — {{ ubicacionTexto(s) }}<br>
+            IP: {{ s.ip_address || '-' }}
+          </p>
+          <button
+            type="button"
+            class="icon-btn icon-btn-danger"
+            title="¿Ubicación sospechosa? Bloquear el acceso de este usuario y cerrar todas sus sesiones"
+            *ngIf="!esPropiaCuenta(s)"
+            [disabled]="bloqueandoAcceso()"
+            (click)="bloquearAccesoUsuario(s)"
+          >
+            🚫
+          </button>
+        </div>
         <div id="auditoria-mapa-popup" class="mapa-modal-mapa"></div>
       </div>
     </div>

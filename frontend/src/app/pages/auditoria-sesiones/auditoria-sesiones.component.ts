@@ -65,6 +65,8 @@ export class AuditoriaSesionesComponent implements OnInit {
 
   seleccionadas = signal<Set<number>>(new Set());
   cerrandoSesiones = signal(false);
+  bloqueandoAcceso = signal(false);
+  successMsg = signal('');
 
   // Filtros de texto aproximado por columna (coincidencia parcial, sin
   // distinguir mayúsculas), aplicados en el cliente sobre lo ya cargado.
@@ -297,6 +299,40 @@ export class AuditoriaSesionesComponent implements OnInit {
       this.mapaPopup = null;
     }
     this.sesionMapaAbierta.set(null);
+  }
+
+  /** No tiene sentido ofrecer el botón sobre la propia cuenta del admin que está viendo el mapa. */
+  esPropiaCuenta(s: SesionAuditoria): boolean {
+    return String(this.sessionService.user()?.idUsuario) === String(s.id_usuario);
+  }
+
+  async bloquearAccesoUsuario(s: SesionAuditoria): Promise<void> {
+    if (this.esPropiaCuenta(s)) return;
+    if (!confirm(`¿Bloquear el acceso de ${s.usuario_nombre}? No podrá iniciar sesión hasta que lo reactives, y se cerrarán todas sus sesiones activas ahora mismo.`)) {
+      return;
+    }
+
+    this.bloqueandoAcceso.set(true);
+    this.errorMsg.set('');
+    this.successMsg.set('');
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/usuarios/${s.id_usuario}/toggle-acceso`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders()
+      });
+      if (this.manejarSesionExpirada(res.status)) return;
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'No se pudo bloquear el acceso del usuario.');
+
+      this.successMsg.set(data.message);
+      this.cerrarMapa();
+      await this.buscar();
+    } catch (error: any) {
+      this.errorMsg.set(error.message || 'No se pudo bloquear el acceso del usuario.');
+    } finally {
+      this.bloqueandoAcceso.set(false);
+    }
   }
 
   formatoDuracion(segundos: number | null): string {

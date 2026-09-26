@@ -34,5 +34,6 @@ router.delete('/avatar', authMiddleware, userController.eliminarAvatar);
 // para no chocar con las rutas literales de arriba, ej. /perfil, /avatar).
 router.put('/:id', authMiddleware, userController.actualizarUsuarioAdmin);
 router.post('/:id/reset-password', authMiddleware, userController.resetPasswordAdmin);
+router.put('/:id/toggle-acceso', authMiddleware, userController.toggleAccesoUsuario);
 
 export default router;
