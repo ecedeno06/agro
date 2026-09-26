@@ -114,31 +114,31 @@
                   </span>
                 </td>
                 <td style="text-align: right;">
-                  <button 
-                    type="button" 
-                    class="secondary-btn action-sm"
+                  <button
+                    type="button"
+                    class="icon-btn"
                     (click)="abrirFormularioEditar(f)"
                     title="Editar datos del fenómeno"
                   >
-                    ✏️ Editar
+                    ✏️
                   </button>
                   @if (f.activo) {
-                    <button 
-                      type="button" 
-                      class="danger-btn action-sm"
+                    <button
+                      type="button"
+                      class="icon-btn icon-btn-danger"
                       (click)="alternarEstado(f)"
                       title="Desactivar fenómeno"
                     >
-                      Desactivar
+                      🚫
                     </button>
                   } @else {
-                    <button 
-                      type="button" 
-                      class="primary-btn action-sm"
+                    <button
+                      type="button"
+                      class="icon-btn icon-btn-success"
                       (click)="alternarEstado(f)"
                       title="Activar fenómeno"
                     >
-                      Activar
+                      ✅
                     </button>
                   }
                 </td>

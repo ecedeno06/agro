@@ -297,6 +297,46 @@
   margin-left: 0.35rem;
 }
 
+.icon-btn {
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.35rem;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15));
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main, #f8fafc);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+  }
+}
+
+.icon-btn-danger {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.35);
+  }
+}
+
+.icon-btn-success {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.4);
+
+  &:hover {
+    background: rgba(16, 185, 129, 0.35);
+  }
+}
+
 .empty-state {
   padding: 2.5rem 1rem;
   text-align: center;
