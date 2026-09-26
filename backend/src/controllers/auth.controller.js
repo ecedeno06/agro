@@ -7,6 +7,7 @@ import { createSession } from './session.helper.js';
 import { obtenerIpCliente } from '../helpers/geoip.helper.js';
 import { esSuperadmin } from '../security/superuser.service.js';
 import { registrarAuditoria } from '../security/auditoria.service.js';
+import { enviarCorreo, escaparHtml } from '../utils/correo.js';
 
 // Encriptación simétrica para guardar el secret key del 2FA de forma segura
 const ALGORITHM = 'aes-256-cbc';
@@ -636,6 +637,8 @@ export const forgotPassword = async (req, res, next) => {
       return res.status(404).json({ message: 'El correo electrónico no está registrado.' });
     }
 
+    const usuario = result.rows[0];
+
     // Generar contraseña temporal aleatoria de 8 caracteres
     const tempPassword = Math.random().toString(36).substring(2, 10);
     const saltRounds = 10;
@@ -647,14 +650,17 @@ export const forgotPassword = async (req, res, next) => {
       [hashedPassword, email]
     );
 
-    console.log(`=========================================`);
-    console.log(`🔑 RECUPERACIÓN DE CONTRASEÑA`);
-    console.log(`Usuario: ${email}`);
-    console.log(`Contraseña Temporal Generada: ${tempPassword}`);
-    console.log(`=========================================`);
+    // Fire-and-forget: un fallo al enviar el correo no debe bloquear la
+    // respuesta ni revelar detalles del error al cliente.
+    enviarCorreo({
+      destinatario: email,
+      asunto: 'Recuperar tu contraseña — AgroNet',
+      texto: `Hola ${usuario.nombre},\n\nTu contraseña temporal es: ${tempPassword}\n\nDeberás cambiarla al iniciar sesión.\n\nSi no solicitaste esto, ignora este correo.`,
+      html: `<p>Hola ${escaparHtml(usuario.nombre)},</p><p>Tu contraseña temporal es: <strong>${escaparHtml(tempPassword)}</strong></p><p>Deberás cambiarla al iniciar sesión.</p><p>Si no solicitaste esto, ignora este correo.</p>`
+    }).catch((err) => console.error('Error enviando correo de recuperación de contraseña:', err.message));
 
     return res.status(200).json({
-      message: 'Se ha generado una contraseña temporal y se ha enviado a su correo (ver consola del backend).'
+      message: 'Se ha generado una contraseña temporal y se ha enviado a su correo electrónico.'
     });
 
   } catch (error) {

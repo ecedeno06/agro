@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { query, withTransaction } from '../db.js';
 import { resolverScope, puedeAccederCapitulo } from '../security/scope.helper.js';
 import { resolverRol } from '../security/rol.helper.js';
+import { enviarCorreo, escaparHtml } from '../utils/correo.js';
 
 export const getUsuarios = async (req, res, next) => {
   try {
@@ -438,7 +439,7 @@ export const resetPasswordAdmin = async (req, res, next) => {
 
   try {
     const usuarioRes = await query(
-      'SELECT "idUsuario", nombre, telefono, telefono_whatsapp FROM public.usuarios WHERE "idUsuario" = $1',
+      'SELECT "idUsuario", nombre, email, telefono, telefono_whatsapp FROM public.usuarios WHERE "idUsuario" = $1',
       [id]
     );
     if (usuarioRes.rows.length === 0) {
@@ -454,12 +455,25 @@ export const resetPasswordAdmin = async (req, res, next) => {
     );
 
     const usuario = usuarioRes.rows[0];
+
+    // Fire-and-forget: además del enlace de WhatsApp que arma el frontend,
+    // se envía la misma contraseña temporal por correo como canal adicional.
+    if (usuario.email) {
+      enviarCorreo({
+        destinatario: usuario.email,
+        asunto: 'Tu contraseña fue restablecida — AgroNet',
+        texto: `Hola ${usuario.nombre},\n\nUn administrador restableció tu contraseña. Tu nueva contraseña temporal es: ${nuevaPassword}\n\nDeberás cambiarla al iniciar sesión.`,
+        html: `<p>Hola ${escaparHtml(usuario.nombre)},</p><p>Un administrador restableció tu contraseña. Tu nueva contraseña temporal es: <strong>${escaparHtml(nuevaPassword)}</strong></p><p>Deberás cambiarla al iniciar sesión.</p>`
+      }).catch((err) => console.error('Error enviando correo de reseteo de contraseña:', err.message));
+    }
+
     return res.status(200).json({
       message: 'Contraseña restablecida correctamente.',
       password: nuevaPassword,
       nombre: usuario.nombre,
       telefono: usuario.telefono,
-      telefonoWhatsapp: usuario.telefono_whatsapp
+      telefonoWhatsapp: usuario.telefono_whatsapp,
+      emailEnviado: !!usuario.email
     });
   } catch (error) {
     next(error);

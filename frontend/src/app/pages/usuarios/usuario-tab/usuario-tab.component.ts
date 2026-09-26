@@ -440,13 +440,14 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
 
       this.passwordGenerada.set(data.password);
 
+      const emailTexto = data.emailEnviado ? ' y por correo' : '';
       const digitos = (data.telefono || '').replace(/\D/g, '');
       if (data.telefonoWhatsapp && digitos) {
-        const mensaje = `Hola ${data.nombre}, tu nueva contraseña temporal para AgroAzuero es: ${data.password}\nDeberás cambiarla al iniciar sesión.`;
+        const mensaje = `Hola ${data.nombre}, tu nueva contraseña temporal para AgroNet es: ${data.password}\nDeberás cambiarla al iniciar sesión.`;
         window.open(`https://wa.me/${digitos}?text=${encodeURIComponent(mensaje)}`, '_blank');
-        this.resetSuccessMsg.set('Contraseña restablecida. Se abrió WhatsApp para enviarla al usuario.');
+        this.resetSuccessMsg.set(`Contraseña restablecida. Se abrió WhatsApp${emailTexto} para enviarla al usuario.`);
       } else {
-        this.resetSuccessMsg.set('Contraseña restablecida. El usuario no tiene Whatsapp habilitado: compártela manualmente.');
+        this.resetSuccessMsg.set(`Contraseña restablecida${emailTexto ? ', enviada' + emailTexto : ''}. El usuario no tiene Whatsapp habilitado: compártela manualmente si no le llegó el correo.`);
       }
     } catch (error: any) {
       this.resetErrorMsg.set(error.message || 'No se pudo restablecer la contraseña.');
