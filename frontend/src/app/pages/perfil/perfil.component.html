@@ -4,13 +4,42 @@
   }
   <div class="profile-header">
     <div class="profile-header-left">
-      <span class="user-avatar-large">🚜</span>
+      <div class="user-avatar-large" (click)="selectorFotoPerfil.abrirSelector()" title="Cambiar foto">
+        <img *ngIf="user()?.avatar" [src]="user()?.avatar" alt="Avatar" />
+        <span *ngIf="!user()?.avatar" class="initials-large">{{ getUserInitials() }}</span>
+        <div class="avatar-overlay">📷</div>
+      </div>
       <div class="profile-info">
         <h2>{{ user()?.nombre }}</h2>
         <span class="badge" [class.admin]="user()?.rol === 'admin'">{{ user()?.rol }}</span>
       </div>
     </div>
   </div>
+
+  <app-selector-foto
+    #selectorFotoPerfil
+    style="display:contents"
+    [foto]="user()?.avatar"
+    [nombre]="user()?.nombre || ''"
+    [ocultarDisparador]="true"
+    [cuadrado]="true"
+    [tamano]="68"
+    (fotoCambiada)="onFotoPerfilCambiada($event)"
+    (fotoEliminada)="onFotoPerfilEliminada()"
+  ></app-selector-foto>
+
+  <div class="avatar-toast" *ngIf="avatarToast()" [class.error]="avatarToastError()">
+    {{ avatarToast() }}
+  </div>
+
+  <button
+    type="button"
+    class="remove-avatar-link"
+    *ngIf="user()?.avatar"
+    (click)="confirmarQuitarAvatar()"
+  >
+    🗑️ Quitar foto de perfil
+  </button>
 
   <hr class="divider">
 

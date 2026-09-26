@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SessionService } from '../../core/services/session.service';
 import { DireccionesComponent } from './direcciones/direcciones.component';
+import { SelectorFotoComponent } from '../../core/components/selector-foto/selector-foto.component';
 import { environment } from '../../../environments/environment';
 import { dividirTelefono, combinarTelefono, CODIGO_TELEFONO_DEFECTO } from '../../core/utils/telefono.util';
 
@@ -13,7 +14,7 @@ type OcupacionOpcion = { id: number; categoria_id: number; nombre_es: string; re
 @Component({
   selector: 'app-perfil',
   standalone: true,
-  imports: [CommonModule, FormsModule, DireccionesComponent],
+  imports: [CommonModule, FormsModule, DireccionesComponent, SelectorFotoComponent],
   templateUrl: './perfil.component.html',
   styleUrls: ['./perfil.component.scss']
 })
@@ -69,6 +70,10 @@ export class PerfilComponent implements OnInit {
   readonly editLoading = signal(false);
   readonly editError = signal('');
   readonly editSuccess = signal('');
+
+  readonly avatarToast = signal('');
+  readonly avatarToastError = signal(false);
+  private avatarToastTimer: any = null;
 
   readonly paisesTelefono = signal<PaisTelefonoOpcion[]>([]);
   readonly telefonoCodigoPais = signal(CODIGO_TELEFONO_DEFECTO);
@@ -350,5 +355,79 @@ export class PerfilComponent implements OnInit {
     } finally {
       this.loadingCuotas.set(false);
     }
+  }
+
+  // ==============================================
+  // AVATAR (mismo patrón que el dropdown del dashboard)
+  // ==============================================
+
+  getUserInitials(): string {
+    const u = this.user();
+    if (!u) return '?';
+    const nombre = (u.nombre || '').trim();
+    const apellidos = (u.apellidos || '').trim();
+    const first = nombre.charAt(0).toUpperCase();
+    const second = apellidos ? apellidos.charAt(0).toUpperCase() : (nombre.charAt(1) || '').toUpperCase();
+    return `${first}${second}` || '?';
+  }
+
+  /** El selector ya redujo/comprimió la imagen (canvas, máx. 300px, JPEG) antes de emitirla. */
+  async onFotoPerfilCambiada(base64: string): Promise<void> {
+    await this.uploadAvatar(base64);
+  }
+
+  /** El selector ya pidió confirmación antes de emitir esto. */
+  async onFotoPerfilEliminada(): Promise<void> {
+    await this.removeAvatar();
+  }
+
+  async confirmarQuitarAvatar(): Promise<void> {
+    if (!confirm('¿Eliminar tu foto de perfil?')) return;
+    await this.removeAvatar();
+  }
+
+  private async uploadAvatar(base64: string): Promise<void> {
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/usuarios/avatar`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ avatar: base64 })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Error al guardar avatar.');
+
+      const currentUser = this.user();
+      if (currentUser) {
+        this.sessionService.setUser({ ...currentUser, avatar: base64 });
+      }
+      this.showAvatarToast('✅ Foto de perfil actualizada.');
+    } catch (err: any) {
+      this.showAvatarToast(err.message || 'Error al subir imagen.', true);
+    }
+  }
+
+  private async removeAvatar(): Promise<void> {
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/usuarios/avatar`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+      if (!res.ok) throw new Error('Error al eliminar avatar.');
+
+      const currentUser = this.user();
+      if (currentUser) {
+        this.sessionService.setUser({ ...currentUser, avatar: null });
+      }
+      this.showAvatarToast('✅ Foto de perfil eliminada.');
+    } catch (err: any) {
+      this.showAvatarToast(err.message || 'Error al eliminar avatar.', true);
+    }
+  }
+
+  private showAvatarToast(msg: string, isError = false): void {
+    if (this.avatarToastTimer) clearTimeout(this.avatarToastTimer);
+    this.avatarToast.set(msg);
+    this.avatarToastError.set(isError);
+    this.avatarToastTimer = setTimeout(() => this.avatarToast.set(''), 3500);
   }
 }
