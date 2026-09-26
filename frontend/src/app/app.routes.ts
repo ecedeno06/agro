@@ -12,6 +12,7 @@ import { TipoTerrenoComponent } from './pages/tipo-terreno/tipo-terreno.componen
 import { TipoGeografiaComponent } from './pages/tipo-geografia/tipo-geografia.component';
 import { TipoEstadoLegalComponent } from './pages/tipo-estado-legal/tipo-estado-legal.component';
 import { PaisesComponent } from './pages/paises/paises.component';
+import { OcupacionesComponent } from './pages/ocupaciones/ocupaciones.component';
 import { FenomenosComponent } from './pages/fenomenos/fenomenos.component';
 import { MapaFincasComponent } from './pages/mapa-fincas/mapa-fincas.component';
 import { AuditoriaSesionesComponent } from './pages/auditoria-sesiones/auditoria-sesiones.component';
@@ -35,6 +36,7 @@ export const routes: Routes = [
       { path: 'tipo-geografia', component: TipoGeografiaComponent },
       { path: 'tipo-estado-legal', component: TipoEstadoLegalComponent },
       { path: 'paises', component: PaisesComponent },
+      { path: 'ocupaciones', component: OcupacionesComponent },
       { path: 'fenomenos', component: FenomenosComponent },
       { path: 'mapafincas', component: MapaFincasComponent },
 

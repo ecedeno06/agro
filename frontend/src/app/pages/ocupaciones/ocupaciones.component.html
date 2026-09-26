@@ -1,0 +1,284 @@
+<div class="mantenimiento-ocupaciones-container animate-in">
+
+  <!-- TABS: Categorías / Ocupaciones -->
+  <nav class="geo-tabs-nav">
+    <button type="button" class="geo-tab-btn" [class.active]="activeTab() === 'categorias'" (click)="activeTab.set('categorias')">
+      🗂️ Categorías
+    </button>
+    <button type="button" class="geo-tab-btn" [class.active]="activeTab() === 'ocupaciones'" (click)="activeTab.set('ocupaciones')">
+      💼 Ocupaciones
+    </button>
+  </nav>
+
+  @if (activeTab() === 'categorias') {
+
+  <!-- CARD: CATEGORÍAS -->
+  <section class="suelos-list-card">
+    <div class="card-header flex-header">
+      <div>
+        <h2>Categorías de Ocupación</h2>
+        <p class="subtitle">Agrupaciones del sector agro para clasificar las ocupaciones.</p>
+      </div>
+      <button type="button" class="action-btn register-suelo-btn" (click)="abrirNuevaCategoriaForm()">
+        {{ showCategoriaForm() && !editingCategoriaId() ? '❌ Cerrar Formulario' : '➕ Registrar Categoría' }}
+      </button>
+    </div>
+
+    <div *ngIf="successCategoriaMsg()" class="alert success animate-in" style="margin-top: 1.25rem;">
+      {{ successCategoriaMsg() }}
+    </div>
+    <div *ngIf="errorCategoriaMsg() && !showCategoriaForm()" class="alert danger animate-in" style="margin-top: 1.25rem;">
+      {{ errorCategoriaMsg() }}
+    </div>
+
+    <div class="search-container">
+      <div class="search-field">
+        <label for="globalSearchCategorias">🔎 Buscar en Categorías</label>
+        <input
+          id="globalSearchCategorias"
+          type="text"
+          [ngModel]="filterCategorias()"
+          (ngModelChange)="filterCategorias.set($event)"
+          placeholder="Buscar por código o nombre..."
+        />
+      </div>
+    </div>
+
+    <div class="list-section">
+      <div *ngIf="loadingCategorias() && categorias().length === 0" class="loading-state" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+        Cargando categorías...
+      </div>
+      <div *ngIf="!loadingCategorias() && categoriasFiltradas().length === 0" class="empty-state">
+        No se encontraron categorías con ese criterio de búsqueda.
+      </div>
+
+      <div class="table-scroll-container" *ngIf="categoriasFiltradas().length > 0">
+        <table class="usuarios-table">
+          <thead>
+            <tr>
+              <th style="width: 55px;">ID</th>
+              <th style="width: 90px;">Código</th>
+              <th>Nombre (Español)</th>
+              <th>Nombre (Inglés)</th>
+              <th style="width: 70px;">Orden</th>
+              <th style="width: 75px;">Estado</th>
+              <th style="width: 90px; text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of categoriasFiltradas()" [class.row-selected]="editingCategoriaId() === item.id || categoriaTabId() === item.id" (click)="abrirEditarCategoriaForm(item)">
+              <td><strong>#{{ item.id }}</strong></td>
+              <td><code>{{ item.codigo }}</code></td>
+              <td>{{ item.nombre_es }}</td>
+              <td>{{ item.nombre_en }}</td>
+              <td>{{ item.orden }}</td>
+              <td>
+                <span class="status-badge" [class.active]="item.activo">
+                  {{ item.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="acciones-cell" (click)="$event.stopPropagation()">
+                <div class="icon-actions">
+                  <button type="button" class="icon-btn" title="Editar" (click)="abrirEditarCategoriaForm(item)">
+                    ✏️
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    [class.icon-btn-danger]="item.activo"
+                    [title]="item.activo ? 'Desactivar' : 'Activar'"
+                    (click)="toggleEstadoCategoria(item)"
+                  >
+                    {{ item.activo ? '🔒' : '🔓' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FORMULARIO CATEGORÍA -->
+    <div class="card-body" style="margin-top: 1.5rem;" *ngIf="showCategoriaForm()">
+      <h3>{{ editingCategoriaId() ? '✏️ Editar Categoría' : '➕ Registrar Categoría' }}</h3>
+      <div class="alert danger animate-in" *ngIf="errorCategoriaMsg()" style="margin-bottom: 1.25rem;">
+        {{ errorCategoriaMsg() }}
+      </div>
+
+      <form (submit)="$event.preventDefault(); guardarCategoria()" class="modal-form">
+        <div class="form-grid-2col">
+          <label class="form-field">
+            <span>Código *</span>
+            <input type="text" [ngModel]="formCategoriaCodigo()" (ngModelChange)="formCategoriaCodigo.set($event)" name="categoriaCodigo" placeholder="Ej. AGR" required [disabled]="loadingCategorias()" style="text-transform: uppercase;" />
+          </label>
+          <label class="form-field">
+            <span>Orden</span>
+            <input type="number" [ngModel]="formCategoriaOrden()" (ngModelChange)="formCategoriaOrden.set($event)" name="categoriaOrden" [disabled]="loadingCategorias()" />
+          </label>
+          <label class="form-field">
+            <span>Nombre (Español) *</span>
+            <input type="text" [ngModel]="formCategoriaNombreEs()" (ngModelChange)="formCategoriaNombreEs.set($event)" name="categoriaNombreEs" required [disabled]="loadingCategorias()" />
+          </label>
+          <label class="form-field">
+            <span>Nombre (Inglés) *</span>
+            <input type="text" [ngModel]="formCategoriaNombreEn()" (ngModelChange)="formCategoriaNombreEn.set($event)" name="categoriaNombreEn" required [disabled]="loadingCategorias()" />
+          </label>
+        </div>
+        <div class="modal-actions" style="margin-top: 1.25rem;">
+          <button type="submit" class="action-btn save-btn" [disabled]="loadingCategorias() || !formCategoriaCodigo().trim() || !formCategoriaNombreEs().trim() || !formCategoriaNombreEn().trim()">
+            {{ loadingCategorias() ? 'Guardando...' : 'Guardar' }}
+          </button>
+          <button type="button" class="action-btn cancel-btn" (click)="cerrarCategoriaForm()" [disabled]="loadingCategorias()">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  }
+
+  @if (activeTab() === 'ocupaciones') {
+
+  <!-- CARD: OCUPACIONES -->
+  <section class="suelos-list-card">
+    <div class="card-header flex-header">
+      <div>
+        <h2>Catálogo de Ocupaciones</h2>
+        <p class="subtitle">Selecciona una categoría para administrar sus ocupaciones.</p>
+      </div>
+      @if (categoriaTabId()) {
+        <button type="button" class="action-btn register-suelo-btn" (click)="abrirNuevaOcupacionForm()">
+          {{ showOcupacionForm() && !editingOcupacionId() ? '❌ Cerrar Formulario' : '➕ Registrar Ocupación' }}
+        </button>
+      }
+    </div>
+
+    <div class="search-container">
+      <div class="search-field">
+        <label for="ocupacionTabCategoria">🗂️ Categoría</label>
+        <select id="ocupacionTabCategoria" [ngModel]="categoriaTabId()" (ngModelChange)="onCategoriaTabChange($event)">
+          <option [ngValue]="null">-- Seleccionar categoría --</option>
+          <option *ngFor="let c of categorias()" [ngValue]="c.id">{{ c.nombre_es }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div *ngIf="successOcupacionMsg()" class="alert success animate-in" style="margin-top: 1.25rem;">
+      {{ successOcupacionMsg() }}
+    </div>
+    <div *ngIf="errorOcupacionMsg() && !showOcupacionForm()" class="alert danger animate-in" style="margin-top: 1.25rem;">
+      {{ errorOcupacionMsg() }}
+    </div>
+
+    <div class="empty-state" *ngIf="!categoriaTabId()">
+      Selecciona una categoría arriba para ver y administrar sus ocupaciones.
+    </div>
+
+    <div class="list-section" *ngIf="categoriaTabId()">
+      <div *ngIf="loadingOcupaciones() && ocupaciones().length === 0" class="loading-state" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+        Cargando ocupaciones...
+      </div>
+      <div *ngIf="!loadingOcupaciones() && ocupaciones().length === 0" class="empty-state">
+        Esta categoría no tiene ocupaciones registradas todavía.
+      </div>
+
+      <div class="table-scroll-container" *ngIf="ocupaciones().length > 0">
+        <table class="usuarios-table">
+          <thead>
+            <tr>
+              <th style="width: 55px;">ID</th>
+              <th style="width: 100px;">Código</th>
+              <th>Nombre (Español)</th>
+              <th>Nombre (Inglés)</th>
+              <th style="width: 80px;">CIUO</th>
+              <th style="width: 90px;">Estado</th>
+              <th style="width: 90px; text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of ocupaciones()" [class.row-selected]="editingOcupacionId() === item.id" (click)="abrirEditarOcupacionForm(item)">
+              <td><strong>#{{ item.id }}</strong></td>
+              <td><code>{{ item.codigo }}</code></td>
+              <td>{{ item.nombre_es }}</td>
+              <td>{{ item.nombre_en }}</td>
+              <td><code>{{ item.codigo_ciuo || '—' }}</code></td>
+              <td>
+                <span class="status-badge" [class.active]="item.activo">
+                  {{ item.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="acciones-cell" (click)="$event.stopPropagation()">
+                <div class="icon-actions">
+                  <button type="button" class="icon-btn" title="Editar" (click)="abrirEditarOcupacionForm(item)">
+                    ✏️
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    [class.icon-btn-danger]="item.activo"
+                    [title]="item.activo ? 'Desactivar' : 'Activar'"
+                    (click)="toggleEstadoOcupacion(item)"
+                  >
+                    {{ item.activo ? '🔒' : '🔓' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FORMULARIO OCUPACIÓN -->
+    <div class="card-body" style="margin-top: 1.5rem;" *ngIf="showOcupacionForm()">
+      <h3>{{ editingOcupacionId() ? '✏️ Editar Ocupación' : '➕ Registrar Ocupación' }}</h3>
+      <div class="alert danger animate-in" *ngIf="errorOcupacionMsg()" style="margin-bottom: 1.25rem;">
+        {{ errorOcupacionMsg() }}
+      </div>
+
+      <form (submit)="$event.preventDefault(); guardarOcupacion()" class="modal-form">
+        <div class="form-grid-2col">
+          <label class="form-field">
+            <span>Código *</span>
+            <input type="text" [ngModel]="formOcupacionCodigo()" (ngModelChange)="formOcupacionCodigo.set($event)" name="ocupacionCodigo" placeholder="Ej. AGR-001" required [disabled]="loadingOcupaciones()" style="text-transform: uppercase;" />
+          </label>
+          <label class="form-field">
+            <span>Código CIUO-08</span>
+            <input type="text" [ngModel]="formOcupacionCiuo()" (ngModelChange)="formOcupacionCiuo.set($event)" name="ocupacionCiuo" placeholder="Ej. 6111" [disabled]="loadingOcupaciones()" />
+          </label>
+          <label class="form-field">
+            <span>Nombre (Español) *</span>
+            <input type="text" [ngModel]="formOcupacionNombreEs()" (ngModelChange)="formOcupacionNombreEs.set($event)" name="ocupacionNombreEs" required [disabled]="loadingOcupaciones()" />
+          </label>
+          <label class="form-field">
+            <span>Nombre (Inglés) *</span>
+            <input type="text" [ngModel]="formOcupacionNombreEn()" (ngModelChange)="formOcupacionNombreEn.set($event)" name="ocupacionNombreEn" required [disabled]="loadingOcupaciones()" />
+          </label>
+          <label class="form-field">
+            <span>Orden</span>
+            <input type="number" [ngModel]="formOcupacionOrden()" (ngModelChange)="formOcupacionOrden.set($event)" name="ocupacionOrden" [disabled]="loadingOcupaciones()" />
+          </label>
+        </div>
+
+        <label class="form-field checkbox-field">
+          <input type="checkbox" [ngModel]="formOcupacionRequiereDetalle()" (ngModelChange)="formOcupacionRequiereDetalle.set($event)" name="ocupacionRequiereDetalle" [disabled]="loadingOcupaciones()" />
+          <span>Requiere descripción libre (ej. "Otra ocupación, especifique")</span>
+        </label>
+
+        <div class="modal-actions" style="margin-top: 1.25rem;">
+          <button type="submit" class="action-btn save-btn" [disabled]="loadingOcupaciones() || !formOcupacionCodigo().trim() || !formOcupacionNombreEs().trim() || !formOcupacionNombreEn().trim()">
+            {{ loadingOcupaciones() ? 'Guardando...' : 'Guardar' }}
+          </button>
+          <button type="button" class="action-btn cancel-btn" (click)="cerrarOcupacionForm()" [disabled]="loadingOcupaciones()">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  }
+
+</div>
