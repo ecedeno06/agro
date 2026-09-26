@@ -67,7 +67,13 @@
           </label>
           <label class="form-field">
             <span>Teléfono</span>
-            <input type="text" [ngModel]="editForm().telefono" (ngModelChange)="actualizarCampoEdicion('telefono', $event)" name="editTelefono" placeholder="Ej. +507 6123-4567" [disabled]="guardandoDatos()" />
+            <div class="telefono-whatsapp-row">
+              <input type="text" [ngModel]="editForm().telefono" (ngModelChange)="actualizarCampoEdicion('telefono', $event)" name="editTelefono" placeholder="Ej. +507 6123-4567" [disabled]="guardandoDatos()" />
+              <label class="checkbox-field checkbox-inline" title="Este teléfono recibe mensajes de WhatsApp">
+                <input type="checkbox" [ngModel]="editForm().telefono_whatsapp" (ngModelChange)="actualizarCampoEdicion('telefono_whatsapp', $event)" name="editTelefonoWhatsapp" [disabled]="guardandoDatos()" />
+                <span>📱</span>
+              </label>
+            </div>
           </label>
           <label class="form-field">
             <span>Tipo de Persona</span>
@@ -93,11 +99,6 @@
             <input type="date" [ngModel]="editForm().fecha_aviso_operacion" (ngModelChange)="actualizarCampoEdicion('fecha_aviso_operacion', $event)" name="editFechaAviso" [disabled]="guardandoDatos()" />
           </label>
         </div>
-
-        <label class="form-field checkbox-field">
-          <input type="checkbox" [ngModel]="editForm().telefono_whatsapp" (ngModelChange)="actualizarCampoEdicion('telefono_whatsapp', $event)" name="editTelefonoWhatsapp" [disabled]="guardandoDatos()" />
-          <span>📱 Este teléfono recibe mensajes de Whatsapp</span>
-        </label>
 
         <div class="modal-actions">
           <button type="submit" class="action-btn save-btn" [disabled]="guardandoDatos() || !editForm().nombre.trim() || !editForm().email.trim()">

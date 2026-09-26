@@ -595,6 +595,28 @@
   }
 }
 
+.telefono-whatsapp-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  input[type="text"] {
+    flex: 1;
+  }
+}
+
+.checkbox-inline {
+  flex-shrink: 0;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+  border-radius: 8px;
+  background: var(--input-bg, rgba(255, 255, 255, 0.03));
+
+  span {
+    font-size: 1rem;
+  }
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
