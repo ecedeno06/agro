@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, computed, inject } from '@angular/core';
+import { Component, signal, OnInit, computed, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -63,6 +63,8 @@ import { SessionService } from '../../core/services/session.service';
 export class UsuariosComponent implements OnInit {
   private readonly apiBaseUrl = environment.apiUrl;
   readonly sessionService = inject(SessionService);
+
+  @ViewChild(UsuarioTabComponent) usuarioTabRef?: UsuarioTabComponent;
 
   usuarios = signal<Usuario[]>([]);
   selectedUser = signal<Usuario | null>(null);
@@ -249,6 +251,20 @@ export class UsuariosComponent implements OnInit {
       this.selectedUser.set({ ...actual, ...usuarioActualizado });
     }
     await this.cargarUsuarios();
+  }
+
+  verDetalle(usuario: Usuario): void {
+    this.seleccionarUsuario(usuario);
+  }
+
+  editarUsuario(usuario: Usuario): void {
+    this.seleccionarUsuario(usuario);
+    setTimeout(() => this.usuarioTabRef?.activarEdicionDatos(), 0);
+  }
+
+  resetPasswordDirecto(usuario: Usuario): void {
+    this.seleccionarUsuario(usuario);
+    setTimeout(() => this.usuarioTabRef?.resetearPasswordCorreo(), 0);
   }
 
   cerrarDetalle(): void {

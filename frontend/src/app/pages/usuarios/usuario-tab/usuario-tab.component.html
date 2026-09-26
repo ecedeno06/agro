@@ -31,9 +31,9 @@
       <button
         type="button"
         class="icon-btn"
-        title="Restablecer contraseña y enviar por WhatsApp"
+        title="Restablecer contraseña y enviar por correo"
         [disabled]="reseteandoPassword()"
-        (click)="resetearPasswordWhatsapp()"
+        (click)="resetearPasswordCorreo()"
       >
         {{ reseteandoPassword() ? '⏳' : '🔑' }}
       </button>

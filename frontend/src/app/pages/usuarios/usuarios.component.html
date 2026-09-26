@@ -84,14 +84,30 @@
                   {{ user.activo !== false ? 'Activo' : 'Inactivo (Solo Registro)' }}
                 </span>
               </td>
-              <td>
-                <button 
-                  class="action-btn edit-btn" 
-                  type="button" 
-                  (click)="seleccionarUsuario(user); $event.stopPropagation();"
-                >
-                  👁️ Ver Detalle
-                </button>
+              <td (click)="$event.stopPropagation()">
+                <div class="icon-actions">
+                  <button type="button" class="icon-btn" title="Ver detalle" (click)="verDetalle(user)">
+                    👁️
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    title="Editar datos del usuario"
+                    *ngIf="sessionService.puedeEditarUsuarios()"
+                    (click)="editarUsuario(user)"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    title="Restablecer contraseña y enviar por correo"
+                    *ngIf="sessionService.puedeEditarUsuarios()"
+                    (click)="resetPasswordDirecto(user)"
+                  >
+                    🔑
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>

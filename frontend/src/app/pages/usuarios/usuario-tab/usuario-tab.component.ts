@@ -418,10 +418,10 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   // ==============================================
-  // RESETEO DE CONTRASEÑA POR WHATSAPP (solo admin/superadmin)
+  // RESETEO DE CONTRASEÑA POR CORREO (solo admin/superadmin)
   // ==============================================
 
-  async resetearPasswordWhatsapp(): Promise<void> {
+  async resetearPasswordCorreo(): Promise<void> {
     if (!this.user?.idUsuario) return;
     if (!confirm(`¿Restablecer la contraseña de ${this.user.nombre}? Deberá cambiarla en su próximo inicio de sesión.`)) return;
 
@@ -439,16 +439,11 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
       if (!res.ok) throw new Error(data.message || 'No se pudo restablecer la contraseña.');
 
       this.passwordGenerada.set(data.password);
-
-      const emailTexto = data.emailEnviado ? ' y por correo' : '';
-      const digitos = (data.telefono || '').replace(/\D/g, '');
-      if (data.telefonoWhatsapp && digitos) {
-        const mensaje = `Hola ${data.nombre}, tu nueva contraseña temporal para AgroNet es: ${data.password}\nDeberás cambiarla al iniciar sesión.`;
-        window.open(`https://wa.me/${digitos}?text=${encodeURIComponent(mensaje)}`, '_blank');
-        this.resetSuccessMsg.set(`Contraseña restablecida. Se abrió WhatsApp${emailTexto} para enviarla al usuario.`);
-      } else {
-        this.resetSuccessMsg.set(`Contraseña restablecida${emailTexto ? ', enviada' + emailTexto : ''}. El usuario no tiene Whatsapp habilitado: compártela manualmente si no le llegó el correo.`);
-      }
+      this.resetSuccessMsg.set(
+        data.emailEnviado
+          ? 'Contraseña restablecida y enviada por correo al usuario.'
+          : 'Contraseña restablecida. El usuario no tiene correo registrado: compártela manualmente.'
+      );
     } catch (error: any) {
       this.resetErrorMsg.set(error.message || 'No se pudo restablecer la contraseña.');
     } finally {
