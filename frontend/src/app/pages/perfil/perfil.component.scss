@@ -702,6 +702,19 @@
     font-size: 0.85rem !important;
   }
 
+  .checkbox-inline {
+    flex-shrink: 0;
+    margin-top: 0 !important;
+    padding: 0.65rem 0.7rem;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    background: var(--input-bg);
+
+    span {
+      font-size: 1rem;
+    }
+  }
+
   .checkbox-field {
     display: flex;
     flex-direction: row;
