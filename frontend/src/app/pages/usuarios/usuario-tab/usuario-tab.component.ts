@@ -104,6 +104,7 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
   readonly selectedCapituloId = signal<number | null>(null);
 
   readonly rolesLoading = signal(false);
+  readonly enviandoInvitacion = signal(false);
   readonly rolesErrorMsg = signal('');
   readonly rolesSuccessMsg = signal('');
 
@@ -342,16 +343,30 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
     this.openMenuItem.set(null);
   }
 
-  /**
-   * Placeholder: todavía no existe servicio de correo (SMTP/proveedor) en el
-   * backend. Cuando se configure, esto debe llamar a un endpoint real que
-   * envíe la invitación.
-   */
-  enviarInvitacion(item: UserRoleItem): void {
+  /** Genera una contraseña temporal (válida 1 hora) y la envía por correo junto con el enlace de acceso. */
+  async enviarInvitacion(item: UserRoleItem): Promise<void> {
     this.closeMenu();
-    this.rolesSuccessMsg.set(
-      `El envío de invitación por correo para el rol ${item.codigo.toUpperCase()} estará disponible próximamente.`
-    );
+    if (!this.user?.idUsuario) return;
+    if (!confirm(`¿Enviar invitación de acceso a ${this.user.nombre} (${this.user.email})? Se generará una nueva contraseña temporal válida por 1 hora.`)) {
+      return;
+    }
+
+    this.enviandoInvitacion.set(true);
+    this.rolesErrorMsg.set('');
+    this.rolesSuccessMsg.set('');
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/usuarios/${this.user.idUsuario}/enviar-invitacion`, {
+        method: 'POST',
+        headers: this.getAuthHeaders()
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'No se pudo enviar la invitación.');
+      this.rolesSuccessMsg.set(data.message);
+    } catch (error: any) {
+      this.rolesErrorMsg.set(error.message || 'No se pudo enviar la invitación.');
+    } finally {
+      this.enviandoInvitacion.set(false);
+    }
   }
 
   async eliminarRol(item: UserRoleItem): Promise<void> {

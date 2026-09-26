@@ -35,5 +35,6 @@ router.delete('/avatar', authMiddleware, userController.eliminarAvatar);
 router.put('/:id', authMiddleware, userController.actualizarUsuarioAdmin);
 router.post('/:id/reset-password', authMiddleware, userController.resetPasswordAdmin);
 router.put('/:id/toggle-acceso', authMiddleware, userController.toggleAccesoUsuario);
+router.post('/:id/enviar-invitacion', authMiddleware, userController.enviarInvitacionUsuario);
 
 export default router;

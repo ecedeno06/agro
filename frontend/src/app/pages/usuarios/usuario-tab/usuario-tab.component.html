@@ -345,8 +345,8 @@
       <button type="button" (click)="alternarEstadoRol(item); closeMenu()">
         {{ item.activo ? '⏸️ Desactivar' : '▶️ Activar' }}
       </button>
-      <button type="button" (click)="enviarInvitacion(item)">
-        ✉️ Enviar invitación
+      <button type="button" [disabled]="enviandoInvitacion()" (click)="enviarInvitacion(item)">
+        {{ enviandoInvitacion() ? '⏳ Enviando...' : '✉️ Enviar invitación' }}
       </button>
       <button type="button" class="danger-option" (click)="eliminarRol(item); closeMenu()">
         🗑️ Quitar
