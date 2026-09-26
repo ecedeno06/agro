@@ -323,9 +323,16 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
     const button = event.currentTarget as HTMLElement;
     const rect = button.getBoundingClientRect();
     const dropdownWidth = 200;
+    const dropdownHeightEstimado = 140;
+
+    // Si no hay espacio debajo (ej. última fila de la tabla), abrir hacia arriba.
+    const espacioAbajo = window.innerHeight - rect.bottom;
+    const top = espacioAbajo < dropdownHeightEstimado
+      ? Math.max(8, rect.top - dropdownHeightEstimado - 6)
+      : rect.bottom + 6;
 
     this.menuPosition.set({
-      top: rect.bottom + 6,
+      top,
       left: Math.max(8, rect.right - dropdownWidth)
     });
     this.openMenuItem.set(item);
