@@ -715,6 +715,29 @@
     }
   }
 
+  .ocupacion-row {
+    display: flex;
+    gap: 0.6rem;
+
+    select {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  .hint-legado {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--warning-color, #fbbf24);
+    margin-top: 0.35rem;
+
+    a {
+      color: var(--primary-color);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  }
+
   .checkbox-field {
     display: flex;
     flex-direction: row;

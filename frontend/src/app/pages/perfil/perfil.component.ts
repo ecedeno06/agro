@@ -7,6 +7,8 @@ import { environment } from '../../../environments/environment';
 import { dividirTelefono, combinarTelefono, CODIGO_TELEFONO_DEFECTO } from '../../core/utils/telefono.util';
 
 type PaisTelefonoOpcion = { codigo_iso2: string; nombre: string; codigo_telefono: string | null };
+type CategoriaOcupacionOpcion = { id: number; nombre_es: string; activo: boolean };
+type OcupacionOpcion = { id: number; categoria_id: number; nombre_es: string; requiere_detalle: boolean; activo: boolean };
 
 @Component({
   selector: 'app-perfil',
@@ -71,6 +73,18 @@ export class PerfilComponent implements OnInit {
   readonly paisesTelefono = signal<PaisTelefonoOpcion[]>([]);
   readonly telefonoCodigoPais = signal(CODIGO_TELEFONO_DEFECTO);
 
+  readonly categoriasOcupacion = signal<CategoriaOcupacionOpcion[]>([]);
+  readonly ocupacionesTodas = signal<OcupacionOpcion[]>([]);
+  readonly categoriaOcupacionId = signal<number | null>(null);
+  readonly ocupacionSeleccionadaId = signal<number | null>(null);
+  readonly ocupacionEsManual = signal(false);
+
+  readonly ocupacionesFiltradas = computed(() => {
+    const catId = this.categoriaOcupacionId();
+    if (!catId) return [];
+    return this.ocupacionesTodas().filter(o => o.categoria_id === catId && o.activo !== false);
+  });
+
   readonly editForm = {
     nombre: '',
     telefono: '',
@@ -97,6 +111,7 @@ export class PerfilComponent implements OnInit {
     this.editForm.tipo_sangre = u?.tipoSangre || '';
     this.editForm.tipo_persona = u?.tipoPersona || 'natural';
     this.editForm.dni = u?.dni || '';
+    this.sincronizarOcupacionForm();
     this.editError.set('');
     this.editSuccess.set('');
   }
@@ -164,9 +179,16 @@ export class PerfilComponent implements OnInit {
     });
   });
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+    // El dashboard puede haber montado este componente con el snapshot de
+    // localStorage antes de que termine de llegar el refresco real del
+    // backend (fetchFreshUserProfile es async) — sin esto, el formulario se
+    // inicializa con datos desactualizados (ej. una ocupación vieja que ya
+    // no hace match con el catálogo).
+    await this.sessionService.fetchFreshUserProfile().catch(() => {});
     this.inicializarFormularioPerfil();
     this.cargarPaisesTelefono();
+    await this.cargarCatalogoOcupaciones();
     if (this.esAsociado()) {
       this.cargarCapitulos();
     }
@@ -179,6 +201,75 @@ export class PerfilComponent implements OnInit {
     } catch (e) {
       console.error('Error al cargar códigos telefónicos de países:', e);
     }
+  }
+
+  async cargarCatalogoOcupaciones(): Promise<void> {
+    try {
+      const [resCat, resOcu] = await Promise.all([
+        fetch(`${this.apiBaseUrl}/categorias-ocupacion`, { headers: this.getAuthHeaders() }),
+        fetch(`${this.apiBaseUrl}/ocupaciones`, { headers: this.getAuthHeaders() })
+      ]);
+      if (resCat.ok) this.categoriasOcupacion.set(await resCat.json());
+      if (resOcu.ok) this.ocupacionesTodas.set(await resOcu.json());
+      this.sincronizarOcupacionForm();
+    } catch (e) {
+      console.error('Error al cargar catálogo de ocupaciones:', e);
+    }
+  }
+
+  /** Busca en el catálogo un match exacto por nombre para el valor de texto libre guardado antes. */
+  private sincronizarOcupacionForm(): void {
+    const valor = (this.editForm.ocupacion || '').trim();
+    if (!valor) {
+      this.ocupacionEsManual.set(false);
+      this.categoriaOcupacionId.set(null);
+      this.ocupacionSeleccionadaId.set(null);
+      return;
+    }
+    const norm = valor.toLowerCase();
+    const match = this.ocupacionesTodas().find(o => o.nombre_es.trim().toLowerCase() === norm);
+    if (match) {
+      this.categoriaOcupacionId.set(match.categoria_id);
+      this.ocupacionSeleccionadaId.set(match.id);
+      this.ocupacionEsManual.set(false);
+    } else {
+      this.ocupacionEsManual.set(true);
+      this.categoriaOcupacionId.set(null);
+      this.ocupacionSeleccionadaId.set(null);
+    }
+  }
+
+  onCategoriaOcupacionChange(id: number | null): void {
+    this.categoriaOcupacionId.set(id);
+    this.ocupacionSeleccionadaId.set(null);
+    this.editForm.ocupacion = '';
+  }
+
+  onOcupacionChange(id: number | null): void {
+    if (id === -1) {
+      this.activarOcupacionManual();
+      return;
+    }
+    this.ocupacionSeleccionadaId.set(id);
+    const match = id != null ? this.ocupacionesFiltradas().find(o => o.id === id) : undefined;
+    if (match?.requiere_detalle) {
+      this.activarOcupacionManual();
+      return;
+    }
+    this.editForm.ocupacion = match ? match.nombre_es : '';
+  }
+
+  private activarOcupacionManual(): void {
+    this.ocupacionEsManual.set(true);
+    this.ocupacionSeleccionadaId.set(-1);
+    this.editForm.ocupacion = '';
+  }
+
+  volverASeleccionarOcupacion(): void {
+    this.ocupacionEsManual.set(false);
+    this.categoriaOcupacionId.set(null);
+    this.ocupacionSeleccionadaId.set(null);
+    this.editForm.ocupacion = '';
   }
 
   private getAuthHeaders(): Record<string, string> {

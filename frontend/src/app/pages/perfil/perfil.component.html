@@ -89,7 +89,35 @@
 
         <label class="form-field">
           <span>Ocupación</span>
-          <input type="text" [(ngModel)]="editForm.ocupacion" name="editOcupacion" placeholder="Ej. Agricultor" [disabled]="editLoading()" />
+          <ng-container *ngIf="!ocupacionEsManual(); else ocupacionManual">
+            <div class="ocupacion-row">
+              <select
+                [ngModel]="categoriaOcupacionId()"
+                (ngModelChange)="onCategoriaOcupacionChange($event)"
+                name="editCategoriaOcupacion"
+                [disabled]="editLoading()"
+              >
+                <option [ngValue]="null">-- Categoría --</option>
+                <option *ngFor="let c of categoriasOcupacion()" [ngValue]="c.id">{{ c.nombre_es }}</option>
+              </select>
+              <select
+                [ngModel]="ocupacionSeleccionadaId()"
+                (ngModelChange)="onOcupacionChange($event)"
+                name="editOcupacion"
+                [disabled]="editLoading() || !categoriaOcupacionId()"
+              >
+                <option [ngValue]="null">-- Seleccionar --</option>
+                <option [ngValue]="-1">Otro / no está en la lista</option>
+                <option *ngFor="let o of ocupacionesFiltradas()" [ngValue]="o.id">{{ o.nombre_es }}</option>
+              </select>
+            </div>
+          </ng-container>
+          <ng-template #ocupacionManual>
+            <input type="text" [(ngModel)]="editForm.ocupacion" name="editOcupacion" placeholder="Ej. Agricultor" [disabled]="editLoading()" />
+            <small class="hint-legado" *ngIf="ocupacionesTodas().length > 0">
+              <a href="javascript:void(0)" (click)="volverASeleccionarOcupacion()">↩ Elegir de la lista del catálogo</a>
+            </small>
+          </ng-template>
         </label>
 
         <label class="form-field">
