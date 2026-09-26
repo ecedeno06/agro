@@ -77,16 +77,25 @@
                 </span>
               </td>
               <td style="text-align: right;" (click)="$event.stopPropagation()">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   class="action-btn edit-btn"
                   (click)="abrirEditarForm(item)"
                   style="margin-right: 0.5rem;"
                 >
                   ✏️ Editar
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
+                  class="action-btn"
+                  [class.save-btn]="paisProvincias()?.id === item.id"
+                  (click)="abrirProvincias(item)"
+                  style="margin-right: 0.5rem;"
+                >
+                  🗺️ Provincias
+                </button>
+                <button
+                  type="button"
                   [class.action-btn]="true"
                   [class.cancel-btn]="item.activo"
                   [class.save-btn]="!item.activo"
@@ -218,6 +227,213 @@
             {{ loading() ? 'Guardando...' : 'Guardar' }}
           </button>
           <button type="button" class="action-btn cancel-btn" (click)="cerrarForm()" [disabled]="loading()">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- CARD 3: PROVINCIAS DEL PAÍS SELECCIONADO -->
+  <section class="suelos-list-card" *ngIf="paisProvincias() as pais">
+    <div class="card-header flex-header">
+      <div>
+        <h2>Provincias de {{ pais.nombre }}</h2>
+        <p class="subtitle">Administra las provincias (1er nivel) de este país.</p>
+      </div>
+      <div>
+        <button type="button" class="action-btn register-suelo-btn" (click)="abrirNuevaProvinciaForm()" style="margin-right: 0.5rem;">
+          {{ showProvinciaForm() && !editingProvinciaId() ? '❌ Cerrar Formulario' : '➕ Registrar Provincia' }}
+        </button>
+        <button type="button" class="action-btn cancel-btn" (click)="cerrarProvincias()">
+          ✕ Cerrar
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="successProvinciaMsg()" class="alert success animate-in" style="margin-top: 1.25rem;">
+      {{ successProvinciaMsg() }}
+    </div>
+    <div *ngIf="errorProvinciaMsg() && !showProvinciaForm()" class="alert danger animate-in" style="margin-top: 1.25rem;">
+      {{ errorProvinciaMsg() }}
+    </div>
+
+    <div class="list-section">
+      <div *ngIf="loadingProvincias() && provincias().length === 0" class="loading-state" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+        Cargando provincias...
+      </div>
+      <div *ngIf="!loadingProvincias() && provincias().length === 0" class="empty-state">
+        Este país no tiene provincias registradas todavía.
+      </div>
+
+      <div class="table-scroll-container" *ngIf="provincias().length > 0">
+        <table class="usuarios-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">ID</th>
+              <th>Provincia</th>
+              <th style="width: 90px;">Código</th>
+              <th style="width: 140px;">Tipo</th>
+              <th style="width: 260px; text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of provincias()" [class.row-selected]="editingProvinciaId() === item.id || provinciaDistritos()?.id === item.id" (click)="abrirEditarProvinciaForm(item)">
+              <td><strong>#{{ item.id }}</strong></td>
+              <td><strong>{{ item.nombre }}</strong></td>
+              <td><code>{{ item.codigo_iso || '—' }}</code></td>
+              <td>{{ item.tipo || '—' }}</td>
+              <td style="text-align: right;" (click)="$event.stopPropagation()">
+                <button type="button" class="action-btn edit-btn" (click)="abrirEditarProvinciaForm(item)" style="margin-right: 0.5rem;">
+                  ✏️ Editar
+                </button>
+                <button
+                  type="button"
+                  class="action-btn"
+                  [class.save-btn]="provinciaDistritos()?.id === item.id"
+                  (click)="abrirDistritos(item)"
+                  style="margin-right: 0.5rem;"
+                >
+                  🏘️ Distritos
+                </button>
+                <button type="button" class="action-btn cancel-btn" (click)="eliminarProvincia(item)">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FORMULARIO PROVINCIA -->
+    <div class="card-body" style="margin-top: 1.5rem;" *ngIf="showProvinciaForm()">
+      <h3>{{ editingProvinciaId() ? '✏️ Editar Provincia' : '➕ Registrar Provincia' }}</h3>
+      <div class="alert danger animate-in" *ngIf="errorProvinciaMsg()" style="margin-bottom: 1.25rem;">
+        {{ errorProvinciaMsg() }}
+      </div>
+
+      <form (submit)="$event.preventDefault(); guardarProvincia()" class="modal-form">
+        <div class="form-grid-2col">
+          <label class="form-field">
+            <span>Nombre *</span>
+            <input type="text" [ngModel]="formProvinciaNombre()" (ngModelChange)="formProvinciaNombre.set($event)" name="provinciaNombre" required [disabled]="loadingProvincias()" />
+          </label>
+          <label class="form-field">
+            <span>Nombre en Inglés</span>
+            <input type="text" [ngModel]="formProvinciaNombreIngles()" (ngModelChange)="formProvinciaNombreIngles.set($event)" name="provinciaNombreIngles" placeholder="Se usa el nombre si se deja vacío" [disabled]="loadingProvincias()" />
+          </label>
+          <label class="form-field">
+            <span>Código</span>
+            <input type="text" [ngModel]="formProvinciaCodigoIso()" (ngModelChange)="formProvinciaCodigoIso.set($event)" name="provinciaCodigoIso" placeholder="Ej. PA-8" [disabled]="loadingProvincias()" />
+          </label>
+          <label class="form-field">
+            <span>Tipo</span>
+            <input type="text" [ngModel]="formProvinciaTipo()" (ngModelChange)="formProvinciaTipo.set($event)" name="provinciaTipo" placeholder="provincia / comarca indígena / estado..." [disabled]="loadingProvincias()" />
+          </label>
+        </div>
+        <div class="modal-actions" style="margin-top: 1.25rem;">
+          <button type="submit" class="action-btn save-btn" [disabled]="loadingProvincias() || !formProvinciaNombre().trim()">
+            {{ loadingProvincias() ? 'Guardando...' : 'Guardar' }}
+          </button>
+          <button type="button" class="action-btn cancel-btn" (click)="cerrarProvinciaForm()" [disabled]="loadingProvincias()">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- CARD 4: DISTRITOS DE LA PROVINCIA SELECCIONADA -->
+  <section class="suelos-list-card" *ngIf="provinciaDistritos() as provincia">
+    <div class="card-header flex-header">
+      <div>
+        <h2>Distritos de {{ provincia.nombre }}</h2>
+        <p class="subtitle">Administra los distritos (2do nivel) de esta provincia.</p>
+      </div>
+      <div>
+        <button type="button" class="action-btn register-suelo-btn" (click)="abrirNuevoDistritoForm()" style="margin-right: 0.5rem;">
+          {{ showDistritoForm() && !editingDistritoId() ? '❌ Cerrar Formulario' : '➕ Registrar Distrito' }}
+        </button>
+        <button type="button" class="action-btn cancel-btn" (click)="cerrarDistritos()">
+          ✕ Cerrar
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="successDistritoMsg()" class="alert success animate-in" style="margin-top: 1.25rem;">
+      {{ successDistritoMsg() }}
+    </div>
+    <div *ngIf="errorDistritoMsg() && !showDistritoForm()" class="alert danger animate-in" style="margin-top: 1.25rem;">
+      {{ errorDistritoMsg() }}
+    </div>
+
+    <div class="list-section">
+      <div *ngIf="loadingDistritos() && distritos().length === 0" class="loading-state" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+        Cargando distritos...
+      </div>
+      <div *ngIf="!loadingDistritos() && distritos().length === 0" class="empty-state">
+        Esta provincia no tiene distritos registrados todavía.
+      </div>
+
+      <div class="table-scroll-container" *ngIf="distritos().length > 0">
+        <table class="usuarios-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">ID</th>
+              <th>Distrito</th>
+              <th style="width: 90px;">Código</th>
+              <th style="width: 140px;">Tipo</th>
+              <th style="width: 160px; text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of distritos()" [class.row-selected]="editingDistritoId() === item.id" (click)="abrirEditarDistritoForm(item)">
+              <td><strong>#{{ item.id }}</strong></td>
+              <td><strong>{{ item.nombre }}</strong></td>
+              <td><code>{{ item.codigo_iso || '—' }}</code></td>
+              <td>{{ item.tipo || '—' }}</td>
+              <td style="text-align: right;" (click)="$event.stopPropagation()">
+                <button type="button" class="action-btn edit-btn" (click)="abrirEditarDistritoForm(item)" style="margin-right: 0.5rem;">
+                  ✏️ Editar
+                </button>
+                <button type="button" class="action-btn cancel-btn" (click)="eliminarDistrito(item)">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FORMULARIO DISTRITO -->
+    <div class="card-body" style="margin-top: 1.5rem;" *ngIf="showDistritoForm()">
+      <h3>{{ editingDistritoId() ? '✏️ Editar Distrito' : '➕ Registrar Distrito' }}</h3>
+      <div class="alert danger animate-in" *ngIf="errorDistritoMsg()" style="margin-bottom: 1.25rem;">
+        {{ errorDistritoMsg() }}
+      </div>
+
+      <form (submit)="$event.preventDefault(); guardarDistrito()" class="modal-form">
+        <div class="form-grid-2col">
+          <label class="form-field">
+            <span>Nombre *</span>
+            <input type="text" [ngModel]="formDistritoNombre()" (ngModelChange)="formDistritoNombre.set($event)" name="distritoNombre" required [disabled]="loadingDistritos()" />
+          </label>
+          <label class="form-field">
+            <span>Código</span>
+            <input type="text" [ngModel]="formDistritoCodigoIso()" (ngModelChange)="formDistritoCodigoIso.set($event)" name="distritoCodigoIso" [disabled]="loadingDistritos()" />
+          </label>
+          <label class="form-field">
+            <span>Tipo</span>
+            <input type="text" [ngModel]="formDistritoTipo()" (ngModelChange)="formDistritoTipo.set($event)" name="distritoTipo" placeholder="distrito / municipio / condado..." [disabled]="loadingDistritos()" />
+          </label>
+        </div>
+        <div class="modal-actions" style="margin-top: 1.25rem;">
+          <button type="submit" class="action-btn save-btn" [disabled]="loadingDistritos() || !formDistritoNombre().trim()">
+            {{ loadingDistritos() ? 'Guardando...' : 'Guardar' }}
+          </button>
+          <button type="button" class="action-btn cancel-btn" (click)="cerrarDistritoForm()" [disabled]="loadingDistritos()">
             Cancelar
           </button>
         </div>

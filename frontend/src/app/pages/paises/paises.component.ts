@@ -15,6 +15,23 @@ interface Pais {
   fecha_creacion: string;
 }
 
+interface Provincia {
+  id: number;
+  pais_id: number;
+  codigo_iso: string | null;
+  nombre: string;
+  nombre_ingles: string;
+  tipo: string | null;
+}
+
+interface Distrito {
+  id: number;
+  provincia_id: number;
+  codigo_iso: string | null;
+  nombre: string;
+  tipo: string | null;
+}
+
 @Component({
   selector: 'app-paises',
   standalone: true,
@@ -212,6 +229,298 @@ export class PaisesComponent implements OnInit {
       this.errorMsg.set(e.message || 'Error de conexión.');
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  // =========================================================
+  // PROVINCIAS
+  // =========================================================
+  readonly paisProvincias = signal<Pais | null>(null);
+  readonly provincias = signal<Provincia[]>([]);
+  readonly loadingProvincias = signal(false);
+  readonly errorProvinciaMsg = signal('');
+  readonly successProvinciaMsg = signal('');
+
+  readonly showProvinciaForm = signal(false);
+  readonly editingProvinciaId = signal<number | null>(null);
+  readonly formProvinciaNombre = signal('');
+  readonly formProvinciaNombreIngles = signal('');
+  readonly formProvinciaCodigoIso = signal('');
+  readonly formProvinciaTipo = signal('provincia');
+
+  async abrirProvincias(pais: Pais): Promise<void> {
+    if (this.paisProvincias()?.id === pais.id) {
+      this.cerrarProvincias();
+      return;
+    }
+    this.paisProvincias.set(pais);
+    this.cerrarDistritos();
+    this.cerrarProvinciaForm();
+    await this.cargarProvincias(pais.id);
+  }
+
+  cerrarProvincias(): void {
+    this.paisProvincias.set(null);
+    this.provincias.set([]);
+    this.cerrarDistritos();
+    this.cerrarProvinciaForm();
+  }
+
+  async cargarProvincias(paisId: number): Promise<void> {
+    try {
+      this.loadingProvincias.set(true);
+      this.errorProvinciaMsg.set('');
+      const res = await fetch(`${this.apiBaseUrl}/provincias?pais_id=${paisId}`, { headers: this.getAuthHeaders() });
+      if (!res.ok) throw new Error('Error al cargar provincias.');
+      this.provincias.set(await res.json());
+    } catch (e: any) {
+      this.errorProvinciaMsg.set(e.message || 'Error de conexión.');
+    } finally {
+      this.loadingProvincias.set(false);
+    }
+  }
+
+  abrirNuevaProvinciaForm(): void {
+    if (this.showProvinciaForm() && this.editingProvinciaId() === null) {
+      this.cerrarProvinciaForm();
+      return;
+    }
+    this.editingProvinciaId.set(null);
+    this.formProvinciaNombre.set('');
+    this.formProvinciaNombreIngles.set('');
+    this.formProvinciaCodigoIso.set('');
+    this.formProvinciaTipo.set('provincia');
+    this.showProvinciaForm.set(true);
+  }
+
+  abrirEditarProvinciaForm(item: Provincia): void {
+    if (this.showProvinciaForm() && this.editingProvinciaId() === item.id) {
+      this.cerrarProvinciaForm();
+      return;
+    }
+    this.editingProvinciaId.set(item.id);
+    this.formProvinciaNombre.set(item.nombre);
+    this.formProvinciaNombreIngles.set(item.nombre_ingles);
+    this.formProvinciaCodigoIso.set(item.codigo_iso || '');
+    this.formProvinciaTipo.set(item.tipo || 'provincia');
+    this.showProvinciaForm.set(true);
+  }
+
+  cerrarProvinciaForm(): void {
+    this.showProvinciaForm.set(false);
+    this.editingProvinciaId.set(null);
+    this.errorProvinciaMsg.set('');
+  }
+
+  async guardarProvincia(): Promise<void> {
+    const pais = this.paisProvincias();
+    if (!pais) return;
+
+    const nombre = this.formProvinciaNombre().trim();
+    if (!nombre) {
+      this.errorProvinciaMsg.set('El nombre es obligatorio.');
+      return;
+    }
+
+    try {
+      this.loadingProvincias.set(true);
+      this.errorProvinciaMsg.set('');
+      this.successProvinciaMsg.set('');
+
+      const id = this.editingProvinciaId();
+      const url = id ? `${this.apiBaseUrl}/provincias/${id}` : `${this.apiBaseUrl}/provincias`;
+      const method = id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({
+          pais_id: pais.id,
+          nombre,
+          nombre_ingles: this.formProvinciaNombreIngles().trim(),
+          codigo_iso: this.formProvinciaCodigoIso().trim(),
+          tipo: this.formProvinciaTipo().trim()
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Error al guardar la provincia.');
+
+      this.successProvinciaMsg.set(id ? 'Provincia actualizada exitosamente.' : 'Provincia creada exitosamente.');
+      this.cerrarProvinciaForm();
+      await this.cargarProvincias(pais.id);
+
+      setTimeout(() => this.successProvinciaMsg.set(''), 3000);
+    } catch (e: any) {
+      this.errorProvinciaMsg.set(e.message || 'Error de conexión.');
+    } finally {
+      this.loadingProvincias.set(false);
+    }
+  }
+
+  async eliminarProvincia(item: Provincia): Promise<void> {
+    if (!confirm(`¿Eliminar la provincia "${item.nombre}"?`)) return;
+
+    const pais = this.paisProvincias();
+    try {
+      this.loadingProvincias.set(true);
+      this.errorProvinciaMsg.set('');
+      const res = await fetch(`${this.apiBaseUrl}/provincias/${item.id}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'No se pudo eliminar la provincia.');
+      this.successProvinciaMsg.set('Provincia eliminada.');
+      if (pais) await this.cargarProvincias(pais.id);
+      setTimeout(() => this.successProvinciaMsg.set(''), 3000);
+    } catch (e: any) {
+      this.errorProvinciaMsg.set(e.message || 'No se pudo eliminar la provincia.');
+    } finally {
+      this.loadingProvincias.set(false);
+    }
+  }
+
+  // =========================================================
+  // DISTRITOS
+  // =========================================================
+  readonly provinciaDistritos = signal<Provincia | null>(null);
+  readonly distritos = signal<Distrito[]>([]);
+  readonly loadingDistritos = signal(false);
+  readonly errorDistritoMsg = signal('');
+  readonly successDistritoMsg = signal('');
+
+  readonly showDistritoForm = signal(false);
+  readonly editingDistritoId = signal<number | null>(null);
+  readonly formDistritoNombre = signal('');
+  readonly formDistritoCodigoIso = signal('');
+  readonly formDistritoTipo = signal('distrito');
+
+  async abrirDistritos(provincia: Provincia): Promise<void> {
+    if (this.provinciaDistritos()?.id === provincia.id) {
+      this.cerrarDistritos();
+      return;
+    }
+    this.provinciaDistritos.set(provincia);
+    this.cerrarDistritoForm();
+    await this.cargarDistritos(provincia.id);
+  }
+
+  cerrarDistritos(): void {
+    this.provinciaDistritos.set(null);
+    this.distritos.set([]);
+    this.cerrarDistritoForm();
+  }
+
+  async cargarDistritos(provinciaId: number): Promise<void> {
+    try {
+      this.loadingDistritos.set(true);
+      this.errorDistritoMsg.set('');
+      const res = await fetch(`${this.apiBaseUrl}/distritos?provincia_id=${provinciaId}`, { headers: this.getAuthHeaders() });
+      if (!res.ok) throw new Error('Error al cargar distritos.');
+      this.distritos.set(await res.json());
+    } catch (e: any) {
+      this.errorDistritoMsg.set(e.message || 'Error de conexión.');
+    } finally {
+      this.loadingDistritos.set(false);
+    }
+  }
+
+  abrirNuevoDistritoForm(): void {
+    if (this.showDistritoForm() && this.editingDistritoId() === null) {
+      this.cerrarDistritoForm();
+      return;
+    }
+    this.editingDistritoId.set(null);
+    this.formDistritoNombre.set('');
+    this.formDistritoCodigoIso.set('');
+    this.formDistritoTipo.set('distrito');
+    this.showDistritoForm.set(true);
+  }
+
+  abrirEditarDistritoForm(item: Distrito): void {
+    if (this.showDistritoForm() && this.editingDistritoId() === item.id) {
+      this.cerrarDistritoForm();
+      return;
+    }
+    this.editingDistritoId.set(item.id);
+    this.formDistritoNombre.set(item.nombre);
+    this.formDistritoCodigoIso.set(item.codigo_iso || '');
+    this.formDistritoTipo.set(item.tipo || 'distrito');
+    this.showDistritoForm.set(true);
+  }
+
+  cerrarDistritoForm(): void {
+    this.showDistritoForm.set(false);
+    this.editingDistritoId.set(null);
+    this.errorDistritoMsg.set('');
+  }
+
+  async guardarDistrito(): Promise<void> {
+    const provincia = this.provinciaDistritos();
+    if (!provincia) return;
+
+    const nombre = this.formDistritoNombre().trim();
+    if (!nombre) {
+      this.errorDistritoMsg.set('El nombre es obligatorio.');
+      return;
+    }
+
+    try {
+      this.loadingDistritos.set(true);
+      this.errorDistritoMsg.set('');
+      this.successDistritoMsg.set('');
+
+      const id = this.editingDistritoId();
+      const url = id ? `${this.apiBaseUrl}/distritos/${id}` : `${this.apiBaseUrl}/distritos`;
+      const method = id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({
+          provincia_id: provincia.id,
+          nombre,
+          codigo_iso: this.formDistritoCodigoIso().trim(),
+          tipo: this.formDistritoTipo().trim()
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Error al guardar el distrito.');
+
+      this.successDistritoMsg.set(id ? 'Distrito actualizado exitosamente.' : 'Distrito creado exitosamente.');
+      this.cerrarDistritoForm();
+      await this.cargarDistritos(provincia.id);
+
+      setTimeout(() => this.successDistritoMsg.set(''), 3000);
+    } catch (e: any) {
+      this.errorDistritoMsg.set(e.message || 'Error de conexión.');
+    } finally {
+      this.loadingDistritos.set(false);
+    }
+  }
+
+  async eliminarDistrito(item: Distrito): Promise<void> {
+    if (!confirm(`¿Eliminar el distrito "${item.nombre}"?`)) return;
+
+    const provincia = this.provinciaDistritos();
+    try {
+      this.loadingDistritos.set(true);
+      this.errorDistritoMsg.set('');
+      const res = await fetch(`${this.apiBaseUrl}/distritos/${item.id}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'No se pudo eliminar el distrito.');
+      this.successDistritoMsg.set('Distrito eliminado.');
+      if (provincia) await this.cargarDistritos(provincia.id);
+      setTimeout(() => this.successDistritoMsg.set(''), 3000);
+    } catch (e: any) {
+      this.errorDistritoMsg.set(e.message || 'No se pudo eliminar el distrito.');
+    } finally {
+      this.loadingDistritos.set(false);
     }
   }
 }
