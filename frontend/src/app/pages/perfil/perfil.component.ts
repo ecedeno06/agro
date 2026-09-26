@@ -71,9 +71,9 @@ export class PerfilComponent implements OnInit {
   readonly editError = signal('');
   readonly editSuccess = signal('');
 
-  readonly avatarToast = signal('');
-  readonly avatarToastError = signal(false);
-  private avatarToastTimer: any = null;
+  readonly pageToast = signal('');
+  readonly pageToastError = signal(false);
+  private pageToastTimer: any = null;
 
   readonly paisesTelefono = signal<PaisTelefonoOpcion[]>([]);
   readonly telefonoCodigoPais = signal(CODIGO_TELEFONO_DEFECTO);
@@ -145,6 +145,7 @@ export class PerfilComponent implements OnInit {
       // campos que este formulario no toca, ej. avatar, twoFactorEnabled).
       this.sessionService.setUser({ ...this.user(), ...data.usuario });
       this.editSuccess.set('Perfil actualizado exitosamente.');
+      this.showToast('✅ Datos guardados satisfactoriamente.');
     } catch (error: any) {
       this.editError.set(error.message || 'Error de conexión.');
     } finally {
@@ -400,9 +401,9 @@ export class PerfilComponent implements OnInit {
       if (currentUser) {
         this.sessionService.setUser({ ...currentUser, avatar: base64 });
       }
-      this.showAvatarToast('✅ Foto de perfil actualizada.');
+      this.showToast('✅ Foto de perfil actualizada.');
     } catch (err: any) {
-      this.showAvatarToast(err.message || 'Error al subir imagen.', true);
+      this.showToast(err.message || 'Error al subir imagen.', true);
     }
   }
 
@@ -418,16 +419,16 @@ export class PerfilComponent implements OnInit {
       if (currentUser) {
         this.sessionService.setUser({ ...currentUser, avatar: null });
       }
-      this.showAvatarToast('✅ Foto de perfil eliminada.');
+      this.showToast('✅ Foto de perfil eliminada.');
     } catch (err: any) {
-      this.showAvatarToast(err.message || 'Error al eliminar avatar.', true);
+      this.showToast(err.message || 'Error al eliminar avatar.', true);
     }
   }
 
-  private showAvatarToast(msg: string, isError = false): void {
-    if (this.avatarToastTimer) clearTimeout(this.avatarToastTimer);
-    this.avatarToast.set(msg);
-    this.avatarToastError.set(isError);
-    this.avatarToastTimer = setTimeout(() => this.avatarToast.set(''), 3500);
+  private showToast(msg: string, isError = false): void {
+    if (this.pageToastTimer) clearTimeout(this.pageToastTimer);
+    this.pageToast.set(msg);
+    this.pageToastError.set(isError);
+    this.pageToastTimer = setTimeout(() => this.pageToast.set(''), 3500);
   }
 }

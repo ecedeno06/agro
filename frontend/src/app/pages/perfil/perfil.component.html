@@ -28,8 +28,8 @@
     (fotoEliminada)="onFotoPerfilEliminada()"
   ></app-selector-foto>
 
-  <div class="avatar-toast" *ngIf="avatarToast()" [class.error]="avatarToastError()">
-    {{ avatarToast() }}
+  <div class="avatar-toast" *ngIf="pageToast()" [class.error]="pageToastError()">
+    {{ pageToast() }}
   </div>
 
   <button
