@@ -1,0 +1,217 @@
+:host {
+  display: inline-block;
+}
+
+.selector-foto-btn {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 50%;
+  cursor: pointer;
+
+  &:hover .selector-foto-avatar,
+  &:hover .selector-foto-img {
+    filter: brightness(0.93);
+  }
+}
+
+.selector-foto-btn-static {
+  cursor: default;
+
+  &:hover .selector-foto-avatar,
+  &:hover .selector-foto-img {
+    filter: none;
+  }
+}
+
+.selector-foto-avatar {
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: #020a0d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.selector-foto-avatar--cuadrado {
+  border-radius: 8px;
+}
+
+.selector-foto-img {
+  border-radius: 8%;
+  object-fit: cover;
+  object-position: 50% 40%;
+  display: block;
+}
+
+.selector-foto-camera {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface-raised, #0a232b);
+  color: var(--text-main);
+  border: 2px solid var(--surface-color, #06151a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.selector-foto-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 10, 13, 0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.selector-foto-modal {
+  width: 100%;
+  max-width: 380px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--surface-color, #06151a);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+  box-shadow: var(--shadow-lg, 0 20px 40px rgba(0, 0, 0, 0.4));
+  padding: 1.5rem;
+}
+
+.selector-foto-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+
+  h2 {
+    font-size: 1.05rem;
+    margin: 0;
+    color: var(--text-main);
+  }
+}
+
+.selector-foto-close {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--danger-color, #f87171);
+  }
+}
+
+.selector-foto-opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-main);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(6, 182, 212, 0.12);
+    border-color: var(--primary-color);
+  }
+}
+
+.save-btn {
+  background: var(--primary-color);
+  color: #020a0d;
+  border-color: var(--primary-color);
+
+  &:hover {
+    background: var(--secondary-color);
+  }
+}
+
+.cancel-btn {
+  color: var(--danger-color, #f87171);
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: var(--danger-color, #f87171);
+  }
+}
+
+.selector-foto-paste {
+  border: 1px dashed var(--glass-border, rgba(255, 255, 255, 0.2));
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  cursor: text;
+
+  &:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+}
+
+.selector-foto-video-wrap {
+  position: relative;
+}
+
+.selector-foto-video {
+  width: 100%;
+  border-radius: 10px;
+  background: #000;
+  display: block;
+}
+
+.selector-foto-flip {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(2, 10, 13, 0.65);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(2, 10, 13, 0.85);
+  }
+}
+
+.selector-foto-camara-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+
+  .action-btn {
+    flex: 1;
+  }
+}

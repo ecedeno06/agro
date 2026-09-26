@@ -55,7 +55,7 @@
               <div class="user-dropdown-menu" *ngIf="showUserMenu()" (click)="$event.stopPropagation()">
                 <!-- Header con foto grande -->
                 <div class="dropdown-profile-header">
-                  <div class="dropdown-avatar-large" (click)="triggerAvatarUpload()" title="Cambiar foto">
+                  <div class="dropdown-avatar-large" (click)="selectorFotoPerfil.abrirSelector()" title="Cambiar foto">
                     <img *ngIf="user().avatar" [src]="user().avatar" alt="Avatar" />
                     <span *ngIf="!user().avatar" class="initials-large">{{ getUserInitials() }}</span>
                     <div class="avatar-overlay">📷</div>
@@ -70,10 +70,10 @@
                 <div class="dropdown-divider"></div>
 
                 <!-- Acciones de avatar -->
-                <button type="button" class="dropdown-item" (click)="triggerAvatarUpload()">
+                <button type="button" class="dropdown-item" (click)="selectorFotoPerfil.abrirSelector()">
                   📷 Cambiar foto de perfil
                 </button>
-                <button type="button" class="dropdown-item remove-avatar-item" *ngIf="user().avatar" (click)="removeAvatar()">
+                <button type="button" class="dropdown-item remove-avatar-item" *ngIf="user().avatar" (click)="confirmarQuitarAvatar()">
                   🗑️ Quitar foto de perfil
                 </button>
 
@@ -88,9 +88,17 @@
             </div>
           </div>
 
-          <!-- Input de archivo oculto para subir imagen -->
-          <input #avatarFileInput type="file" accept="image/jpeg,image/png,image/webp" style="display:none"
-            (change)="onAvatarFileSelected($event)" id="avatar-file-input" />
+          <!-- Selector de foto (cámara / archivo / pegar): trigger oculto,
+               se abre desde los botones de arriba vía #selectorFotoPerfil -->
+          <app-selector-foto
+            #selectorFotoPerfil
+            style="display:contents"
+            [foto]="user().avatar"
+            [nombre]="user().nombre"
+            [ocultarDisparador]="true"
+            (fotoCambiada)="onFotoPerfilCambiada($event)"
+            (fotoEliminada)="onFotoPerfilEliminada()"
+          ></app-selector-foto>
 
           <!-- Toast de feedback -->
           <div class="avatar-toast" *ngIf="avatarToast()" [class.error]="avatarToastError()">

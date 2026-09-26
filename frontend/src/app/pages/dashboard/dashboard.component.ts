@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
 import { ThemeService } from '../../core/services/theme.service';
 import { SessionService } from '../../core/services/session.service';
 import { NavigationService } from '../../core/services/navigation.service';
@@ -7,6 +7,7 @@ import { filter } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { InactividadComponent } from '../inactividad/inactividad.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
+import { SelectorFotoComponent } from '../../core/components/selector-foto/selector-foto.component';
 import { environment } from '../../../environments/environment';
 
 /**
@@ -17,7 +18,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, SidebarComponent, InactividadComponent],
+  imports: [CommonModule, RouterOutlet, SidebarComponent, InactividadComponent, SelectorFotoComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
@@ -116,8 +117,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private readonly apiBaseUrl = environment.apiUrl;
 
-  @ViewChild('avatarFileInput') avatarFileInput?: ElementRef<HTMLInputElement>;
-
   readonly showUserMenu = signal(false);
   readonly avatarToast = signal<string>('');
   readonly avatarToastError = signal<boolean>(false);
@@ -147,38 +146,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return `${first}${second}` || '?';
   }
 
-  /** Abre el selector de archivo */
-  triggerAvatarUpload(): void {
-    this.avatarFileInput?.nativeElement?.click();
+  /** El selector ya redujo/comprimió la imagen (canvas, máx. 300px, JPEG) antes de emitirla. */
+  async onFotoPerfilCambiada(base64: string): Promise<void> {
+    await this.uploadAvatar(base64);
   }
 
-  /** Maneja la selección del archivo y convierte a base64 */
-  onAvatarFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
-    const file = input.files[0];
+  /** El selector ya pidió confirmación antes de emitir esto. */
+  async onFotoPerfilEliminada(): Promise<void> {
+    await this.removeAvatar();
+  }
 
-    // Validar tipo
-    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowed.includes(file.type)) {
-      this.showAvatarToast('Solo se permiten imágenes JPG, PNG o WebP.', true);
-      return;
-    }
-
-    // Validar tamaño (2 MB)
-    if (file.size > 2 * 1024 * 1024) {
-      this.showAvatarToast('La imagen no puede superar 2 MB.', true);
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64 = e.target?.result as string;
-      await this.uploadAvatar(base64);
-      // Limpiar el input para permitir seleccionar el mismo archivo de nuevo
-      input.value = '';
-    };
-    reader.readAsDataURL(file);
+  /** Botón directo del menú (fuera del selector): pide su propia confirmación. */
+  async confirmarQuitarAvatar(): Promise<void> {
+    if (!confirm('¿Eliminar tu foto de perfil?')) return;
+    await this.removeAvatar();
   }
 
   /** Sube el avatar al backend y actualiza la sesión */
