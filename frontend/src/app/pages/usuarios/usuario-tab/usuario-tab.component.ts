@@ -3,10 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../environments/environment';
 import { SessionService } from '../../../core/services/session.service';
+import { dividirTelefono, combinarTelefono, CODIGO_TELEFONO_DEFECTO } from '../../../core/utils/telefono.util';
 
 export interface Capitulo {
   id_capitulo: number;
   nombre_capitulo: string;
+}
+
+export interface PaisTelefonoOpcion {
+  codigo_iso2: string;
+  nombre: string;
+  codigo_telefono: string | null;
 }
 
 export interface UserRoleItem {
@@ -55,6 +62,8 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
   readonly guardandoDatos = signal(false);
   readonly datosErrorMsg = signal('');
   readonly datosSuccessMsg = signal('');
+  readonly paisesTelefono = signal<PaisTelefonoOpcion[]>([]);
+  readonly telefonoCodigoPais = signal(CODIGO_TELEFONO_DEFECTO);
   readonly editForm = signal({
     nombre: '',
     apellidos: '',
@@ -127,8 +136,18 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
 
   ngOnInit(): void {
     this.cargarDatosRoles();
+    this.cargarPaisesTelefono();
     if (this.sessionService.isSuperadmin()) {
       this.cargarCapitulos();
+    }
+  }
+
+  async cargarPaisesTelefono(): Promise<void> {
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/paises`, { headers: this.getAuthHeaders() });
+      if (res.ok) this.paisesTelefono.set(await res.json());
+    } catch (e) {
+      console.error('Error al cargar códigos telefónicos de países:', e);
     }
   }
 
@@ -359,11 +378,13 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
   // ==============================================
 
   activarEdicionDatos(): void {
+    const { codigo, numero } = dividirTelefono(this.user?.telefono);
+    this.telefonoCodigoPais.set(codigo);
     this.editForm.set({
       nombre: this.user?.nombre || '',
       apellidos: this.user?.apellidos || '',
       email: this.user?.email || '',
-      telefono: this.user?.telefono || '',
+      telefono: numero,
       telefono_whatsapp: !!this.user?.telefono_whatsapp,
       tipo_persona: this.user?.tipo_persona === 'juridica' ? 'juridica' : 'natural',
       dni: this.user?.dni || '',
@@ -399,10 +420,11 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
     this.datosSuccessMsg.set('');
 
     try {
+      const payload = { ...f, telefono: combinarTelefono(this.telefonoCodigoPais(), f.telefono) };
       const res = await fetch(`${this.apiBaseUrl}/usuarios/${this.user.idUsuario}`, {
         method: 'PUT',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify(f)
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'No se pudieron guardar los datos del usuario.');

@@ -52,6 +52,9 @@ type Usuario = {
 import { UsuarioTabComponent } from './usuario-tab/usuario-tab.component';
 import { environment } from '../../../environments/environment';
 import { SessionService } from '../../core/services/session.service';
+import { combinarTelefono, CODIGO_TELEFONO_DEFECTO } from '../../core/utils/telefono.util';
+
+type PaisTelefonoOpcion = { codigo_iso2: string; nombre: string; codigo_telefono: string | null };
 
 @Component({
   selector: 'app-usuarios',
@@ -65,6 +68,9 @@ export class UsuariosComponent implements OnInit {
   readonly sessionService = inject(SessionService);
 
   @ViewChild(UsuarioTabComponent) usuarioTabRef?: UsuarioTabComponent;
+
+  readonly paisesTelefono = signal<PaisTelefonoOpcion[]>([]);
+  readonly telefonoCodigoPaisNuevo = signal(CODIGO_TELEFONO_DEFECTO);
 
   usuarios = signal<Usuario[]>([]);
   selectedUser = signal<Usuario | null>(null);
@@ -152,8 +158,18 @@ export class UsuariosComponent implements OnInit {
     this.sessionService.loadUserFromStorage();
     this.cargarUsuarios();
     this.cargarCatalogoRoles();
+    this.cargarPaisesTelefono();
     if (this.sessionService.isSuperadmin()) {
       this.cargarCapitulos();
+    }
+  }
+
+  async cargarPaisesTelefono(): Promise<void> {
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/paises`, { headers: this.getAuthHeaders() });
+      if (res.ok) this.paisesTelefono.set(await res.json());
+    } catch (e) {
+      console.error('Error al cargar códigos telefónicos de países:', e);
     }
   }
 
@@ -323,7 +339,7 @@ export class UsuariosComponent implements OnInit {
         apellidos: this.nuevoUsuario.apellidos,
         email: this.nuevoUsuario.email,
         password: this.nuevoUsuario.password,
-        telefono: this.nuevoUsuario.telefono,
+        telefono: combinarTelefono(this.telefonoCodigoPaisNuevo(), this.nuevoUsuario.telefono),
         idRol: this.nuevoUsuario.idRol,
         idCapitulo: this.sessionService.isSuperadmin() ? this.nuevoUsuario.idCapitulo : undefined,
         tipo_persona: this.nuevoUsuario.tipo_persona,
@@ -359,6 +375,7 @@ export class UsuariosComponent implements OnInit {
 
   restablecerNuevoUsuarioForm(): void {
     const catalogo = this.roles();
+    this.telefonoCodigoPaisNuevo.set(CODIGO_TELEFONO_DEFECTO);
     this.nuevoUsuario = {
       nombre: '',
       apellidos: '',

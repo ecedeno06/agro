@@ -68,7 +68,19 @@
           <label class="form-field">
             <span>Teléfono</span>
             <div class="telefono-whatsapp-row">
-              <input type="text" [ngModel]="editForm().telefono" (ngModelChange)="actualizarCampoEdicion('telefono', $event)" name="editTelefono" placeholder="Ej. +507 6123-4567" [disabled]="guardandoDatos()" />
+              <select
+                class="codigo-pais-select"
+                [ngModel]="telefonoCodigoPais()"
+                (ngModelChange)="telefonoCodigoPais.set($event)"
+                name="editCodigoPaisTelefono"
+                [disabled]="guardandoDatos()"
+                title="Código de país"
+              >
+                <option *ngFor="let p of paisesTelefono()" [value]="p.codigo_telefono" [disabled]="!p.codigo_telefono">
+                  {{ p.codigo_telefono ? '+' + p.codigo_telefono : '—' }} {{ p.nombre }}
+                </option>
+              </select>
+              <input type="text" [ngModel]="editForm().telefono" (ngModelChange)="actualizarCampoEdicion('telefono', $event)" name="editTelefono" placeholder="Ej. 6123-4567" [disabled]="guardandoDatos()" />
               <label class="checkbox-field checkbox-inline" title="Este teléfono recibe mensajes de WhatsApp">
                 <input type="checkbox" [ngModel]="editForm().telefono_whatsapp" (ngModelChange)="actualizarCampoEdicion('telefono_whatsapp', $event)" name="editTelefonoWhatsapp" [disabled]="guardandoDatos()" />
                 <span>📱</span>

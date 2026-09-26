@@ -150,7 +150,20 @@
 
       <div class="form-field">
         <label>Teléfono</label>
-        <input type="text" [(ngModel)]="nuevoUsuario.telefono" name="regTelefono" placeholder="Ej. +507 6666-8888" />
+        <div class="telefono-row">
+          <select
+            class="codigo-pais-select"
+            [ngModel]="telefonoCodigoPaisNuevo()"
+            (ngModelChange)="telefonoCodigoPaisNuevo.set($event)"
+            name="regCodigoPaisTelefono"
+            title="Código de país"
+          >
+            <option *ngFor="let p of paisesTelefono()" [value]="p.codigo_telefono" [disabled]="!p.codigo_telefono">
+              {{ p.codigo_telefono ? '+' + p.codigo_telefono : '—' }} {{ p.nombre }}
+            </option>
+          </select>
+          <input type="text" [(ngModel)]="nuevoUsuario.telefono" name="regTelefono" placeholder="Ej. 6666-8888" />
+        </div>
       </div>
 
       <div class="form-field">

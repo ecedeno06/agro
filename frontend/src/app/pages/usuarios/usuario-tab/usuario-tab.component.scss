@@ -605,6 +605,27 @@
   }
 }
 
+.codigo-pais-select {
+  flex-shrink: 0;
+  width: 6rem;
+  padding: 0.65rem 0.4rem;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+  border-radius: 8px;
+  background: var(--input-bg, rgba(255, 255, 255, 0.03));
+  color: var(--text-main, #e2e8f0);
+  outline: none;
+  font-size: 0.85rem;
+
+  &:focus {
+    border-color: var(--primary-color, #38bdf8);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
 .checkbox-inline {
   flex-shrink: 0;
   padding: 0.65rem 0.7rem;

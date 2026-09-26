@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { SessionService } from '../../core/services/session.service';
 import { DireccionesComponent } from './direcciones/direcciones.component';
 import { environment } from '../../../environments/environment';
+import { dividirTelefono, combinarTelefono, CODIGO_TELEFONO_DEFECTO } from '../../core/utils/telefono.util';
+
+type PaisTelefonoOpcion = { codigo_iso2: string; nombre: string; codigo_telefono: string | null };
 
 @Component({
   selector: 'app-perfil',
@@ -65,6 +68,9 @@ export class PerfilComponent implements OnInit {
   readonly editError = signal('');
   readonly editSuccess = signal('');
 
+  readonly paisesTelefono = signal<PaisTelefonoOpcion[]>([]);
+  readonly telefonoCodigoPais = signal(CODIGO_TELEFONO_DEFECTO);
+
   readonly editForm = {
     nombre: '',
     telefono: '',
@@ -81,8 +87,10 @@ export class PerfilComponent implements OnInit {
   /** Carga (o recarga) el formulario con los datos actuales de la sesión. */
   inicializarFormularioPerfil(): void {
     const u = this.user();
+    const { codigo, numero } = dividirTelefono(u?.telefono);
+    this.telefonoCodigoPais.set(codigo);
     this.editForm.nombre = u?.nombre || '';
-    this.editForm.telefono = u?.telefono || '';
+    this.editForm.telefono = numero;
     this.editForm.telefono_whatsapp = !!u?.telefonoWhatsapp;
     this.editForm.ocupacion = u?.ocupacion || '';
     this.editForm.fecha_nacimiento = (u?.fechaNacimiento || '').toString().substring(0, 10);
@@ -101,10 +109,11 @@ export class PerfilComponent implements OnInit {
     this.editSuccess.set('');
 
     try {
+      const payload = { ...this.editForm, telefono: combinarTelefono(this.telefonoCodigoPais(), this.editForm.telefono) };
       const response = await fetch(`${this.apiBaseUrl}/usuarios/perfil`, {
         method: 'PUT',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify(this.editForm)
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();
@@ -157,8 +166,18 @@ export class PerfilComponent implements OnInit {
 
   ngOnInit(): void {
     this.inicializarFormularioPerfil();
+    this.cargarPaisesTelefono();
     if (this.esAsociado()) {
       this.cargarCapitulos();
+    }
+  }
+
+  async cargarPaisesTelefono(): Promise<void> {
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/paises`, { headers: this.getAuthHeaders() });
+      if (res.ok) this.paisesTelefono.set(await res.json());
+    } catch (e) {
+      console.error('Error al cargar códigos telefónicos de países:', e);
     }
   }
 

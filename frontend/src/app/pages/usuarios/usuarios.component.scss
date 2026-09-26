@@ -319,6 +319,23 @@
   &.full-width-field {
     grid-column: 1 / -1;
   }
+
+  .telefono-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    input[type="text"] {
+      flex: 1;
+    }
+  }
+
+  .codigo-pais-select {
+    flex-shrink: 0;
+    width: 6rem;
+    padding: 0.6rem 0.35rem !important;
+    font-size: 0.82rem !important;
+  }
 }
 
 .full-width-field {

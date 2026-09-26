@@ -66,7 +66,21 @@
 
         <label class="form-field">
           <span>Teléfono</span>
-          <input type="text" [(ngModel)]="editForm.telefono" name="editTelefono" [disabled]="editLoading()" />
+          <div class="telefono-row">
+            <select
+              class="codigo-pais-select"
+              [ngModel]="telefonoCodigoPais()"
+              (ngModelChange)="telefonoCodigoPais.set($event)"
+              name="editCodigoPaisTelefono"
+              [disabled]="editLoading()"
+              title="Código de país"
+            >
+              <option *ngFor="let p of paisesTelefono()" [value]="p.codigo_telefono" [disabled]="!p.codigo_telefono">
+                {{ p.codigo_telefono ? '+' + p.codigo_telefono : '—' }} {{ p.nombre }}
+              </option>
+            </select>
+            <input type="text" [(ngModel)]="editForm.telefono" name="editTelefono" placeholder="Ej. 6123-4567" [disabled]="editLoading()" />
+          </div>
         </label>
 
         <label class="checkbox-field whatsapp-field">

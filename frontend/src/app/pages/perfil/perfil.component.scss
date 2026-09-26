@@ -685,6 +685,23 @@
     }
   }
 
+  .telefono-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    input[type="text"] {
+      flex: 1;
+    }
+  }
+
+  .codigo-pais-select {
+    flex-shrink: 0;
+    width: 6rem;
+    padding: 0.65rem 0.4rem !important;
+    font-size: 0.85rem !important;
+  }
+
   .checkbox-field {
     display: flex;
     flex-direction: row;
