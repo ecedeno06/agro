@@ -22,8 +22,8 @@
     [foto]="user()?.avatar"
     [nombre]="user()?.nombre || ''"
     [ocultarDisparador]="true"
-    [cuadrado]="true"
-    [tamano]="68"
+    [cuadrado]="false"
+    [tamano]="110"
     (fotoCambiada)="onFotoPerfilCambiada($event)"
     (fotoEliminada)="onFotoPerfilEliminada()"
   ></app-selector-foto>
