@@ -553,16 +553,11 @@ export const enviarInvitacionUsuario = async (req, res, next) => {
     }
 
     const nuevaPassword = generarPasswordSegura();
-    const hash = await bcrypt.hash(nuevaPassword, 10);
     const expiraEn = new Date(Date.now() + 60 * 60 * 1000);
-
-    await query(
-      'UPDATE public.usuarios SET password = $1, debe_cambiar_password = true, invitacion_expira_en = $2 WHERE "idUsuario" = $3',
-      [hash, expiraEn, id]
-    );
-
     const enlace = `${process.env.FRONTEND_URL || 'https://agro-steel-nine.vercel.app'}/login`;
 
+    // Se envía el correo ANTES de tocar la contraseña: si el envío falla, la
+    // cuenta no debe quedar con una contraseña nueva que nadie recibió.
     try {
       await enviarCorreo({
         destinatario: usuario.email,
@@ -572,8 +567,14 @@ export const enviarInvitacionUsuario = async (req, res, next) => {
       });
     } catch (correoError) {
       console.error('Error enviando invitación:', correoError.message);
-      return res.status(502).json({ message: 'La invitación se generó pero no se pudo enviar el correo. Intenta nuevamente.' });
+      return res.status(502).json({ message: 'No se pudo enviar el correo de invitación. La contraseña del usuario no fue modificada. Intenta nuevamente.' });
     }
+
+    const hash = await bcrypt.hash(nuevaPassword, 10);
+    await query(
+      'UPDATE public.usuarios SET password = $1, debe_cambiar_password = true, invitacion_expira_en = $2 WHERE "idUsuario" = $3',
+      [hash, expiraEn, id]
+    );
 
     return res.status(200).json({ message: `Invitación enviada a ${usuario.email}.` });
   } catch (error) {
