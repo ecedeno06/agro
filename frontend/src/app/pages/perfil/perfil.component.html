@@ -29,6 +29,14 @@
     <button
       type="button"
       class="profile-tab-btn"
+      [class.active]="activeTab() === 'direcciones'"
+      (click)="activeTab.set('direcciones')"
+    >
+      📍 Direcciones
+    </button>
+    <button
+      type="button"
+      class="profile-tab-btn"
       [class.active]="activeTab() === 'cuotas'"
       (click)="activeTab.set('cuotas')"
     >
@@ -114,6 +122,15 @@
     </div>
   }
 </section>
+
+<!-- ============================================== -->
+<!-- SECCIÓN: DIRECCIONES DEL USUARIO                -->
+<!-- ============================================== -->
+@if (activeTab() === 'direcciones') {
+  <section class="glass-card m-top-md animate-in">
+    <app-direcciones></app-direcciones>
+  </section>
+}
 
 <!-- ============================================== -->
 <!-- SECCIÓN: HISTORIAL DE CUOTAS DE ASOCIADO        -->

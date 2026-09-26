@@ -17,6 +17,7 @@ import fenomenosRoutes from './routes/fenomenos.routes.js';
 import fincaFenomenosRoutes from './routes/finca-fenomenos.routes.js';
 import geocodificacionRoutes from './routes/geocodificacion.routes.js';
 import auditoriaRoutes from './routes/auditoria.routes.js';
+import usuarioDireccionesRoutes from './routes/usuario-direcciones.routes.js';
 import errorMiddleware from './middlewares/error.middleware.js';
 
 import path from 'path';
@@ -57,6 +58,7 @@ app.use('/api/fenomenos', fenomenosRoutes);
 app.use('/api/fincas-fenomenos', fincaFenomenosRoutes);
 app.use('/api/geocodificacion', geocodificacionRoutes);
 app.use('/api/auditoria', auditoriaRoutes);
+app.use('/api/usuarios/direcciones', usuarioDireccionesRoutes);
 
 // Root Endpoint
 app.get('/', (req, res) => {

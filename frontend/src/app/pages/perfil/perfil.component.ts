@@ -2,12 +2,13 @@ import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SessionService } from '../../core/services/session.service';
+import { DireccionesComponent } from './direcciones/direcciones.component';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-perfil',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DireccionesComponent],
   templateUrl: './perfil.component.html',
   styleUrls: ['./perfil.component.scss']
 })
@@ -57,7 +58,7 @@ export class PerfilComponent implements OnInit {
   };
 
   // --- Pestañas de la página de perfil ---
-  readonly activeTab = signal<'perfil' | 'cuotas'>('perfil');
+  readonly activeTab = signal<'perfil' | 'direcciones' | 'cuotas'>('perfil');
 
   // --- Edición de datos personales (ahora inline en la pestaña "Perfil", sin modal) ---
   readonly editLoading = signal(false);

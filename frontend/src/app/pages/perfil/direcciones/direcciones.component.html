@@ -1,0 +1,168 @@
+<div class="direcciones-container animate-in">
+
+  <div class="direcciones-header">
+    <div>
+      <h3>📍 Mis Direcciones</h3>
+      <p class="section-desc">Puedes registrar varias direcciones y marcar una como principal.</p>
+    </div>
+    <button type="button" class="action-btn register-pago-btn" (click)="abrirNuevo()">
+      ➕ Agregar Dirección
+    </button>
+  </div>
+
+  <div *ngIf="errorMsg()" class="alert danger animate-in">{{ errorMsg() }}</div>
+  <div *ngIf="successMsg()" class="alert success animate-in">{{ successMsg() }}</div>
+
+  <div *ngIf="loading() && direcciones().length === 0" class="loading-state">Cargando direcciones...</div>
+  <div *ngIf="!loading() && direcciones().length === 0" class="empty-state">
+    No tienes direcciones registradas todavía.
+  </div>
+
+  <div class="direcciones-lista">
+    <div class="direccion-card" *ngFor="let d of direcciones()" [class.es-principal]="d.es_principal">
+      <div class="direccion-card-header">
+        <span class="badge" [class.success-badge]="d.es_principal">
+          {{ d.es_principal ? '⭐ Principal' : 'Secundaria' }}
+        </span>
+        <span class="badge" *ngIf="d.comparte_ubicacion">📡 Comparte ubicación</span>
+      </div>
+      <p class="direccion-texto">{{ d.direccion_texto }}</p>
+      <p class="direccion-ubicacion">{{ ubicacionTexto(d) }}</p>
+      <a *ngIf="d.google_maps_url" [href]="d.google_maps_url" target="_blank" rel="noopener" class="direccion-maps-link">
+        🗺️ Ver en Google Maps
+      </a>
+
+      <div class="direccion-acciones">
+        <button type="button" class="icon-btn" title="Editar" (click)="abrirEditar(d)">✏️</button>
+        <button type="button" class="icon-btn" title="Marcar como principal" *ngIf="!d.es_principal" (click)="marcarPrincipal(d)">⭐</button>
+        <button type="button" class="icon-btn icon-btn-danger" title="Eliminar" (click)="eliminar(d)">🗑️</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" *ngIf="formAbierto()" (click)="cerrarForm()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ form().id ? '✏️ Editar Dirección' : '➕ Nueva Dirección' }}</h2>
+        <button class="close-btn" type="button" (click)="cerrarForm()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="guardar()" class="modal-form">
+          <label class="form-field">
+            <span>Dirección *</span>
+            <textarea
+              [ngModel]="form().direccion_texto"
+              (ngModelChange)="actualizarCampo('direccion_texto', $event)"
+              name="direccionTexto"
+              rows="2"
+              required
+              placeholder="Calle, casa, referencia..."
+              [disabled]="loading()"
+            ></textarea>
+          </label>
+
+          <label class="form-field">
+            <span>Enlace de Google Maps</span>
+            <input
+              type="text"
+              [ngModel]="form().google_maps_url"
+              (ngModelChange)="actualizarCampo('google_maps_url', $event)"
+              name="googleMapsUrl"
+              placeholder="https://maps.google.com/?q=8.9,-79.7"
+              [disabled]="loading()"
+            />
+          </label>
+
+          <button
+            type="button"
+            class="action-btn save-btn"
+            (click)="detectarDivisionPolitica()"
+            [disabled]="detectando() || loading()"
+          >
+            {{ detectando() ? '🌎 Detectando...' : '🌎 Detectar País/Provincia/Distrito' }}
+          </button>
+
+          <div class="form-grid-2">
+            <label class="form-field">
+              <span>País</span>
+              <select
+                [ngModel]="form().pais"
+                (ngModelChange)="actualizarCampo('pais', $event)"
+                name="pais"
+                [disabled]="loading()"
+              >
+                <option value="">-- Seleccionar --</option>
+                <option *ngFor="let p of paises()" [value]="p.codigo_iso2">{{ p.nombre }}</option>
+              </select>
+            </label>
+
+            <label class="form-field">
+              <span>Provincia</span>
+              <input
+                type="text"
+                [ngModel]="form().provincia"
+                (ngModelChange)="actualizarCampo('provincia', $event)"
+                name="provincia"
+                [disabled]="loading()"
+              />
+            </label>
+
+            <label class="form-field">
+              <span>Distrito</span>
+              <input
+                type="text"
+                [ngModel]="form().distrito"
+                (ngModelChange)="actualizarCampo('distrito', $event)"
+                name="distrito"
+                [disabled]="loading()"
+              />
+            </label>
+
+            <label class="form-field">
+              <span>Corregimiento</span>
+              <input
+                type="text"
+                [ngModel]="form().corregimiento"
+                (ngModelChange)="actualizarCampo('corregimiento', $event)"
+                name="corregimiento"
+                [disabled]="loading()"
+              />
+            </label>
+          </div>
+
+          <label class="checkbox-field">
+            <input
+              type="checkbox"
+              [ngModel]="form().es_principal"
+              (ngModelChange)="actualizarCampo('es_principal', $event)"
+              name="esPrincipal"
+              [disabled]="loading()"
+            />
+            <span>⭐ Marcar como dirección principal</span>
+          </label>
+
+          <label class="checkbox-field">
+            <input
+              type="checkbox"
+              [ngModel]="form().comparte_ubicacion"
+              (ngModelChange)="actualizarCampo('comparte_ubicacion', $event)"
+              name="comparteUbicacion"
+              [disabled]="loading()"
+            />
+            <span>📡 Compartir mi ubicación</span>
+          </label>
+
+          <div class="modal-actions">
+            <button type="submit" class="action-btn save-btn" [disabled]="loading()">
+              {{ loading() ? 'Guardando...' : '💾 Guardar' }}
+            </button>
+            <button type="button" class="action-btn cancel-btn" (click)="cerrarForm()" [disabled]="loading()">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div>
