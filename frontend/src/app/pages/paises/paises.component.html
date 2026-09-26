@@ -66,15 +66,15 @@
         <table class="usuarios-table">
           <thead>
             <tr>
-              <th style="width: 60px;">ID</th>
-              <th style="width: 180px;">País</th>
-              <th style="width: 65px;">ISO2</th>
-              <th style="width: 65px;">ISO3</th>
-              <th style="width: 140px;">Nacionalidad</th>
-              <th>Moneda</th>
-              <th>Idioma Oficial</th>
-              <th style="width: 90px;">Estado</th>
-              <th style="width: 210px; text-align: right;">Acciones</th>
+              <th style="width: 65px;">ID</th>
+              <th style="width: 150px;">País</th>
+              <th style="width: 55px;">ISO2</th>
+              <th style="width: 55px;">ISO3</th>
+              <th style="width: 105px;">Nacionalidad</th>
+              <th style="width: 120px;">Moneda</th>
+              <th style="width: 120px;">Idioma Oficial</th>
+              <th style="width: 75px;">Estado</th>
+              <th style="width: 110px; text-align: right;">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -83,7 +83,7 @@
               <td><strong>{{ item.nombre }}</strong></td>
               <td><code>{{ item.codigo_iso2 }}</code></td>
               <td><code>{{ item.codigo_iso3 }}</code></td>
-              <td>{{ item.nacionalidad }}</td>
+              <td class="description-cell" [title]="item.nacionalidad">{{ item.nacionalidad }}</td>
               <td class="description-cell" [title]="item.moneda || 'Sin moneda'">{{ item.moneda || '—' }}</td>
               <td class="description-cell" [title]="item.idioma_oficial || 'Sin idioma'">{{ item.idioma_oficial || '—' }}</td>
               <td>
@@ -91,32 +91,24 @@
                   {{ item.activo ? 'Activo' : 'Inactivo' }}
                 </span>
               </td>
-              <td style="text-align: right;" (click)="$event.stopPropagation()">
-                <button
-                  type="button"
-                  class="action-btn edit-btn"
-                  (click)="abrirEditarForm(item)"
-                  style="margin-right: 0.5rem;"
-                >
-                  ✏️ Editar
-                </button>
-                <button
-                  type="button"
-                  class="action-btn"
-                  (click)="irAProvinciasDe(item)"
-                  style="margin-right: 0.5rem;"
-                >
-                  🗺️ Provincias
-                </button>
-                <button
-                  type="button"
-                  [class.action-btn]="true"
-                  [class.cancel-btn]="item.activo"
-                  [class.save-btn]="!item.activo"
-                  (click)="toggleEstado(item)"
-                >
-                  {{ item.activo ? '🔒' : '🔓' }}
-                </button>
+              <td class="acciones-cell" (click)="$event.stopPropagation()">
+                <div class="icon-actions">
+                  <button type="button" class="icon-btn" title="Editar" (click)="abrirEditarForm(item)">
+                    ✏️
+                  </button>
+                  <button type="button" class="icon-btn" title="Provincias" (click)="irAProvinciasDe(item)">
+                    🗺️
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    [class.icon-btn-danger]="item.activo"
+                    [title]="item.activo ? 'Desactivar' : 'Activar'"
+                    (click)="toggleEstado(item)"
+                  >
+                    {{ item.activo ? '🔒' : '🔓' }}
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -299,11 +291,11 @@
         <table class="usuarios-table">
           <thead>
             <tr>
-              <th style="width: 60px;">ID</th>
+              <th style="width: 90px;">ID</th>
               <th>Provincia</th>
-              <th style="width: 90px;">Código</th>
-              <th style="width: 140px;">Tipo</th>
-              <th style="width: 260px; text-align: right;">Acciones</th>
+              <th style="width: 80px;">Código</th>
+              <th style="width: 160px;">Tipo</th>
+              <th style="width: 110px; text-align: right;">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -312,21 +304,18 @@
               <td><strong>{{ item.nombre }}</strong></td>
               <td><code>{{ item.codigo_iso || '—' }}</code></td>
               <td>{{ item.tipo || '—' }}</td>
-              <td style="text-align: right;" (click)="$event.stopPropagation()">
-                <button type="button" class="action-btn edit-btn" (click)="abrirEditarProvinciaForm(item)" style="margin-right: 0.5rem;">
-                  ✏️ Editar
-                </button>
-                <button
-                  type="button"
-                  class="action-btn"
-                  (click)="irADistritosDe(item, paisProvincias()!)"
-                  style="margin-right: 0.5rem;"
-                >
-                  🏘️ Distritos
-                </button>
-                <button type="button" class="action-btn cancel-btn" (click)="eliminarProvincia(item)">
-                  🗑️
-                </button>
+              <td class="acciones-cell" (click)="$event.stopPropagation()">
+                <div class="icon-actions">
+                  <button type="button" class="icon-btn" title="Editar" (click)="abrirEditarProvinciaForm(item)">
+                    ✏️
+                  </button>
+                  <button type="button" class="icon-btn" title="Distritos" (click)="irADistritosDe(item, paisProvincias()!)">
+                    🏘️
+                  </button>
+                  <button type="button" class="icon-btn icon-btn-danger" title="Eliminar" (click)="eliminarProvincia(item)">
+                    🗑️
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -437,11 +426,11 @@
         <table class="usuarios-table">
           <thead>
             <tr>
-              <th style="width: 60px;">ID</th>
+              <th style="width: 90px;">ID</th>
               <th>Distrito</th>
-              <th style="width: 90px;">Código</th>
-              <th style="width: 140px;">Tipo</th>
-              <th style="width: 160px; text-align: right;">Acciones</th>
+              <th style="width: 80px;">Código</th>
+              <th style="width: 160px;">Tipo</th>
+              <th style="width: 90px; text-align: right;">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -450,13 +439,15 @@
               <td><strong>{{ item.nombre }}</strong></td>
               <td><code>{{ item.codigo_iso || '—' }}</code></td>
               <td>{{ item.tipo || '—' }}</td>
-              <td style="text-align: right;" (click)="$event.stopPropagation()">
-                <button type="button" class="action-btn edit-btn" (click)="abrirEditarDistritoForm(item)" style="margin-right: 0.5rem;">
-                  ✏️ Editar
-                </button>
-                <button type="button" class="action-btn cancel-btn" (click)="eliminarDistrito(item)">
-                  🗑️
-                </button>
+              <td class="acciones-cell" (click)="$event.stopPropagation()">
+                <div class="icon-actions">
+                  <button type="button" class="icon-btn" title="Editar" (click)="abrirEditarDistritoForm(item)">
+                    ✏️
+                  </button>
+                  <button type="button" class="icon-btn icon-btn-danger" title="Eliminar" (click)="eliminarDistrito(item)">
+                    🗑️
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
