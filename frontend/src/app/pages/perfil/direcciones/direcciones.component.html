@@ -35,6 +35,15 @@
       <div class="direccion-acciones">
         <button type="button" class="icon-btn" title="Editar" (click)="abrirEditar(d)">✏️</button>
         <button type="button" class="icon-btn" title="Marcar como principal" *ngIf="!d.es_principal" (click)="marcarPrincipal(d)">⭐</button>
+        <button
+          type="button"
+          class="icon-btn"
+          [class.icon-btn-active]="d.comparte_ubicacion"
+          [title]="d.comparte_ubicacion ? 'Dejar de compartir ubicación' : 'Compartir ubicación'"
+          (click)="toggleCompartirUbicacion(d)"
+        >
+          {{ d.comparte_ubicacion ? '📡' : '📴' }}
+        </button>
         <button type="button" class="icon-btn icon-btn-danger" title="Eliminar" (click)="eliminar(d)">🗑️</button>
       </div>
     </div>

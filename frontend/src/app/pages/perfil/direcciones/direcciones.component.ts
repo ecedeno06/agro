@@ -407,6 +407,25 @@ export class DireccionesComponent implements OnInit {
     }
   }
 
+  async toggleCompartirUbicacion(d: Direccion): Promise<void> {
+    this.loading.set(true);
+    this.errorMsg.set('');
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/usuarios/direcciones/${d.id}`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ ...d, comparte_ubicacion: !d.comparte_ubicacion })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'No se pudo actualizar el estado de ubicación compartida.');
+      await this.cargarDirecciones();
+    } catch (error: any) {
+      this.errorMsg.set(error.message || 'No se pudo actualizar el estado de ubicación compartida.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
   async eliminar(d: Direccion): Promise<void> {
     if (!confirm(`¿Eliminar la dirección "${d.direccion_texto}"?`)) return;
 

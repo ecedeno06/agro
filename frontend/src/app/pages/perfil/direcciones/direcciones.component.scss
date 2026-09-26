@@ -171,6 +171,11 @@
   border-color: var(--danger-color, #f87171);
 }
 
+.icon-btn-active {
+  background: rgba(6, 182, 212, 0.18);
+  border-color: var(--primary-color);
+}
+
 /* Modal de formulario */
 .modal-overlay {
   position: fixed;
