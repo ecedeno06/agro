@@ -17,6 +17,8 @@ type Direccion = {
 };
 
 type PaisOpcion = { codigo_iso2: string; nombre: string };
+type ProvinciaOpcion = { id: number; nombre: string; tipo: string | null };
+type DistritoOpcion = { id: number; nombre: string; tipo: string | null };
 
 function formularioVacio() {
   return {
@@ -46,6 +48,12 @@ export class DireccionesComponent implements OnInit {
 
   direcciones = signal<Direccion[]>([]);
   paises = signal<PaisOpcion[]>([]);
+  provincias = signal<ProvinciaOpcion[]>([]);
+  distritos = signal<DistritoOpcion[]>([]);
+  provinciaSeleccionadaId = signal<number | null>(null);
+  distritoSeleccionadoId = signal<number | null>(null);
+  provinciaNoCatalogada = signal<string | null>(null);
+  distritoNoCatalogado = signal<string | null>(null);
   loading = signal(false);
   errorMsg = signal('');
   successMsg = signal('');
@@ -90,14 +98,89 @@ export class DireccionesComponent implements OnInit {
     }
   }
 
+  private async cargarProvincias(codigoIso2: string): Promise<void> {
+    if (!codigoIso2) {
+      this.provincias.set([]);
+      return;
+    }
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/provincias?codigo_iso2=${codigoIso2}`, { headers: this.getAuthHeaders() });
+      this.provincias.set(res.ok ? await res.json() : []);
+    } catch (e) {
+      console.error('Error al cargar provincias:', e);
+      this.provincias.set([]);
+    }
+  }
+
+  private async cargarDistritos(provinciaId: number | null): Promise<void> {
+    if (!provinciaId) {
+      this.distritos.set([]);
+      return;
+    }
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/distritos?provincia_id=${provinciaId}`, { headers: this.getAuthHeaders() });
+      this.distritos.set(res.ok ? await res.json() : []);
+    } catch (e) {
+      console.error('Error al cargar distritos:', e);
+      this.distritos.set([]);
+    }
+  }
+
+  private buscarProvinciaPorNombre(nombre: string): ProvinciaOpcion | undefined {
+    const norm = nombre.trim().toLowerCase();
+    return this.provincias().find(p => p.nombre.trim().toLowerCase() === norm);
+  }
+
+  private buscarDistritoPorNombre(nombre: string): DistritoOpcion | undefined {
+    const norm = nombre.trim().toLowerCase();
+    return this.distritos().find(d => d.nombre.trim().toLowerCase() === norm);
+  }
+
+  private resetearDivisionPolitica(): void {
+    this.provincias.set([]);
+    this.distritos.set([]);
+    this.provinciaSeleccionadaId.set(null);
+    this.distritoSeleccionadoId.set(null);
+    this.provinciaNoCatalogada.set(null);
+    this.distritoNoCatalogado.set(null);
+  }
+
+  async onPaisChange(codigoIso2: string): Promise<void> {
+    this.actualizarCampo('pais', codigoIso2);
+    this.actualizarCampo('provincia', '');
+    this.actualizarCampo('distrito', '');
+    this.resetearDivisionPolitica();
+    await this.cargarProvincias(codigoIso2);
+  }
+
+  async onProvinciaChange(id: number | null): Promise<void> {
+    this.provinciaSeleccionadaId.set(id);
+    this.provinciaNoCatalogada.set(null);
+    this.distritoSeleccionadoId.set(null);
+    this.distritoNoCatalogado.set(null);
+
+    const prov = id != null ? this.provincias().find(p => p.id === id) : undefined;
+    this.actualizarCampo('provincia', prov ? prov.nombre : '');
+    this.actualizarCampo('distrito', '');
+    await this.cargarDistritos(id);
+  }
+
+  onDistritoChange(id: number | null): void {
+    this.distritoSeleccionadoId.set(id);
+    this.distritoNoCatalogado.set(null);
+    const dist = id != null ? this.distritos().find(d => d.id === id) : undefined;
+    this.actualizarCampo('distrito', dist ? dist.nombre : '');
+  }
+
   abrirNuevo(): void {
     this.form.set(formularioVacio());
+    this.resetearDivisionPolitica();
     this.errorMsg.set('');
     this.successMsg.set('');
     this.formAbierto.set(true);
   }
 
-  abrirEditar(d: Direccion): void {
+  async abrirEditar(d: Direccion): Promise<void> {
     this.form.set({
       id: d.id,
       pais: d.pais || '',
@@ -111,7 +194,30 @@ export class DireccionesComponent implements OnInit {
     });
     this.errorMsg.set('');
     this.successMsg.set('');
+    this.resetearDivisionPolitica();
     this.formAbierto.set(true);
+
+    if (!d.pais) return;
+    await this.cargarProvincias(d.pais);
+    if (!d.provincia) return;
+
+    const prov = this.buscarProvinciaPorNombre(d.provincia);
+    if (!prov) {
+      this.provinciaNoCatalogada.set(d.provincia);
+      if (d.distrito) this.distritoNoCatalogado.set(d.distrito);
+      return;
+    }
+
+    this.provinciaSeleccionadaId.set(prov.id);
+    await this.cargarDistritos(prov.id);
+    if (!d.distrito) return;
+
+    const dist = this.buscarDistritoPorNombre(d.distrito);
+    if (dist) {
+      this.distritoSeleccionadoId.set(dist.id);
+    } else {
+      this.distritoNoCatalogado.set(d.distrito);
+    }
   }
 
   cerrarForm(): void {
@@ -150,13 +256,40 @@ export class DireccionesComponent implements OnInit {
       const paisCoincidente = data.pais_codigo
         ? this.paises().find(p => p.codigo_iso2 === data.pais_codigo)
         : null;
+      const codigoIso2 = paisCoincidente ? paisCoincidente.codigo_iso2 : this.form().pais;
 
-      this.form.set({
-        ...this.form(),
-        pais: paisCoincidente ? paisCoincidente.codigo_iso2 : this.form().pais,
-        provincia: data.provincia || this.form().provincia,
-        distrito: data.distrito || this.form().distrito
-      });
+      this.actualizarCampo('pais', codigoIso2);
+      this.resetearDivisionPolitica();
+
+      if (codigoIso2) {
+        await this.cargarProvincias(codigoIso2);
+      }
+
+      if (data.provincia) {
+        const prov = this.buscarProvinciaPorNombre(data.provincia);
+        if (prov) {
+          this.provinciaSeleccionadaId.set(prov.id);
+          this.actualizarCampo('provincia', prov.nombre);
+          await this.cargarDistritos(prov.id);
+
+          const dist = data.distrito ? this.buscarDistritoPorNombre(data.distrito) : undefined;
+          if (dist) {
+            this.distritoSeleccionadoId.set(dist.id);
+            this.actualizarCampo('distrito', dist.nombre);
+          } else if (data.distrito) {
+            this.distritoNoCatalogado.set(data.distrito);
+            this.actualizarCampo('distrito', data.distrito);
+          }
+        } else {
+          this.provinciaNoCatalogada.set(data.provincia);
+          this.actualizarCampo('provincia', data.provincia);
+          if (data.distrito) {
+            this.distritoNoCatalogado.set(data.distrito);
+            this.actualizarCampo('distrito', data.distrito);
+          }
+        }
+      }
+
       this.successMsg.set('📍 División política detectada. Revisa los campos y guarda.');
     } catch (error: any) {
       this.errorMsg.set(error.message || 'No se pudo detectar la división política para ese punto.');

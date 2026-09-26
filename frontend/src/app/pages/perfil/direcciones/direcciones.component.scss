@@ -279,6 +279,11 @@
   }
 }
 
+.hint-legado {
+  font-size: 0.72rem;
+  color: var(--warning-color, #fbbf24);
+}
+
 .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;

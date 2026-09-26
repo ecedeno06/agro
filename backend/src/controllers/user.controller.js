@@ -539,7 +539,7 @@ export const eliminarRolUsuario = async (req, res, next) => {
  * No permite tocar email, contraseña ni rol (eso pasa por otros flujos).
  */
 export const actualizarPerfilPropio = async (req, res, next) => {
-  const { nombre, telefono, telefono_whatsapp, direccion, ocupacion, fecha_nacimiento, tipo_sangre, tipo_persona, dni } = req.body;
+  const { nombre, telefono, telefono_whatsapp, ocupacion, fecha_nacimiento, tipo_sangre, tipo_persona, dni } = req.body;
   const userId = req.userId;
 
   try {
@@ -552,13 +552,12 @@ export const actualizarPerfilPropio = async (req, res, next) => {
          nombre = $1,
          telefono = $2,
          telefono_whatsapp = $3,
-         direccion = $4,
-         ocupacion = $5,
-         fecha_nacimiento = $6,
-         tipo_sangre = $7,
-         tipo_persona = $8,
-         dni = $9
-       WHERE "idUsuario" = $10
+         ocupacion = $4,
+         fecha_nacimiento = $5,
+         tipo_sangre = $6,
+         tipo_persona = $7,
+         dni = $8
+       WHERE "idUsuario" = $9
        RETURNING "idUsuario", nombre, email, rol, telefono, telefono_whatsapp, direccion, ocupacion,
                  fecha_nacimiento, tipo_sangre, tipo_persona, dni, activo,
                  debe_cambiar_password, two_factor_enabled, avatar`,
@@ -566,7 +565,6 @@ export const actualizarPerfilPropio = async (req, res, next) => {
         nombre.trim(),
         telefono || null,
         !!telefono_whatsapp,
-        JSON.stringify(direccion || ''),
         ocupacion || null,
         fecha_nacimiento || null,
         tipo_sangre || null,

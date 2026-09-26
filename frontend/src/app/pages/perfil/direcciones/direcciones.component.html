@@ -92,7 +92,7 @@
               <span>País</span>
               <select
                 [ngModel]="form().pais"
-                (ngModelChange)="actualizarCampo('pais', $event)"
+                (ngModelChange)="onPaisChange($event)"
                 name="pais"
                 [disabled]="loading()"
               >
@@ -103,24 +103,34 @@
 
             <label class="form-field">
               <span>Provincia</span>
-              <input
-                type="text"
-                [ngModel]="form().provincia"
-                (ngModelChange)="actualizarCampo('provincia', $event)"
+              <select
+                [ngModel]="provinciaSeleccionadaId()"
+                (ngModelChange)="onProvinciaChange($event)"
                 name="provincia"
-                [disabled]="loading()"
-              />
+                [disabled]="loading() || !form().pais || provincias().length === 0"
+              >
+                <option [ngValue]="null">-- Seleccionar --</option>
+                <option *ngFor="let p of provincias()" [ngValue]="p.id">{{ p.nombre }}</option>
+              </select>
+              <small class="hint-legado" *ngIf="provinciaNoCatalogada()">
+                Valor guardado: "{{ provinciaNoCatalogada() }}" (no coincide con el catálogo; selecciona una opción para actualizar)
+              </small>
             </label>
 
             <label class="form-field">
               <span>Distrito</span>
-              <input
-                type="text"
-                [ngModel]="form().distrito"
-                (ngModelChange)="actualizarCampo('distrito', $event)"
+              <select
+                [ngModel]="distritoSeleccionadoId()"
+                (ngModelChange)="onDistritoChange($event)"
                 name="distrito"
-                [disabled]="loading()"
-              />
+                [disabled]="loading() || !provinciaSeleccionadaId() || distritos().length === 0"
+              >
+                <option [ngValue]="null">-- Seleccionar --</option>
+                <option *ngFor="let d of distritos()" [ngValue]="d.id">{{ d.nombre }}</option>
+              </select>
+              <small class="hint-legado" *ngIf="distritoNoCatalogado()">
+                Valor guardado: "{{ distritoNoCatalogado() }}" (no coincide con el catálogo; selecciona una opción para actualizar)
+              </small>
             </label>
 
             <label class="form-field">
