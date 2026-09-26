@@ -41,6 +41,7 @@
 
     <div class="alert danger animate-in" *ngIf="resetErrorMsg()">{{ resetErrorMsg() }}</div>
     <div class="alert success animate-in" *ngIf="resetSuccessMsg()">{{ resetSuccessMsg() }}</div>
+    <div class="alert success animate-in" *ngIf="datosSuccessMsg() && !editandoDatos()">{{ datosSuccessMsg() }}</div>
     <div class="password-generada-box" *ngIf="passwordGenerada()">
       <span>🔑 Nueva contraseña temporal:</span>
       <code>{{ passwordGenerada() }}</code>
