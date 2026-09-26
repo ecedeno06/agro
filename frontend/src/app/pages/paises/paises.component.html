@@ -1,5 +1,20 @@
 <div class="mantenimiento-suelos-container animate-in">
 
+  <!-- TABS: Países / Provincias / Distritos -->
+  <nav class="geo-tabs-nav">
+    <button type="button" class="geo-tab-btn" [class.active]="activeTab() === 'paises'" (click)="activeTab.set('paises')">
+      🌍 Países
+    </button>
+    <button type="button" class="geo-tab-btn" [class.active]="activeTab() === 'provincias'" (click)="activeTab.set('provincias')">
+      🗺️ Provincias
+    </button>
+    <button type="button" class="geo-tab-btn" [class.active]="activeTab() === 'distritos'" (click)="activeTab.set('distritos')">
+      🏘️ Distritos
+    </button>
+  </nav>
+
+  @if (activeTab() === 'paises') {
+
   <!-- CARD 1: LISTADO DE PAÍSES -->
   <section class="suelos-list-card">
     <div class="card-header flex-header">
@@ -88,8 +103,7 @@
                 <button
                   type="button"
                   class="action-btn"
-                  [class.save-btn]="paisProvincias()?.id === item.id"
-                  (click)="abrirProvincias(item)"
+                  (click)="irAProvinciasDe(item)"
                   style="margin-right: 0.5rem;"
                 >
                   🗺️ Provincias
@@ -234,20 +248,31 @@
     </div>
   </section>
 
-  <!-- CARD 3: PROVINCIAS DEL PAÍS SELECCIONADO -->
-  <section class="suelos-list-card" *ngIf="paisProvincias() as pais">
+  }
+
+  @if (activeTab() === 'provincias') {
+
+  <!-- CARD 3: PROVINCIAS -->
+  <section class="suelos-list-card">
     <div class="card-header flex-header">
       <div>
-        <h2>Provincias de {{ pais.nombre }}</h2>
-        <p class="subtitle">Administra las provincias (1er nivel) de este país.</p>
+        <h2>Catálogo de Provincias</h2>
+        <p class="subtitle">Selecciona un país para administrar sus provincias (1er nivel).</p>
       </div>
-      <div>
-        <button type="button" class="action-btn register-suelo-btn" (click)="abrirNuevaProvinciaForm()" style="margin-right: 0.5rem;">
+      @if (paisProvincias()) {
+        <button type="button" class="action-btn register-suelo-btn" (click)="abrirNuevaProvinciaForm()">
           {{ showProvinciaForm() && !editingProvinciaId() ? '❌ Cerrar Formulario' : '➕ Registrar Provincia' }}
         </button>
-        <button type="button" class="action-btn cancel-btn" (click)="cerrarProvincias()">
-          ✕ Cerrar
-        </button>
+      }
+    </div>
+
+    <div class="search-container">
+      <div class="search-field">
+        <label for="provinciaTabPais">🌍 País</label>
+        <select id="provinciaTabPais" [ngModel]="provinciaTabPaisId()" (ngModelChange)="onProvinciaTabPaisChange($event)">
+          <option [ngValue]="null">-- Seleccionar país --</option>
+          <option *ngFor="let p of paises()" [ngValue]="p.id">{{ p.nombre }}</option>
+        </select>
       </div>
     </div>
 
@@ -258,7 +283,11 @@
       {{ errorProvinciaMsg() }}
     </div>
 
-    <div class="list-section">
+    <div class="empty-state" *ngIf="!paisProvincias()">
+      Selecciona un país arriba para ver y administrar sus provincias.
+    </div>
+
+    <div class="list-section" *ngIf="paisProvincias()">
       <div *ngIf="loadingProvincias() && provincias().length === 0" class="loading-state" style="text-align: center; padding: 2rem; color: var(--text-muted);">
         Cargando provincias...
       </div>
@@ -290,8 +319,7 @@
                 <button
                   type="button"
                   class="action-btn"
-                  [class.save-btn]="provinciaDistritos()?.id === item.id"
-                  (click)="abrirDistritos(item)"
+                  (click)="irADistritosDe(item, paisProvincias()!)"
                   style="margin-right: 0.5rem;"
                 >
                   🏘️ Distritos
@@ -344,20 +372,45 @@
     </div>
   </section>
 
-  <!-- CARD 4: DISTRITOS DE LA PROVINCIA SELECCIONADA -->
-  <section class="suelos-list-card" *ngIf="provinciaDistritos() as provincia">
+  }
+
+  @if (activeTab() === 'distritos') {
+
+  <!-- CARD 4: DISTRITOS -->
+  <section class="suelos-list-card">
     <div class="card-header flex-header">
       <div>
-        <h2>Distritos de {{ provincia.nombre }}</h2>
-        <p class="subtitle">Administra los distritos (2do nivel) de esta provincia.</p>
+        <h2>Catálogo de Distritos</h2>
+        <p class="subtitle">Selecciona un país y una provincia para administrar sus distritos (2do nivel).</p>
       </div>
-      <div>
-        <button type="button" class="action-btn register-suelo-btn" (click)="abrirNuevoDistritoForm()" style="margin-right: 0.5rem;">
+      @if (provinciaDistritos()) {
+        <button type="button" class="action-btn register-suelo-btn" (click)="abrirNuevoDistritoForm()">
           {{ showDistritoForm() && !editingDistritoId() ? '❌ Cerrar Formulario' : '➕ Registrar Distrito' }}
         </button>
-        <button type="button" class="action-btn cancel-btn" (click)="cerrarDistritos()">
-          ✕ Cerrar
-        </button>
+      }
+    </div>
+
+    <div class="search-container">
+      <div class="form-grid-2col">
+        <div class="search-field">
+          <label for="distritoTabPais">🌍 País</label>
+          <select id="distritoTabPais" [ngModel]="distritoTabPaisId()" (ngModelChange)="onDistritoTabPaisChange($event)">
+            <option [ngValue]="null">-- Seleccionar país --</option>
+            <option *ngFor="let p of paises()" [ngValue]="p.id">{{ p.nombre }}</option>
+          </select>
+        </div>
+        <div class="search-field">
+          <label for="distritoTabProvincia">🗺️ Provincia</label>
+          <select
+            id="distritoTabProvincia"
+            [ngModel]="distritoTabProvinciaId()"
+            (ngModelChange)="onDistritoTabProvinciaChange($event)"
+            [disabled]="!distritoTabPaisId() || distritoTabProvincias().length === 0"
+          >
+            <option [ngValue]="null">-- Seleccionar provincia --</option>
+            <option *ngFor="let p of distritoTabProvincias()" [ngValue]="p.id">{{ p.nombre }}</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -368,7 +421,11 @@
       {{ errorDistritoMsg() }}
     </div>
 
-    <div class="list-section">
+    <div class="empty-state" *ngIf="!provinciaDistritos()">
+      Selecciona un país y una provincia arriba para ver y administrar sus distritos.
+    </div>
+
+    <div class="list-section" *ngIf="provinciaDistritos()">
       <div *ngIf="loadingDistritos() && distritos().length === 0" class="loading-state" style="text-align: center; padding: 2rem; color: var(--text-muted);">
         Cargando distritos...
       </div>
@@ -440,5 +497,7 @@
       </form>
     </div>
   </section>
+
+  }
 
 </div>

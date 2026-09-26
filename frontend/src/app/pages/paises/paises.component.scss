@@ -10,6 +10,34 @@
   width: 100%;
 }
 
+.geo-tabs-nav {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 0;
+}
+
+.geo-tab-btn {
+  padding: 0.75rem 1.25rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--text-color);
+  }
+
+  &.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+  }
+}
+
 /* CARD COMÚN Y ESTILOS GLASS */
 .suelos-list-card,
 .suelos-form-card {
@@ -87,7 +115,7 @@
     color: var(--primary-color);
   }
 
-  input {
+  input, select {
     width: 100%;
     padding: 0.75rem 1rem;
     border-radius: 10px;
@@ -101,6 +129,11 @@
     &:focus {
       border-color: var(--primary-color);
       box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.15);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
   }
 }

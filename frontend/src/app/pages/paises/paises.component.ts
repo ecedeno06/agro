@@ -42,6 +42,8 @@ interface Distrito {
 export class PaisesComponent implements OnInit {
   private readonly apiBaseUrl = environment.apiUrl;
 
+  readonly activeTab = signal<'paises' | 'provincias' | 'distritos'>('paises');
+
   readonly paises = signal<Pais[]>([]);
   readonly loading = signal(false);
   readonly errorMsg = signal('');
@@ -248,9 +250,27 @@ export class PaisesComponent implements OnInit {
   readonly formProvinciaCodigoIso = signal('');
   readonly formProvinciaTipo = signal('provincia');
 
+  // Selector de país para la pestaña "Provincias"
+  readonly provinciaTabPaisId = signal<number | null>(null);
+
+  async onProvinciaTabPaisChange(id: number | null): Promise<void> {
+    this.provinciaTabPaisId.set(id);
+    const pais = id != null ? this.paises().find(p => p.id === id) : undefined;
+    if (pais) {
+      await this.abrirProvincias(pais);
+    } else {
+      this.cerrarProvincias();
+    }
+  }
+
+  async irAProvinciasDe(pais: Pais): Promise<void> {
+    this.activeTab.set('provincias');
+    this.provinciaTabPaisId.set(pais.id);
+    await this.abrirProvincias(pais);
+  }
+
   async abrirProvincias(pais: Pais): Promise<void> {
     if (this.paisProvincias()?.id === pais.id) {
-      this.cerrarProvincias();
       return;
     }
     this.paisProvincias.set(pais);
@@ -261,18 +281,26 @@ export class PaisesComponent implements OnInit {
 
   cerrarProvincias(): void {
     this.paisProvincias.set(null);
+    this.provinciaTabPaisId.set(null);
     this.provincias.set([]);
     this.cerrarDistritos();
     this.cerrarProvinciaForm();
+  }
+
+  private async fetchProvinciasPorPais(paisId: number): Promise<Provincia[]> {
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/provincias?pais_id=${paisId}`, { headers: this.getAuthHeaders() });
+      return res.ok ? await res.json() : [];
+    } catch {
+      return [];
+    }
   }
 
   async cargarProvincias(paisId: number): Promise<void> {
     try {
       this.loadingProvincias.set(true);
       this.errorProvinciaMsg.set('');
-      const res = await fetch(`${this.apiBaseUrl}/provincias?pais_id=${paisId}`, { headers: this.getAuthHeaders() });
-      if (!res.ok) throw new Error('Error al cargar provincias.');
-      this.provincias.set(await res.json());
+      this.provincias.set(await this.fetchProvinciasPorPais(paisId));
     } catch (e: any) {
       this.errorProvinciaMsg.set(e.message || 'Error de conexión.');
     } finally {
@@ -396,9 +424,47 @@ export class PaisesComponent implements OnInit {
   readonly formDistritoCodigoIso = signal('');
   readonly formDistritoTipo = signal('distrito');
 
+  // Selectores de país -> provincia para la pestaña "Distritos"
+  readonly distritoTabPaisId = signal<number | null>(null);
+  readonly distritoTabProvincias = signal<Provincia[]>([]);
+  readonly loadingDistritoTabProvincias = signal(false);
+  readonly distritoTabProvinciaId = signal<number | null>(null);
+
+  async onDistritoTabPaisChange(id: number | null): Promise<void> {
+    this.distritoTabPaisId.set(id);
+    this.distritoTabProvinciaId.set(null);
+    this.cerrarDistritos();
+    if (id == null) {
+      this.distritoTabProvincias.set([]);
+      return;
+    }
+    this.loadingDistritoTabProvincias.set(true);
+    this.distritoTabProvincias.set(await this.fetchProvinciasPorPais(id));
+    this.loadingDistritoTabProvincias.set(false);
+  }
+
+  async onDistritoTabProvinciaChange(id: number | null): Promise<void> {
+    this.distritoTabProvinciaId.set(id);
+    const provincia = id != null ? this.distritoTabProvincias().find(p => p.id === id) : undefined;
+    if (provincia) {
+      await this.abrirDistritos(provincia);
+    } else {
+      this.cerrarDistritos();
+    }
+  }
+
+  async irADistritosDe(provincia: Provincia, pais: Pais): Promise<void> {
+    this.activeTab.set('distritos');
+    this.distritoTabPaisId.set(pais.id);
+    this.loadingDistritoTabProvincias.set(true);
+    this.distritoTabProvincias.set(await this.fetchProvinciasPorPais(pais.id));
+    this.loadingDistritoTabProvincias.set(false);
+    this.distritoTabProvinciaId.set(provincia.id);
+    await this.abrirDistritos(provincia);
+  }
+
   async abrirDistritos(provincia: Provincia): Promise<void> {
     if (this.provinciaDistritos()?.id === provincia.id) {
-      this.cerrarDistritos();
       return;
     }
     this.provinciaDistritos.set(provincia);
