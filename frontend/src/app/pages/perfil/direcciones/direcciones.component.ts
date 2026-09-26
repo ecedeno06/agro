@@ -1,7 +1,8 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../environments/environment';
+import { MapaSelectorComponent, UbicacionSeleccionada, extraerLatLng } from '../../../core/components/mapa-selector/mapa-selector.component';
 
 type Direccion = {
   id: number;
@@ -16,13 +17,6 @@ type Direccion = {
 };
 
 type PaisOpcion = { codigo_iso2: string; nombre: string };
-
-function extraerLatLng(url: string | null | undefined): [number, number] | null {
-  if (!url) return null;
-  const match = url.match(/(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
-  if (!match) return null;
-  return [Number(match[1]), Number(match[2])];
-}
 
 function formularioVacio() {
   return {
@@ -41,11 +35,13 @@ function formularioVacio() {
 @Component({
   selector: 'app-direcciones',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MapaSelectorComponent],
   templateUrl: './direcciones.component.html',
   styleUrls: ['./direcciones.component.scss']
 })
 export class DireccionesComponent implements OnInit {
+  @ViewChild(MapaSelectorComponent) mapaSelector?: MapaSelectorComponent;
+
   private readonly apiBaseUrl = environment.apiUrl;
 
   direcciones = signal<Direccion[]>([]);
@@ -124,6 +120,14 @@ export class DireccionesComponent implements OnInit {
 
   actualizarCampo<K extends keyof ReturnType<typeof formularioVacio>>(campo: K, valor: ReturnType<typeof formularioVacio>[K]): void {
     this.form.set({ ...this.form(), [campo]: valor });
+  }
+
+  abrirMapa(): void {
+    this.mapaSelector?.abrir(this.form().google_maps_url);
+  }
+
+  onUbicacionElegida(u: UbicacionSeleccionada): void {
+    this.actualizarCampo('google_maps_url', u.url);
   }
 
   async detectarDivisionPolitica(): Promise<void> {
