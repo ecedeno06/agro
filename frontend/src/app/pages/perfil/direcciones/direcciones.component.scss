@@ -282,6 +282,12 @@
 .hint-legado {
   font-size: 0.72rem;
   color: var(--warning-color, #fbbf24);
+
+  a {
+    color: var(--primary-color);
+    text-decoration: underline;
+    cursor: pointer;
+  }
 }
 
 .form-grid-2 {

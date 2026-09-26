@@ -103,34 +103,60 @@
 
             <label class="form-field">
               <span>Provincia</span>
-              <select
-                [ngModel]="provinciaSeleccionadaId()"
-                (ngModelChange)="onProvinciaChange($event)"
-                name="provincia"
-                [disabled]="loading() || !form().pais || provincias().length === 0"
-              >
-                <option [ngValue]="null">-- Seleccionar --</option>
-                <option *ngFor="let p of provincias()" [ngValue]="p.id">{{ p.nombre }}</option>
-              </select>
-              <small class="hint-legado" *ngIf="provinciaNoCatalogada()">
-                Valor guardado: "{{ provinciaNoCatalogada() }}" (no coincide con el catálogo; selecciona una opción para actualizar)
-              </small>
+              <ng-container *ngIf="!provinciaEsManual(); else provinciaManual">
+                <select
+                  [ngModel]="provinciaSeleccionadaId()"
+                  (ngModelChange)="onProvinciaChange($event)"
+                  name="provincia"
+                  [disabled]="loading() || !form().pais"
+                >
+                  <option [ngValue]="null">-- Seleccionar --</option>
+                  <option [ngValue]="-1">Otro / no está en la lista</option>
+                  <option *ngFor="let p of provincias()" [ngValue]="p.id">{{ p.nombre }}</option>
+                </select>
+              </ng-container>
+              <ng-template #provinciaManual>
+                <input
+                  type="text"
+                  [ngModel]="form().provincia"
+                  (ngModelChange)="actualizarCampo('provincia', $event)"
+                  name="provincia"
+                  placeholder="Escribe la provincia / estado"
+                  [disabled]="loading()"
+                />
+                <small class="hint-legado" *ngIf="provincias().length > 0">
+                  <a href="javascript:void(0)" (click)="volverASeleccionarProvincia()">↩ Elegir de la lista del catálogo</a>
+                </small>
+              </ng-template>
             </label>
 
             <label class="form-field">
               <span>Distrito</span>
-              <select
-                [ngModel]="distritoSeleccionadoId()"
-                (ngModelChange)="onDistritoChange($event)"
-                name="distrito"
-                [disabled]="loading() || !provinciaSeleccionadaId() || distritos().length === 0"
-              >
-                <option [ngValue]="null">-- Seleccionar --</option>
-                <option *ngFor="let d of distritos()" [ngValue]="d.id">{{ d.nombre }}</option>
-              </select>
-              <small class="hint-legado" *ngIf="distritoNoCatalogado()">
-                Valor guardado: "{{ distritoNoCatalogado() }}" (no coincide con el catálogo; selecciona una opción para actualizar)
-              </small>
+              <ng-container *ngIf="!distritoEsManual(); else distritoManual">
+                <select
+                  [ngModel]="distritoSeleccionadoId()"
+                  (ngModelChange)="onDistritoChange($event)"
+                  name="distrito"
+                  [disabled]="loading() || !provinciaSeleccionadaId()"
+                >
+                  <option [ngValue]="null">-- Seleccionar --</option>
+                  <option [ngValue]="-1">Otro / no está en la lista</option>
+                  <option *ngFor="let d of distritos()" [ngValue]="d.id">{{ d.nombre }}</option>
+                </select>
+              </ng-container>
+              <ng-template #distritoManual>
+                <input
+                  type="text"
+                  [ngModel]="form().distrito"
+                  (ngModelChange)="actualizarCampo('distrito', $event)"
+                  name="distrito"
+                  placeholder="Escribe el distrito / condado"
+                  [disabled]="loading()"
+                />
+                <small class="hint-legado" *ngIf="distritos().length > 0">
+                  <a href="javascript:void(0)" (click)="volverASeleccionarDistrito()">↩ Elegir de la lista del catálogo</a>
+                </small>
+              </ng-template>
             </label>
 
             <label class="form-field">

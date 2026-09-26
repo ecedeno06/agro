@@ -52,8 +52,8 @@ export class DireccionesComponent implements OnInit {
   distritos = signal<DistritoOpcion[]>([]);
   provinciaSeleccionadaId = signal<number | null>(null);
   distritoSeleccionadoId = signal<number | null>(null);
-  provinciaNoCatalogada = signal<string | null>(null);
-  distritoNoCatalogado = signal<string | null>(null);
+  provinciaEsManual = signal(false);
+  distritoEsManual = signal(false);
   loading = signal(false);
   errorMsg = signal('');
   successMsg = signal('');
@@ -141,8 +141,36 @@ export class DireccionesComponent implements OnInit {
     this.distritos.set([]);
     this.provinciaSeleccionadaId.set(null);
     this.distritoSeleccionadoId.set(null);
-    this.provinciaNoCatalogada.set(null);
-    this.distritoNoCatalogado.set(null);
+    this.provinciaEsManual.set(false);
+    this.distritoEsManual.set(false);
+  }
+
+  private activarProvinciaManual(): void {
+    this.provinciaSeleccionadaId.set(-1);
+    this.provinciaEsManual.set(true);
+  }
+
+  private activarDistritoManual(): void {
+    this.distritoSeleccionadoId.set(-1);
+    this.distritoEsManual.set(true);
+  }
+
+  /** Permite volver al select cuando el país sí tiene catálogo de provincias. */
+  volverASeleccionarProvincia(): void {
+    this.provinciaEsManual.set(false);
+    this.provinciaSeleccionadaId.set(null);
+    this.actualizarCampo('provincia', '');
+    this.distritoEsManual.set(false);
+    this.distritoSeleccionadoId.set(null);
+    this.distritos.set([]);
+    this.actualizarCampo('distrito', '');
+  }
+
+  /** Permite volver al select cuando la provincia sí tiene catálogo de distritos. */
+  volverASeleccionarDistrito(): void {
+    this.distritoEsManual.set(false);
+    this.distritoSeleccionadoId.set(null);
+    this.actualizarCampo('distrito', '');
   }
 
   async onPaisChange(codigoIso2: string): Promise<void> {
@@ -154,10 +182,19 @@ export class DireccionesComponent implements OnInit {
   }
 
   async onProvinciaChange(id: number | null): Promise<void> {
+    if (id === -1) {
+      this.distritos.set([]);
+      this.activarProvinciaManual();
+      this.actualizarCampo('provincia', '');
+      this.actualizarCampo('distrito', '');
+      this.activarDistritoManual();
+      return;
+    }
+
     this.provinciaSeleccionadaId.set(id);
-    this.provinciaNoCatalogada.set(null);
+    this.provinciaEsManual.set(false);
     this.distritoSeleccionadoId.set(null);
-    this.distritoNoCatalogado.set(null);
+    this.distritoEsManual.set(false);
 
     const prov = id != null ? this.provincias().find(p => p.id === id) : undefined;
     this.actualizarCampo('provincia', prov ? prov.nombre : '');
@@ -166,8 +203,14 @@ export class DireccionesComponent implements OnInit {
   }
 
   onDistritoChange(id: number | null): void {
+    if (id === -1) {
+      this.activarDistritoManual();
+      this.actualizarCampo('distrito', '');
+      return;
+    }
+
     this.distritoSeleccionadoId.set(id);
-    this.distritoNoCatalogado.set(null);
+    this.distritoEsManual.set(false);
     const dist = id != null ? this.distritos().find(d => d.id === id) : undefined;
     this.actualizarCampo('distrito', dist ? dist.nombre : '');
   }
@@ -203,8 +246,8 @@ export class DireccionesComponent implements OnInit {
 
     const prov = this.buscarProvinciaPorNombre(d.provincia);
     if (!prov) {
-      this.provinciaNoCatalogada.set(d.provincia);
-      if (d.distrito) this.distritoNoCatalogado.set(d.distrito);
+      this.activarProvinciaManual();
+      if (d.distrito) this.activarDistritoManual();
       return;
     }
 
@@ -216,7 +259,7 @@ export class DireccionesComponent implements OnInit {
     if (dist) {
       this.distritoSeleccionadoId.set(dist.id);
     } else {
-      this.distritoNoCatalogado.set(d.distrito);
+      this.activarDistritoManual();
     }
   }
 
@@ -277,14 +320,14 @@ export class DireccionesComponent implements OnInit {
             this.distritoSeleccionadoId.set(dist.id);
             this.actualizarCampo('distrito', dist.nombre);
           } else if (data.distrito) {
-            this.distritoNoCatalogado.set(data.distrito);
+            this.activarDistritoManual();
             this.actualizarCampo('distrito', data.distrito);
           }
         } else {
-          this.provinciaNoCatalogada.set(data.provincia);
+          this.activarProvinciaManual();
           this.actualizarCampo('provincia', data.provincia);
           if (data.distrito) {
-            this.distritoNoCatalogado.set(data.distrito);
+            this.activarDistritoManual();
             this.actualizarCampo('distrito', data.distrito);
           }
         }
