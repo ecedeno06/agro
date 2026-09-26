@@ -67,6 +67,7 @@ export class PerfilComponent implements OnInit {
   readonly editForm = {
     nombre: '',
     telefono: '',
+    telefono_whatsapp: false,
     direccion: '',
     ocupacion: '',
     fecha_nacimiento: '',
@@ -82,6 +83,7 @@ export class PerfilComponent implements OnInit {
     const u = this.user();
     this.editForm.nombre = u?.nombre || '';
     this.editForm.telefono = u?.telefono || '';
+    this.editForm.telefono_whatsapp = !!u?.telefonoWhatsapp;
     this.editForm.direccion = u?.direccion || '';
     this.editForm.ocupacion = u?.ocupacion || '';
     this.editForm.fecha_nacimiento = (u?.fechaNacimiento || '').toString().substring(0, 10);

@@ -216,7 +216,7 @@ export const login = async (req, res, next) => {
 export const me = async (req, res, next) => {
   try {
     const result = await query(
-      `SELECT "idUsuario", nombre, email, rol, telefono, activo, debe_cambiar_password, two_factor_enabled, avatar,
+      `SELECT "idUsuario", nombre, email, rol, telefono, telefono_whatsapp, activo, debe_cambiar_password, two_factor_enabled, avatar,
               direccion, ocupacion, fecha_nacimiento, tipo_sangre, tipo_persona, dni
        FROM usuarios WHERE "idUsuario" = $1 AND activo = true`,
       [req.userId]
@@ -241,6 +241,7 @@ export const me = async (req, res, next) => {
         email: usuario.email,
         rol: activeRol,
         telefono: usuario.telefono,
+        telefonoWhatsapp: usuario.telefono_whatsapp,
         direccion: usuario.direccion,
         ocupacion: usuario.ocupacion,
         fechaNacimiento: usuario.fecha_nacimiento,

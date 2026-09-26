@@ -61,6 +61,11 @@
           <input type="text" [(ngModel)]="editForm.telefono" name="editTelefono" [disabled]="editLoading()" />
         </label>
 
+        <label class="checkbox-field whatsapp-field">
+          <input type="checkbox" [(ngModel)]="editForm.telefono_whatsapp" name="editTelefonoWhatsapp" [disabled]="editLoading()" />
+          <span>📱 Whatsapp (recibe mensajes en este número)</span>
+        </label>
+
         <label class="form-field">
           <span>Dirección</span>
           <input type="text" [(ngModel)]="editForm.direccion" name="editDireccion" placeholder="Ej. Ciudad de Panamá, Calle 50" [disabled]="editLoading()" />
