@@ -58,17 +58,29 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
   });
 
   tiposProduccionDisponibles = computed(() => {
-    const nombres = this.fincas()
-      .map(f => f.nombre_tipo_produccion)
-      .filter((n): n is string => !!n && n.trim().length > 0);
-    return Array.from(new Set(nombres)).sort((a, b) => a.localeCompare(b));
+    const todos: string[] = [];
+    this.fincas().forEach(f => {
+      if (f.nombre_tipo_produccion) {
+        f.nombre_tipo_produccion.split(',').forEach(item => {
+          const s = item.trim();
+          if (s) todos.push(s);
+        });
+      }
+    });
+    return Array.from(new Set(todos)).sort((a, b) => a.localeCompare(b));
   });
 
   subproductosDisponibles = computed(() => {
-    const nombres = this.fincas()
-      .map(f => f.nombre_producto)
-      .filter((n): n is string => !!n && n.trim().length > 0);
-    return Array.from(new Set(nombres)).sort((a, b) => a.localeCompare(b));
+    const todos: string[] = [];
+    this.fincas().forEach(f => {
+      if (f.nombre_producto) {
+        f.nombre_producto.split(',').forEach(item => {
+          const s = item.trim();
+          if (s) todos.push(s);
+        });
+      }
+    });
+    return Array.from(new Set(todos)).sort((a, b) => a.localeCompare(b));
   });
 
   paisesDisponibles = computed(() => {
@@ -105,13 +117,21 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
     if (criterio === 'tipo_produccion') {
       const valor = this.valorTipoProduccion();
       if (!valor) return list;
-      return list.filter(f => f.nombre_tipo_produccion === valor);
+      return list.filter(f => {
+        if (!f.nombre_tipo_produccion) return false;
+        const partes = f.nombre_tipo_produccion.split(',').map(s => s.trim());
+        return partes.includes(valor);
+      });
     }
 
     if (criterio === 'subproducto') {
       const valor = this.valorSubproducto();
       if (!valor) return list;
-      return list.filter(f => f.nombre_producto === valor);
+      return list.filter(f => {
+        if (!f.nombre_producto) return false;
+        const partes = f.nombre_producto.split(',').map(s => s.trim());
+        return partes.includes(valor);
+      });
     }
 
     if (criterio === 'pais') {
