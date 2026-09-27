@@ -148,16 +148,17 @@ export const getFincas = async (req, res, next) => {
     let queryParams = [];
     const conditions = [];
 
-    // El asociado (ASO) siempre ve únicamente sus propias fincas.
+    // REGLAS DE ALCANCE Y SEGURIDAD POR ROL DE SESIÓN:
+    // 1) SUPERADMIN ('superadmin'): esGlobal = true -> Ve todo el ecosistema (sin filtro de capítulo/propietario).
+    // 2) ASOCIADO ('aso' / 'asociado'): esAsociadoUser = true -> Ve únicamente sus propias fincas (propietario o propietario legal).
+    // 3) ADMINISTRADOR DE CAPÍTULO ('adm') Y TESORERO ('tes'): esGlobal = false -> Ven las fincas del capítulo activo en su sesión.
     if (esAsociadoUser) {
       queryParams.push(userId);
-      conditions.push(`f.id_propietario = $${queryParams.length}`);
+      conditions.push(`(f.id_propietario = $${queryParams.length} OR f.id_propietario_legal = $${queryParams.length})`);
     } else if (!esGlobal) {
-      // Rol administrativo de capítulo (ej. ADM): ve las fincas cuyos propietarios
-      // pertenecen a su mismo capítulo.
       queryParams.push(idCapitulo);
       conditions.push(
-        `f.id_propietario IN (${SUBQUERY_PROPIETARIOS_DEL_CAPITULO}$${queryParams.length})`
+        `(f.id_propietario IN (${SUBQUERY_PROPIETARIOS_DEL_CAPITULO}$${queryParams.length}) OR f.id_propietario_legal IN (${SUBQUERY_PROPIETARIOS_DEL_CAPITULO}$${queryParams.length}))`
       );
     }
 
