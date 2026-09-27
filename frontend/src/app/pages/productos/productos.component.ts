@@ -1,7 +1,9 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
+import { NavigationService } from '../../core/services/navigation.service';
+import { SessionService } from '../../core/services/session.service';
 
 interface Categoria {
   id: number;
@@ -41,8 +43,23 @@ interface UnidadMedida {
 })
 export class ProductosComponent implements OnInit {
   private readonly apiBaseUrl = environment.apiUrl;
+  private readonly navService = inject(NavigationService);
+  private readonly sessionService = inject(SessionService);
 
   readonly activeTab = signal<'categorias' | 'productos'>('productos');
+
+  /** Permisos configurados para el menú "Productos" (ver/crear/editar/eliminar), según la matriz de roles. */
+  private tienePermiso(codigo: string): boolean {
+    if (this.sessionService.isSuperadmin()) return true;
+    const permsMap = this.navService.permissions();
+    const permsLoaded = Object.keys(permsMap).length > 0;
+    if (!permsLoaded) return true;
+    return this.navService.hasPermission('/productos', codigo) || this.navService.hasPermission('productos', codigo);
+  }
+
+  readonly puedeCrear = computed(() => this.tienePermiso('crear'));
+  readonly puedeEditar = computed(() => this.tienePermiso('editar'));
+  readonly puedeEliminar = computed(() => this.tienePermiso('eliminar'));
 
   private getAuthHeaders(): Record<string, string> {
     const token = localStorage.getItem('agro_session_token');

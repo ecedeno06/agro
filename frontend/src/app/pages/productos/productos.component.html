@@ -19,7 +19,7 @@
         <h2>Categorías de Productos</h2>
         <p class="subtitle">Subcategorías del catálogo (Carnes, Granos, Lácteos, etc.). Haz clic en una fila para administrar sus productos.</p>
       </div>
-      <button type="button" class="action-btn register-suelo-btn" (click)="abrirNuevaCategoriaForm()">
+      <button *ngIf="puedeCrear()" type="button" class="action-btn register-suelo-btn" (click)="abrirNuevaCategoriaForm()">
         {{ showCategoriaForm() && !editingCategoriaId() ? '❌ Cerrar Formulario' : '➕ Registrar Categoría' }}
       </button>
     </div>
@@ -64,10 +64,11 @@
               </td>
               <td class="acciones-cell" (click)="$event.stopPropagation()">
                 <div class="icon-actions">
-                  <button type="button" class="icon-btn" title="Editar" (click)="abrirEditarCategoriaForm(item)">
+                  <button *ngIf="puedeEditar()" type="button" class="icon-btn" title="Editar" (click)="abrirEditarCategoriaForm(item)">
                     ✏️
                   </button>
                   <button
+                    *ngIf="puedeEliminar()"
                     type="button"
                     class="icon-btn"
                     [class.icon-btn-danger]="item.activo"
@@ -133,7 +134,7 @@
         </p>
         <p class="subtitle" *ngIf="!categoriaActual()">Selecciona una categoría en el tab "🗂️ Categorías" para administrar sus productos.</p>
       </div>
-      @if (categoriaSeleccionadaId()) {
+      @if (categoriaSeleccionadaId() && puedeCrear()) {
         <button type="button" class="action-btn register-suelo-btn" (click)="abrirNuevoProductoForm()">
           {{ showProductoForm() && !editingProductoId() ? '❌ Cerrar Formulario' : '➕ Registrar Producto' }}
         </button>
@@ -185,7 +186,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let item of productosFiltrados()" [class.row-selected]="editingProductoId() === item.id" (click)="abrirEditarProductoForm(item)">
+            <tr *ngFor="let item of productosFiltrados()" [class.row-selected]="editingProductoId() === item.id" (click)="puedeEditar() && abrirEditarProductoForm(item)">
               <td><strong>#{{ item.id }}</strong></td>
               <td><code>{{ item.codigo || '—' }}</code></td>
               <td [title]="item.descripcion || ''">{{ item.nombre }}</td>
@@ -197,10 +198,11 @@
               </td>
               <td class="acciones-cell" (click)="$event.stopPropagation()">
                 <div class="icon-actions">
-                  <button type="button" class="icon-btn" title="Editar" (click)="abrirEditarProductoForm(item)">
+                  <button *ngIf="puedeEditar()" type="button" class="icon-btn" title="Editar" (click)="abrirEditarProductoForm(item)">
                     ✏️
                   </button>
                   <button
+                    *ngIf="puedeEliminar()"
                     type="button"
                     class="icon-btn"
                     [class.icon-btn-danger]="item.activo"
