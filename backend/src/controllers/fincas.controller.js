@@ -113,8 +113,8 @@ export const getFincas = async (req, res, next) => {
          ts.nombre AS nombre_tipo_suelo,
          tg.descripcion AS nombre_tipo_geografia,
          tel.descripcion AS nombre_estado_legal,
-         tp.nombre AS nombre_tipo_produccion,
-         cp.nombre AS nombre_producto,
+         COALESCE(prods.producciones_categorias, tp.nombre) AS nombre_tipo_produccion,
+         COALESCE(prods.producciones_subproductos, cp.nombre) AS nombre_producto,
          pc.nombre AS nombre_pais
        FROM public.fincas f
        LEFT JOIN public.usuarios u ON f.id_propietario = u."idUsuario"
@@ -125,7 +125,18 @@ export const getFincas = async (req, res, next) => {
        LEFT JOIN public.tipo_estado_legal tel ON f.estado_legal = tel.id_estado_legal
        LEFT JOIN public.categorias tp ON f.id_tipo_produccion = tp.id
        LEFT JOIN public.catalogo_productos cp ON f.id_producto = cp.id
-       LEFT JOIN public.catalogo_paises pc ON f.id_pais = pc.codigo_iso2`;
+       LEFT JOIN public.catalogo_paises pc ON f.id_pais = pc.codigo_iso2
+       LEFT JOIN (
+         SELECT 
+           fp.finca_id,
+           STRING_AGG(DISTINCT c.nombre, ', ') AS producciones_categorias,
+           STRING_AGG(DISTINCT cp.nombre, ', ') AS producciones_subproductos
+         FROM public.finca_productos fp
+         LEFT JOIN public.categorias c ON fp.categoria_producto = c.id
+         LEFT JOIN public.catalogo_productos cp ON (fp.subproducto_id = cp.id OR fp.producto_id = cp.id)
+         WHERE fp.activo = true
+         GROUP BY fp.finca_id
+       ) prods ON f.id_finca = prods.finca_id`;
     let queryParams = [];
     const conditions = [];
 

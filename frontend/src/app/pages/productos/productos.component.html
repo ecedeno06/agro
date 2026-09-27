@@ -31,6 +31,20 @@
       {{ errorCategoriaMsg() }}
     </div>
 
+    <!-- BÚSQUEDA GLOBAL DE CATEGORÍAS -->
+    <div class="search-container" *ngIf="categoriasHijas().length > 0">
+      <div class="search-field">
+        <label for="searchCategorias">🔎 Buscar Categoría</label>
+        <input 
+          id="searchCategorias"
+          type="text" 
+          [ngModel]="filterCategorias()" 
+          (ngModelChange)="filterCategorias.set($event)" 
+          placeholder="Buscar por nombre de categoría, ID, ícono o estado..." 
+        />
+      </div>
+    </div>
+
     <div class="list-section">
       <div *ngIf="loadingCategorias() && categoriasHijas().length === 0" class="loading-state" style="text-align: center; padding: 2rem; color: var(--text-muted);">
         Cargando categorías...
@@ -38,8 +52,11 @@
       <div *ngIf="!loadingCategorias() && categoriasHijas().length === 0" class="empty-state">
         No hay categorías registradas todavía.
       </div>
+      <div *ngIf="!loadingCategorias() && categoriasHijas().length > 0 && categoriasHijasFiltradas().length === 0" class="empty-state">
+        No se encontraron categorías con ese criterio de búsqueda.
+      </div>
 
-      <div class="table-scroll-container" *ngIf="categoriasHijas().length > 0">
+      <div class="table-scroll-container" *ngIf="categoriasHijasFiltradas().length > 0">
         <table class="usuarios-table">
           <thead>
             <tr>
@@ -52,7 +69,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let item of categoriasHijas()" [class.row-selected]="categoriaSeleccionadaId() === item.id" (click)="seleccionarCategoria(item)">
+            <tr *ngFor="let item of categoriasHijasFiltradas()" [class.row-selected]="categoriaSeleccionadaId() === item.id" (click)="seleccionarCategoria(item)">
               <td><strong>#{{ item.id }}</strong></td>
               <td style="font-size: 1.2rem;">{{ item.icono || '—' }}</td>
               <td>{{ item.nombre }}</td>

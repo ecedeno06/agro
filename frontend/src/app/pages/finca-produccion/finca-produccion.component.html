@@ -1,3 +1,199 @@
-<div class="finca-produccion-wrapper animate-in">
+<div class="finca-produccion-container animate-in">
+
+  <!-- ALERTAS -->
+  <div *ngIf="successMsg()" class="alert success animate-in">
+    {{ successMsg() }}
+  </div>
+  <div *ngIf="errorMsg()" class="alert danger animate-in">
+    {{ errorMsg() }}
+  </div>
+
+  <!-- BARRERA Y BOTÓN DE REGISTRO -->
+  <div class="produccion-header flex-header" *ngIf="!readOnly">
+    <div class="header-info">
+      <h4>🚜 Producción Agrícola y Ganadera de la Finca</h4>
+      <p class="subtitle">Administra los tipos de producción y subproductos que genera esta finca.</p>
+    </div>
+    <button 
+      type="button" 
+      class="action-btn add-produccion-btn"
+      (click)="showForm() ? cerrarForm() : abrirNuevoForm()"
+    >
+      {{ showForm() ? '❌ Cerrar Formulario' : '➕ Agregar Producción' }}
+    </button>
+  </div>
+
+  <!-- FORMULARIO DE ALTA / EDICIÓN -->
+  <div class="form-card animate-in" *ngIf="showForm()">
+    <h5>{{ editingId() ? '✏️ Editar Producción de Finca' : '➕ Registrar Producción en Finca' }}</h5>
+
+    <form (submit)="$event.preventDefault(); guardarProduccion()" class="produccion-form">
+      <div class="form-grid-3col">
+
+        <div class="form-field">
+          <label>Tipo de Producción (Categoría) *</label>
+          <select 
+            [ngModel]="formCategoriaId()" 
+            (ngModelChange)="onCategoriaChange($event)"
+            name="categoria_producto" 
+            required
+            [disabled]="loading()"
+          >
+            <option [ngValue]="null">-- Seleccionar Categoría --</option>
+            <option *ngFor="let cat of categorias()" [ngValue]="cat.id">
+              {{ cat.icono ? cat.icono + ' ' : '' }}{{ cat.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label>Sub Categoría (Producto) *</label>
+          <select 
+            [ngModel]="formSubproductoId()" 
+            (ngModelChange)="formSubproductoId.set($event)"
+            name="subproducto_id" 
+            [disabled]="loading() || !formCategoriaId() || loadingSubproductos()"
+          >
+            <option [ngValue]="null">
+              {{ !formCategoriaId() ? '-- Seleccione primero una Categoría --' : (loadingSubproductos() ? 'Cargando subproductos...' : '-- Seleccionar Sub Categoría --') }}
+            </option>
+            <option *ngFor="let sub of subproductos()" [ngValue]="sub.id">
+              {{ sub.nombre }}{{ sub.codigo ? ' (' + sub.codigo + ')' : '' }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label>Área Destinada (Hectáreas)</label>
+          <input 
+            type="number" 
+            step="0.01" 
+            [ngModel]="formAreaProduccion()" 
+            (ngModelChange)="formAreaProduccion.set($event)" 
+            name="area_produccion" 
+            placeholder="Ej. 12.5" 
+            [disabled]="loading()"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Fecha Inicio (Desde)</label>
+          <input 
+            type="date" 
+            [ngModel]="formDesde()" 
+            (ngModelChange)="formDesde.set($event)" 
+            name="desde" 
+            [disabled]="loading()"
+          />
+        </div>
+
+        <div class="form-field">
+          <label>Fecha Fin / Cosecha (Hasta)</label>
+          <input 
+            type="date" 
+            [ngModel]="formHasta()" 
+            (ngModelChange)="formHasta.set($event)" 
+            name="hasta" 
+            [disabled]="loading()"
+          />
+        </div>
+
+        <div class="form-field checkbox-field" style="align-self: flex-end; padding-bottom: 0.5rem;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--primary-color); font-weight: 600;">
+            <input 
+              type="checkbox" 
+              [ngModel]="formActivo()" 
+              (ngModelChange)="formActivo.set($event)" 
+              name="activo" 
+              [disabled]="loading()"
+            />
+            Producción Activa u Operativa
+          </label>
+        </div>
+
+      </div>
+
+      <div class="form-actions-row" style="margin-top: 1rem; display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button type="submit" class="action-btn save-btn" [disabled]="loading()">
+          {{ loading() ? 'Guardando...' : (editingId() ? '💾 Actualizar Producción' : '💾 Guardar Producción') }}
+        </button>
+        <button type="button" class="action-btn cancel-btn" (click)="cerrarForm()" [disabled]="loading()">
+          ❌ Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- TABLA DE PRODUCCIONES REGISTRADAS -->
+  <div class="list-section" style="margin-top: 1rem;">
+    <div *ngIf="loading() && producciones().length === 0" class="loading-state" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">
+      Cargando producciones de la finca...
+    </div>
+
+    <div *ngIf="!loading() && producciones().length === 0" class="empty-state">
+      🚜 No hay producciones registradas aún para esta finca.
+    </div>
+
+    <div class="table-scroll-container" *ngIf="producciones().length > 0">
+      <table class="usuarios-table">
+        <thead>
+          <tr>
+            <th style="width: 50px;">ID</th>
+            <th>Tipo de Producción</th>
+            <th>Sub Categoría</th>
+            <th style="width: 100px;">Área (Ha)</th>
+            <th style="width: 180px;">Período (Desde - Hasta)</th>
+            <th style="width: 85px;">Estado</th>
+            <th style="width: 90px; text-align: right;" *ngIf="!readOnly">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of producciones()">
+            <td><strong>#{{ item.id }}</strong></td>
+            <td>
+              <span class="cat-badge">
+                {{ item.icono_categoria ? item.icono_categoria + ' ' : '🌾 ' }}{{ item.nombre_categoria || 'Sin definir' }}
+              </span>
+            </td>
+            <td>
+              <strong>{{ item.nombre_subproducto || 'Sin especificar' }}</strong>
+            </td>
+            <td>
+              {{ item.area_produccion != null ? item.area_produccion + ' Ha' : '—' }}
+            </td>
+            <td>
+              <span class="periodo-tag">
+                {{ item.desde ? (item.desde | date:'dd/MM/yyyy') : 'Indefinido' }} ➔ {{ item.hasta ? (item.hasta | date:'dd/MM/yyyy') : 'Presente' }}
+              </span>
+            </td>
+            <td>
+              <span class="status-badge" [class.active]="item.activo">
+                {{ item.activo ? 'En Prod.' : 'Inactivo' }}
+              </span>
+            </td>
+            <td class="acciones-cell" *ngIf="!readOnly" (click)="$event.stopPropagation()">
+              <div class="icon-actions">
+                <button type="button" class="icon-btn" title="Editar producción" (click)="abrirEditarForm(item)">
+                  ✏️
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn"
+                  [class.icon-btn-danger]="item.activo"
+                  [title]="item.activo ? 'Desactivar producción' : 'Activar producción'"
+                  (click)="alternarEstado(item)"
+                >
+                  {{ item.activo ? '🔒' : '🔓' }}
+                </button>
+                <button type="button" class="icon-btn icon-btn-danger" title="Eliminar producción" (click)="eliminarProduccion(item)">
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
-  

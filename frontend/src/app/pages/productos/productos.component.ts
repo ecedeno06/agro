@@ -80,10 +80,24 @@ export class ProductosComponent implements OnInit {
   // =========================================================
   readonly categoriasTodas = signal<Categoria[]>([]);
   readonly categoriaRaizId = signal<number | null>(null);
+  readonly filterCategorias = signal('');
+
   readonly categoriasHijas = computed(() => {
     const raizId = this.categoriaRaizId();
     if (!raizId) return [];
     return this.categoriasTodas().filter(c => c.categoria_padre_id === raizId);
+  });
+
+  readonly categoriasHijasFiltradas = computed(() => {
+    const term = this.filterCategorias().toLowerCase().trim();
+    const list = this.categoriasHijas();
+    if (!term) return list;
+    return list.filter(c =>
+      c.nombre.toLowerCase().includes(term) ||
+      String(c.id).includes(term) ||
+      (c.icono || '').toLowerCase().includes(term) ||
+      (c.activo ? 'activo' : 'inactivo').includes(term)
+    );
   });
 
   /** Categoría actualmente activa para el tab "Catálogo de Productos" (seleccionada en el tab "Categorías"). */
