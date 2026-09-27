@@ -1,7 +1,6 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
 import { environment } from '../../../environments/environment';
 
 interface Categoria {
@@ -43,14 +42,7 @@ interface UnidadMedida {
 export class ProductosComponent implements OnInit {
   private readonly apiBaseUrl = environment.apiUrl;
 
-  /** Si viene por ruta (Granos/Carnes), la página queda fija en esa categoría (sin pestaña de Categorías ni selector). */
-  readonly categoriaFiltroNombre = signal<string | null>(null);
-  readonly modoRestringido = computed(() => this.categoriaFiltroNombre() !== null);
-  readonly tituloPagina = computed(() => this.categoriaFiltroNombre() ? `Catálogo de ${this.categoriaFiltroNombre()}` : 'Catálogo de Productos');
-
   readonly activeTab = signal<'categorias' | 'productos'>('productos');
-
-  constructor(private readonly activatedRoute: ActivatedRoute) {}
 
   private getAuthHeaders(): Record<string, string> {
     const token = localStorage.getItem('agro_session_token');
@@ -61,19 +53,8 @@ export class ProductosComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    this.categoriaFiltroNombre.set(this.activatedRoute.snapshot.data['categoriaFiltro'] || null);
     this.unidadesMedida.set([]);
     await Promise.all([this.cargarCategorias(), this.cargarUnidadesMedida()]);
-
-    if (this.modoRestringido()) {
-      const cat = this.categoriasHijas().find(
-        c => c.nombre.trim().toLowerCase() === (this.categoriaFiltroNombre() || '').trim().toLowerCase()
-      );
-      if (cat) {
-        this.categoriaSeleccionadaId.set(cat.id);
-        await this.cargarProductos(cat.id);
-      }
-    }
   }
 
   // =========================================================

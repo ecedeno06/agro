@@ -17,7 +17,6 @@ import { ProductosComponent } from './pages/productos/productos.component';
 import { FenomenosComponent } from './pages/fenomenos/fenomenos.component';
 import { MapaFincasComponent } from './pages/mapa-fincas/mapa-fincas.component';
 import { AuditoriaSesionesComponent } from './pages/auditoria-sesiones/auditoria-sesiones.component';
-import { PlaceholderComponent } from './pages/placeholder/placeholder.component';
 import { authGuard, publicGuard, adminGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -38,6 +37,7 @@ export const routes: Routes = [
       { path: 'tipo-estado-legal', component: TipoEstadoLegalComponent },
       { path: 'paises', component: PaisesComponent },
       { path: 'ocupaciones', component: OcupacionesComponent },
+      { path: 'productos', component: ProductosComponent },
       { path: 'fenomenos', component: FenomenosComponent },
       { path: 'mapafincas', component: MapaFincasComponent },
 
@@ -45,11 +45,6 @@ export const routes: Routes = [
       { path: 'usuarios', component: UsuariosComponent, canActivate: [adminGuard] },
       { path: 'roles-permisos', component: MantenimientoComponent, canActivate: [adminGuard] },
       { path: 'auditoria-sesiones', component: AuditoriaSesionesComponent, canActivate: [adminGuard] },
-
-      // Secciones aún no implementadas (antes eran texto quemado en el dashboard)
-      { path: 'productos', component: ProductosComponent },
-      { path: 'granos', component: ProductosComponent, data: { categoriaFiltro: 'Granos' } },
-      { path: 'carnes', component: ProductosComponent, data: { categoriaFiltro: 'Carnes' } },
     ]
   },
   { path: '', redirectTo: '/login', pathMatch: 'full' },

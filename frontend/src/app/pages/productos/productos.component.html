@@ -1,7 +1,7 @@
 <div class="mantenimiento-productos-container animate-in">
 
-  <!-- TABS: Categorías / Productos (solo en el modo general, no en Granos/Carnes) -->
-  <nav class="geo-tabs-nav" *ngIf="!modoRestringido()">
+  <!-- TABS: Categorías / Productos -->
+  <nav class="geo-tabs-nav">
     <button type="button" class="geo-tab-btn" [class.active]="activeTab() === 'categorias'" (click)="activeTab.set('categorias')">
       🗂️ Categorías
     </button>
@@ -10,7 +10,7 @@
     </button>
   </nav>
 
-  @if (!modoRestringido() && activeTab() === 'categorias') {
+  @if (activeTab() === 'categorias') {
 
   <!-- CARD: CATEGORÍAS -->
   <section class="suelos-list-card">
@@ -120,19 +120,18 @@
 
   }
 
-  @if (modoRestringido() || activeTab() === 'productos') {
+  @if (activeTab() === 'productos') {
 
   <!-- CARD: CATÁLOGO DE PRODUCTOS -->
   <section class="suelos-list-card">
     <div class="card-header flex-header">
       <div>
-        <h2>{{ tituloPagina() }}</h2>
-        <p class="subtitle" *ngIf="!modoRestringido() && categoriaActual() as cat">
+        <h2>Catálogo de Productos</h2>
+        <p class="subtitle" *ngIf="categoriaActual() as cat">
           Productos de la categoría: <strong>{{ cat.icono }} {{ cat.nombre }}</strong>
           <button type="button" class="link-btn" (click)="activeTab.set('categorias')">🔄 Cambiar categoría</button>
         </p>
-        <p class="subtitle" *ngIf="!modoRestringido() && !categoriaActual()">Selecciona una categoría en el tab "🗂️ Categorías" para administrar sus productos.</p>
-        <p class="subtitle" *ngIf="modoRestringido()">Productos del catálogo global en esta categoría.</p>
+        <p class="subtitle" *ngIf="!categoriaActual()">Selecciona una categoría en el tab "🗂️ Categorías" para administrar sus productos.</p>
       </div>
       @if (categoriaSeleccionadaId()) {
         <button type="button" class="action-btn register-suelo-btn" (click)="abrirNuevoProductoForm()">
