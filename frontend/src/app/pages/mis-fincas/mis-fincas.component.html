@@ -268,53 +268,6 @@
                 [disabled]="!puedeEditarOFormulario() || loading()"
               />
             </div>
-
-            <div class="form-field">
-              <label>Estado Operativo</label>
-              <select 
-                [(ngModel)]="finca.estado" 
-                name="estado" 
-                required
-                [disabled]="!puedeEditarOFormulario() || loading()"
-              >
-                <option value="En producción">En producción</option>
-                <option value="En alquiler">En alquiler</option>
-                <option value="En venta">En venta</option>
-                <option value="En descanso">En descanso</option>
-                <option value="Inutilizada">Inutilizada</option>
-              </select>
-            </div>
-
-            <div class="form-field">
-              <label>Tipo de Producción</label>
-              <select
-                [ngModel]="finca.id_tipo_produccion"
-                (ngModelChange)="onTipoProduccionChange($event)"
-                name="id_tipo_produccion"
-                [disabled]="!puedeEditarOFormulario() || loading()"
-              >
-                <option [ngValue]="null">-- Seleccione Tipo de Producción --</option>
-                <option *ngFor="let tp of tiposProduccion()" [ngValue]="+tp.id_tipo">
-                  {{ tp.nombre }}
-                </option>
-              </select>
-            </div>
-
-            <div class="form-field">
-              <label>Sub Categoria</label>
-              <select
-                [(ngModel)]="finca.id_producto"
-                name="id_producto"
-                [disabled]="!puedeEditarOFormulario() || loading() || !finca.id_tipo_produccion || loadingSubCategorias()"
-              >
-                <option [ngValue]="null">
-                  {{ !finca.id_tipo_produccion ? '-- Seleccione primero un Tipo de Producción --' : '-- Seleccione Sub Categoria --' }}
-                </option>
-                <option *ngFor="let sc of subCategorias()" [ngValue]="sc.id">
-                  {{ sc.nombre }}
-                </option>
-              </select>
-            </div>
           </div>
 
           <!-- 2. SUB-TAB: GEOGRAFIA Y TERRENO -->
@@ -556,10 +509,59 @@
             </div>
           </div>
 
+          <!-- 6. SUB-TAB: PRODUCCION -->
           <div class="form-grid-layout" *ngIf="activeFormSubTab() === 'produccion'">
+            <div class="form-field">
+              <label>Estado Operativo</label>
+              <select 
+                [(ngModel)]="finca.estado" 
+                name="estado" 
+                required
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              >
+                <option value="En producción">En producción</option>
+                <option value="En alquiler">En alquiler</option>
+                <option value="En venta">En venta</option>
+                <option value="En descanso">En descanso</option>
+                <option value="Inutilizada">Inutilizada</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label>Tipo de Producción</label>
+              <select
+                [ngModel]="finca.id_tipo_produccion"
+                (ngModelChange)="onTipoProduccionChange($event)"
+                name="id_tipo_produccion"
+                [disabled]="!puedeEditarOFormulario() || loading()"
+              >
+                <option [ngValue]="null">-- Seleccione Tipo de Producción --</option>
+                <option *ngFor="let tp of tiposProduccion()" [ngValue]="+tp.id_tipo">
+                  {{ tp.nombre }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label>Sub Categoria</label>
+              <select
+                [(ngModel)]="finca.id_producto"
+                name="id_producto"
+                [disabled]="!puedeEditarOFormulario() || loading() || !finca.id_tipo_produccion || loadingSubCategorias()"
+              >
+                <option [ngValue]="null">
+                  {{ !finca.id_tipo_produccion ? '-- Seleccione primero un Tipo de Producción --' : '-- Seleccione Sub Categoria --' }}
+                </option>
+                <option *ngFor="let sc of subCategorias()" [ngValue]="sc.id">
+                  {{ sc.nombre }}
+                </option>
+              </select>
+            </div>
+
             <app-finca-produccion
-            *ngIf="selectedFinca()?.id_finca" 
-           ></app-finca-produccion>
+              *ngIf="selectedFinca()?.id_finca" 
+              style="grid-column: 1 / -1;"
+            ></app-finca-produccion>
           </div>
 
           <!-- BOTÓN DE ACCIÓN (GUARDAR / REGISTRAR Y CANCELAR) CON SIMETRÍA UX -->
