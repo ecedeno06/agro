@@ -1,6 +1,47 @@
 import { query } from '../db.js';
 
 /**
+ * Auxiliar para validar que la suma de áreas de producciones activas
+ * no supere el tamaño total de la finca.
+ */
+async function validarAreaFinca(res, finca_id, areaNueva, excludeId = null) {
+  const nuevaAreaNum = areaNueva != null && areaNueva !== '' ? Number(areaNueva) : 0;
+  if (nuevaAreaNum <= 0) return true;
+
+  // 1. Obtener tamaño total de la finca
+  const resFinca = await query('SELECT tamano, nombre_finca FROM public.fincas WHERE id_finca = $1', [finca_id]);
+  if (resFinca.rows.length === 0) return true;
+
+  const tamanoTotal = Number(resFinca.rows[0].tamano || 0);
+  if (tamanoTotal <= 0) return true;
+
+  // 2. Sumar áreas de producciones activas existentes para esa finca
+  let sumQuery = `SELECT COALESCE(SUM(area_produccion), 0) AS area_usada FROM public.finca_productos WHERE finca_id = $1 AND activo = true`;
+  const params = [finca_id];
+
+  if (excludeId) {
+    params.push(excludeId);
+    sumQuery += ` AND id != $2`;
+  }
+
+  const resSum = await query(sumQuery, params);
+  const areaUsada = Number(resSum.rows[0].area_usada || 0);
+
+  const areaTotalProyectada = Number((areaUsada + nuevaAreaNum).toFixed(2));
+  const areaDisponible = Number((tamanoTotal - areaUsada).toFixed(2));
+
+  if (areaTotalProyectada > tamanoTotal) {
+    const dispLabel = areaDisponible > 0 ? areaDisponible : 0;
+    res.status(400).json({
+      message: `El área de producción (${nuevaAreaNum} Ha) supera el tamaño total de la finca (${tamanoTotal} Ha). Área en producción actual: ${areaUsada} Ha. Disponible: ${dispLabel} Ha.`
+    });
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * Obtener todos los registros de producción (finca_productos) asociados a una finca.
  * GET /api/fincas-productos?finca_id=...
  */
@@ -11,6 +52,10 @@ export const getFincaProductos = async (req, res, next) => {
     if (!finca_id) {
       return res.status(400).json({ message: 'El parámetro finca_id es obligatorio.' });
     }
+
+    // Traer información de producciones y tamaño total de la finca
+    const fincaRes = await query('SELECT tamano, nombre_finca FROM public.fincas WHERE id_finca = $1', [finca_id]);
+    const tamanoFinca = fincaRes.rows.length > 0 ? Number(fincaRes.rows[0].tamano || 0) : 0;
 
     const result = await query(
       `SELECT 
@@ -27,7 +72,16 @@ export const getFincaProductos = async (req, res, next) => {
       [finca_id]
     );
 
-    return res.status(200).json(result.rows);
+    const areaUsadaTotal = result.rows
+      .filter(r => r.activo && r.area_produccion)
+      .reduce((sum, r) => sum + Number(r.area_produccion), 0);
+
+    return res.status(200).json({
+      tamanoFinca,
+      areaUsadaTotal: Number(areaUsadaTotal.toFixed(2)),
+      areaDisponible: Number(Math.max(0, tamanoFinca - areaUsadaTotal).toFixed(2)),
+      rows: result.rows
+    });
   } catch (error) {
     next(error);
   }
@@ -55,6 +109,12 @@ export const addFincaProducto = async (req, res, next) => {
       return res.status(400).json({
         message: 'La finca y al menos la categoría o subproducto son obligatorios.'
       });
+    }
+
+    // Validar límite de área si la producción es activa
+    if (activo !== false && area_produccion) {
+      const ok = await validarAreaFinca(res, finca_id, area_produccion);
+      if (!ok) return;
     }
 
     const prodId = subproducto_id || null;
@@ -103,6 +163,7 @@ export const addFincaProducto = async (req, res, next) => {
 export const updateFincaProducto = async (req, res, next) => {
   const { id } = req.params;
   const {
+    finca_id,
     categoria_producto,
     subproducto_id,
     area_produccion,
@@ -114,6 +175,22 @@ export const updateFincaProducto = async (req, res, next) => {
   } = req.body;
 
   try {
+    // Obtener finca_id actual si no viene en body
+    let targetFincaId = finca_id;
+    if (!targetFincaId) {
+      const actual = await query('SELECT finca_id FROM public.finca_productos WHERE id = $1', [id]);
+      if (actual.rows.length === 0) {
+        return res.status(404).json({ message: 'Registro de producción no encontrado.' });
+      }
+      targetFincaId = actual.rows[0].finca_id;
+    }
+
+    // Validar límite de área si está activa
+    if (activo !== false && area_produccion) {
+      const ok = await validarAreaFinca(res, targetFincaId, area_produccion, id);
+      if (!ok) return;
+    }
+
     const prodId = subproducto_id || null;
 
     const result = await query(
@@ -165,12 +242,17 @@ export const toggleEstadoFincaProducto = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const actual = await query('SELECT activo FROM public.finca_productos WHERE id = $1', [id]);
+    const actual = await query('SELECT finca_id, area_produccion, activo FROM public.finca_productos WHERE id = $1', [id]);
     if (actual.rows.length === 0) {
       return res.status(404).json({ message: 'Registro de producción no encontrado.' });
     }
 
     const nuevoEstado = !actual.rows[0].activo;
+
+    if (nuevoEstado && actual.rows[0].area_produccion) {
+      const ok = await validarAreaFinca(res, actual.rows[0].finca_id, actual.rows[0].area_produccion, id);
+      if (!ok) return;
+    }
 
     const result = await query(
       `UPDATE public.finca_productos

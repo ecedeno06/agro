@@ -129,8 +129,16 @@ export const getFincas = async (req, res, next) => {
        LEFT JOIN (
          SELECT 
            fp.finca_id,
-           STRING_AGG(DISTINCT c.nombre, ', ') AS producciones_categorias,
-           STRING_AGG(DISTINCT cp.nombre, ', ') AS producciones_subproductos
+           STRING_AGG(DISTINCT 
+             CASE 
+               WHEN fp.area_produccion > 0 THEN CONCAT(c.nombre, ' (', fp.area_produccion, ' Ha)')
+               ELSE c.nombre 
+             END, ', ') AS producciones_categorias,
+           STRING_AGG(DISTINCT 
+             CASE 
+               WHEN fp.area_produccion > 0 THEN CONCAT(cp.nombre, ' (', fp.area_produccion, ' Ha)')
+               ELSE cp.nombre 
+             END, ', ') AS producciones_subproductos
          FROM public.finca_productos fp
          LEFT JOIN public.categorias c ON fp.categoria_producto = c.id
          LEFT JOIN public.catalogo_productos cp ON (fp.subproducto_id = cp.id OR fp.producto_id = cp.id)

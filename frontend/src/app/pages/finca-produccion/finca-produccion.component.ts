@@ -54,6 +54,10 @@ export class FincaProduccionComponent implements OnInit, OnChanges {
   readonly categorias = signal<CategoriaOption[]>([]);
   readonly subproductos = signal<SubproductoOption[]>([]);
 
+  readonly tamanoFinca = signal<number>(0);
+  readonly areaUsadaTotal = signal<number>(0);
+  readonly areaDisponible = signal<number>(0);
+
   readonly loading = signal(false);
   readonly loadingSubproductos = signal(false);
   readonly errorMsg = signal('');
@@ -112,7 +116,14 @@ export class FincaProduccionComponent implements OnInit, OnChanges {
     });
     if (res.ok) {
       const data = await res.json();
-      this.producciones.set(data);
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        this.tamanoFinca.set(data.tamanoFinca || 0);
+        this.areaUsadaTotal.set(data.areaUsadaTotal || 0);
+        this.areaDisponible.set(data.areaDisponible || 0);
+        this.producciones.set(data.rows || []);
+      } else {
+        this.producciones.set(Array.isArray(data) ? data : []);
+      }
     }
   }
 
@@ -194,6 +205,21 @@ export class FincaProduccionComponent implements OnInit, OnChanges {
     if (!catId && !subId) {
       this.errorMsg.set('Debe seleccionar al menos el Tipo de Producción o Subcategoría.');
       return;
+    }
+
+    const nuevaAreaNum = this.formAreaProduccion() ? Number(this.formAreaProduccion()) : 0;
+    if (this.formActivo() && nuevaAreaNum > 0 && this.tamanoFinca() > 0) {
+      const editId = this.editingId();
+      const areaUsadaOtros = this.producciones()
+        .filter(p => p.activo && p.id !== editId && p.area_produccion)
+        .reduce((sum, p) => sum + Number(p.area_produccion), 0);
+      
+      const proyectada = Number((areaUsadaOtros + nuevaAreaNum).toFixed(2));
+      if (proyectada > this.tamanoFinca()) {
+        const disp = Number(Math.max(0, this.tamanoFinca() - areaUsadaOtros).toFixed(2));
+        this.errorMsg.set(`El área de producción (${nuevaAreaNum} Ha) supera el tamaño total disponible de la finca (${this.tamanoFinca()} Ha). Área usada actual: ${areaUsadaOtros} Ha. Disponible: ${disp} Ha.`);
+        return;
+      }
     }
 
     try {
