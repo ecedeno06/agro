@@ -22,6 +22,9 @@ import auditoriaRoutes from './routes/auditoria.routes.js';
 import usuarioDireccionesRoutes from './routes/usuario-direcciones.routes.js';
 import categoriaOcupacionRoutes from './routes/categoria-ocupacion.routes.js';
 import ocupacionRoutes from './routes/ocupacion.routes.js';
+import categoriaProductoRoutes from './routes/categoria-producto.routes.js';
+import catalogoProductoRoutes from './routes/catalogo-producto.routes.js';
+import unidadMedidaRoutes from './routes/unidad-medida.routes.js';
 import errorMiddleware from './middlewares/error.middleware.js';
 
 import path from 'path';
@@ -67,6 +70,9 @@ app.use('/api/auditoria', auditoriaRoutes);
 app.use('/api/usuarios/direcciones', usuarioDireccionesRoutes);
 app.use('/api/categorias-ocupacion', categoriaOcupacionRoutes);
 app.use('/api/ocupaciones', ocupacionRoutes);
+app.use('/api/categorias-producto', categoriaProductoRoutes);
+app.use('/api/catalogo-productos', catalogoProductoRoutes);
+app.use('/api/unidades-medida', unidadMedidaRoutes);
 
 // Root Endpoint
 app.get('/', (req, res) => {

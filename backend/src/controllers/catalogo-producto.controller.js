@@ -1,0 +1,104 @@
+import { query } from '../db.js';
+
+// GET /api/catalogo-productos?categoria_id=
+export const getProductos = async (req, res, next) => {
+  const { categoria_id } = req.query;
+  try {
+    const base = `
+      SELECT p.*, c.nombre AS categoria_nombre, u.nombre AS unidad_nombre, u.abrev AS unidad_abrev
+      FROM public.catalogo_productos p
+      JOIN public.categorias c ON c.id = p.categoria_id
+      LEFT JOIN public.unidades_medida u ON u.id = p.unidad_medida_id`;
+
+    if (categoria_id) {
+      const result = await query(
+        `${base} WHERE p.categoria_id = $1 ORDER BY p.nombre ASC`,
+        [categoria_id]
+      );
+      return res.status(200).json(result.rows);
+    }
+    const result = await query(`${base} ORDER BY c.nombre ASC, p.nombre ASC`);
+    return res.status(200).json(result.rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createProducto = async (req, res, next) => {
+  const { categoria_id, unidad_medida_id, nombre, descripcion, codigo, imagen_url } = req.body;
+  try {
+    if (!categoria_id || !nombre || !nombre.trim()) {
+      return res.status(400).json({ message: 'Categoría y nombre son obligatorios.' });
+    }
+    const result = await query(
+      `INSERT INTO public.catalogo_productos (categoria_id, unidad_medida_id, nombre, descripcion, codigo, imagen_url)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [
+        categoria_id,
+        unidad_medida_id || null,
+        nombre.trim(),
+        descripcion ? descripcion.trim() : null,
+        codigo ? codigo.trim().toUpperCase() : null,
+        imagen_url ? imagen_url.trim() : null
+      ]
+    );
+    return res.status(201).json(result.rows[0]);
+  } catch (error) {
+    if (error.code === '23505') {
+      return res.status(409).json({ message: 'Ya existe un producto con ese código.' });
+    }
+    next(error);
+  }
+};
+
+export const updateProducto = async (req, res, next) => {
+  const { id } = req.params;
+  const { categoria_id, unidad_medida_id, nombre, descripcion, codigo, imagen_url, activo } = req.body;
+  try {
+    if (!categoria_id || !nombre || !nombre.trim()) {
+      return res.status(400).json({ message: 'Categoría y nombre son obligatorios.' });
+    }
+    const result = await query(
+      `UPDATE public.catalogo_productos
+       SET categoria_id = $1, unidad_medida_id = $2, nombre = $3, descripcion = $4,
+           codigo = $5, imagen_url = $6, activo = $7
+       WHERE id = $8 RETURNING *`,
+      [
+        categoria_id,
+        unidad_medida_id || null,
+        nombre.trim(),
+        descripcion ? descripcion.trim() : null,
+        codigo ? codigo.trim().toUpperCase() : null,
+        imagen_url ? imagen_url.trim() : null,
+        activo !== false,
+        id
+      ]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Producto no encontrado.' });
+    }
+    return res.status(200).json(result.rows[0]);
+  } catch (error) {
+    if (error.code === '23505') {
+      return res.status(409).json({ message: 'Ya existe un producto con ese código.' });
+    }
+    next(error);
+  }
+};
+
+export const toggleEstadoProducto = async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const actual = await query('SELECT activo FROM public.catalogo_productos WHERE id = $1', [id]);
+    if (actual.rows.length === 0) {
+      return res.status(404).json({ message: 'Producto no encontrado.' });
+    }
+    const result = await query(
+      'UPDATE public.catalogo_productos SET activo = $1 WHERE id = $2 RETURNING *',
+      [!actual.rows[0].activo, id]
+    );
+    return res.status(200).json({ message: 'Estado actualizado correctamente.', data: result.rows[0] });
+  } catch (error) {
+    next(error);
+  }
+};

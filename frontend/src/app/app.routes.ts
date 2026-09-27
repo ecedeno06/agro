@@ -13,6 +13,7 @@ import { TipoGeografiaComponent } from './pages/tipo-geografia/tipo-geografia.co
 import { TipoEstadoLegalComponent } from './pages/tipo-estado-legal/tipo-estado-legal.component';
 import { PaisesComponent } from './pages/paises/paises.component';
 import { OcupacionesComponent } from './pages/ocupaciones/ocupaciones.component';
+import { ProductosComponent } from './pages/productos/productos.component';
 import { FenomenosComponent } from './pages/fenomenos/fenomenos.component';
 import { MapaFincasComponent } from './pages/mapa-fincas/mapa-fincas.component';
 import { AuditoriaSesionesComponent } from './pages/auditoria-sesiones/auditoria-sesiones.component';
@@ -46,9 +47,9 @@ export const routes: Routes = [
       { path: 'auditoria-sesiones', component: AuditoriaSesionesComponent, canActivate: [adminGuard] },
 
       // Secciones aún no implementadas (antes eran texto quemado en el dashboard)
-      { path: 'productos', component: PlaceholderComponent, data: { titulo: 'Productos', descripcion: 'Gestión de productos disponibles.' } },
-      { path: 'granos', component: PlaceholderComponent, data: { titulo: 'Granos', descripcion: 'Listado y gestión de granos.' } },
-      { path: 'carnes', component: PlaceholderComponent, data: { titulo: 'Carnes', descripcion: 'Listado y gestión de carnes.' } },
+      { path: 'productos', component: ProductosComponent },
+      { path: 'granos', component: ProductosComponent, data: { categoriaFiltro: 'Granos' } },
+      { path: 'carnes', component: ProductosComponent, data: { categoriaFiltro: 'Carnes' } },
     ]
   },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
