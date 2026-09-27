@@ -87,6 +87,13 @@ export class ProductosComponent implements OnInit {
     return this.categoriasTodas().filter(c => c.categoria_padre_id === raizId);
   });
 
+  /** Categoría actualmente activa para el tab "Catálogo de Productos" (seleccionada en el tab "Categorías"). */
+  readonly categoriaActual = computed(() => {
+    const id = this.categoriaSeleccionadaId();
+    if (!id) return null;
+    return this.categoriasHijas().find(c => c.id === id) || null;
+  });
+
   readonly loadingCategorias = signal(false);
   readonly errorCategoriaMsg = signal('');
   readonly successCategoriaMsg = signal('');
@@ -136,6 +143,15 @@ export class ProductosComponent implements OnInit {
     this.formCategoriaIcono.set(item.icono || '');
     this.formCategoriaOrden.set(item.orden);
     this.showCategoriaForm.set(true);
+  }
+
+  /** Selecciona la categoría activa (fila del tab Categorías) y salta al tab de Catálogo de Productos con sus productos. */
+  async seleccionarCategoria(item: Categoria): Promise<void> {
+    this.categoriaSeleccionadaId.set(item.id);
+    this.cerrarProductoForm();
+    this.filterProductos.set('');
+    this.activeTab.set('productos');
+    await this.cargarProductos(item.id);
   }
 
   cerrarCategoriaForm(): void {
@@ -244,16 +260,6 @@ export class ProductosComponent implements OnInit {
     } catch (e) {
       console.error('Error al cargar unidades de medida:', e);
     }
-  }
-
-  async onCategoriaTabChange(id: number | null): Promise<void> {
-    this.categoriaSeleccionadaId.set(id);
-    this.cerrarProductoForm();
-    if (id == null) {
-      this.productos.set([]);
-      return;
-    }
-    await this.cargarProductos(id);
   }
 
   async cargarProductos(categoriaId: number): Promise<void> {

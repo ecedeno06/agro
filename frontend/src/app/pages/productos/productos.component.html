@@ -17,7 +17,7 @@
     <div class="card-header flex-header">
       <div>
         <h2>Categorías de Productos</h2>
-        <p class="subtitle">Subcategorías del catálogo (Carnes, Granos, Lácteos, etc.).</p>
+        <p class="subtitle">Subcategorías del catálogo (Carnes, Granos, Lácteos, etc.). Haz clic en una fila para administrar sus productos.</p>
       </div>
       <button type="button" class="action-btn register-suelo-btn" (click)="abrirNuevaCategoriaForm()">
         {{ showCategoriaForm() && !editingCategoriaId() ? '❌ Cerrar Formulario' : '➕ Registrar Categoría' }}
@@ -52,7 +52,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let item of categoriasHijas()" [class.row-selected]="editingCategoriaId() === item.id || categoriaSeleccionadaId() === item.id" (click)="abrirEditarCategoriaForm(item)">
+            <tr *ngFor="let item of categoriasHijas()" [class.row-selected]="categoriaSeleccionadaId() === item.id" (click)="seleccionarCategoria(item)">
               <td><strong>#{{ item.id }}</strong></td>
               <td style="font-size: 1.2rem;">{{ item.icono || '—' }}</td>
               <td>{{ item.nombre }}</td>
@@ -127,7 +127,11 @@
     <div class="card-header flex-header">
       <div>
         <h2>{{ tituloPagina() }}</h2>
-        <p class="subtitle" *ngIf="!modoRestringido()">Selecciona una categoría para administrar sus productos.</p>
+        <p class="subtitle" *ngIf="!modoRestringido() && categoriaActual() as cat">
+          Productos de la categoría: <strong>{{ cat.icono }} {{ cat.nombre }}</strong>
+          <button type="button" class="link-btn" (click)="activeTab.set('categorias')">🔄 Cambiar categoría</button>
+        </p>
+        <p class="subtitle" *ngIf="!modoRestringido() && !categoriaActual()">Selecciona una categoría en el tab "🗂️ Categorías" para administrar sus productos.</p>
         <p class="subtitle" *ngIf="modoRestringido()">Productos del catálogo global en esta categoría.</p>
       </div>
       @if (categoriaSeleccionadaId()) {
@@ -135,16 +139,6 @@
           {{ showProductoForm() && !editingProductoId() ? '❌ Cerrar Formulario' : '➕ Registrar Producto' }}
         </button>
       }
-    </div>
-
-    <div class="search-container" *ngIf="!modoRestringido()">
-      <div class="search-field">
-        <label for="productoTabCategoria">🗂️ Categoría</label>
-        <select id="productoTabCategoria" [ngModel]="categoriaSeleccionadaId()" (ngModelChange)="onCategoriaTabChange($event)">
-          <option [ngValue]="null">-- Seleccionar categoría --</option>
-          <option *ngFor="let c of categoriasHijas()" [ngValue]="c.id">{{ c.icono }} {{ c.nombre }}</option>
-        </select>
-      </div>
     </div>
 
     <div class="search-container" *ngIf="categoriaSeleccionadaId()">
@@ -168,7 +162,7 @@
     </div>
 
     <div class="empty-state" *ngIf="!categoriaSeleccionadaId()">
-      Selecciona una categoría arriba para ver y administrar sus productos.
+      Selecciona una categoría en el tab "🗂️ Categorías" para ver y administrar sus productos.
     </div>
 
     <div class="list-section" *ngIf="categoriaSeleccionadaId()">
