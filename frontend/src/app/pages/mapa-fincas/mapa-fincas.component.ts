@@ -62,7 +62,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
     this.fincas().forEach(f => {
       if (f.nombre_tipo_produccion) {
         f.nombre_tipo_produccion.split(',').forEach(item => {
-          const s = item.trim();
+          const s = item.replace(/\s*\([\d\.]+\s*Ha\)/gi, '').trim();
           if (s) todos.push(s);
         });
       }
@@ -75,7 +75,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
     this.fincas().forEach(f => {
       if (f.nombre_producto) {
         f.nombre_producto.split(',').forEach(item => {
-          const s = item.trim();
+          const s = item.replace(/\s*\([\d\.]+\s*Ha\)/gi, '').trim();
           if (s) todos.push(s);
         });
       }
@@ -119,7 +119,9 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
       if (!valor) return list;
       return list.filter(f => {
         if (!f.nombre_tipo_produccion) return false;
-        const partes = f.nombre_tipo_produccion.split(',').map(s => s.trim());
+        const partes = f.nombre_tipo_produccion
+          .split(',')
+          .map(s => s.replace(/\s*\([\d\.]+\s*Ha\)/gi, '').trim());
         return partes.includes(valor);
       });
     }
@@ -129,7 +131,9 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
       if (!valor) return list;
       return list.filter(f => {
         if (!f.nombre_producto) return false;
-        const partes = f.nombre_producto.split(',').map(s => s.trim());
+        const partes = f.nombre_producto
+          .split(',')
+          .map(s => s.replace(/\s*\([\d\.]+\s*Ha\)/gi, '').trim());
         return partes.includes(valor);
       });
     }
@@ -185,12 +189,12 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
 
   valorParaFinca(f: FincaMapa): string {
     switch (this.criterio()) {
-      case 'asociado': return this.valorAsociado() || f.nombre_propietario || '-';
-      case 'tipo_produccion': return this.valorTipoProduccion() || f.nombre_tipo_produccion || '-';
-      case 'subproducto': return this.valorSubproducto() || f.nombre_producto || '-';
-      case 'pais': return this.valorPais() || f.nombre_pais || '-';
-      case 'provincia': return this.valorProvincia() || f.id_privincia || '-';
-      case 'estado': return this.valorEstado() || f.estado || '-';
+      case 'asociado': return f.nombre_propietario || '-';
+      case 'tipo_produccion': return f.nombre_tipo_produccion || '-';
+      case 'subproducto': return f.nombre_producto || '-';
+      case 'pais': return f.nombre_pais || '-';
+      case 'provincia': return f.id_privincia || '-';
+      case 'estado': return f.estado || '-';
       case 'tamano': return `${f.tamano} Ha`;
       default: return '-';
     }
