@@ -12,13 +12,15 @@ type FincaMapa = {
   estado?: string;
   id_tipo_produccion?: number | null;
   nombre_tipo_produccion?: string;
+  id_producto?: number | null;
+  nombre_producto?: string;
   nombre_pais?: string;
   id_privincia?: string | null;
   mapa_latitud?: number | null;
   mapa_logitud?: number | null;
 };
 
-type Criterio = 'ninguno' | 'asociado' | 'tipo_produccion' | 'pais' | 'provincia' | 'estado' | 'tamano';
+type Criterio = 'ninguno' | 'asociado' | 'tipo_produccion' | 'subproducto' | 'pais' | 'provincia' | 'estado' | 'tamano';
 
 @Component({
   selector: 'app-mapa-fincas',
@@ -41,6 +43,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
   criterio = signal<Criterio>('ninguno');
   valorAsociado = signal('');
   valorTipoProduccion = signal('');
+  valorSubproducto = signal('');
   valorPais = signal('');
   valorProvincia = signal('');
   valorEstado = signal('');
@@ -57,6 +60,13 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
   tiposProduccionDisponibles = computed(() => {
     const nombres = this.fincas()
       .map(f => f.nombre_tipo_produccion)
+      .filter((n): n is string => !!n && n.trim().length > 0);
+    return Array.from(new Set(nombres)).sort((a, b) => a.localeCompare(b));
+  });
+
+  subproductosDisponibles = computed(() => {
+    const nombres = this.fincas()
+      .map(f => f.nombre_producto)
       .filter((n): n is string => !!n && n.trim().length > 0);
     return Array.from(new Set(nombres)).sort((a, b) => a.localeCompare(b));
   });
@@ -96,6 +106,12 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
       const valor = this.valorTipoProduccion();
       if (!valor) return list;
       return list.filter(f => f.nombre_tipo_produccion === valor);
+    }
+
+    if (criterio === 'subproducto') {
+      const valor = this.valorSubproducto();
+      if (!valor) return list;
+      return list.filter(f => f.nombre_producto === valor);
     }
 
     if (criterio === 'pais') {
@@ -138,6 +154,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
     switch (this.criterio()) {
       case 'asociado': return 'Asociado';
       case 'tipo_produccion': return 'Tipo de Producción';
+      case 'subproducto': return 'Subproducto';
       case 'pais': return 'País';
       case 'provincia': return 'Provincia';
       case 'estado': return 'Estado';
@@ -150,6 +167,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
     switch (this.criterio()) {
       case 'asociado': return f.nombre_propietario || '-';
       case 'tipo_produccion': return f.nombre_tipo_produccion || '-';
+      case 'subproducto': return f.nombre_producto || '-';
       case 'pais': return f.nombre_pais || '-';
       case 'provincia': return f.id_privincia || '-';
       case 'estado': return f.estado || '-';
@@ -233,6 +251,8 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
         estado: f.estado,
         id_tipo_produccion: (f.id_tipo_produccion != null && f.id_tipo_produccion !== '') ? Number(f.id_tipo_produccion) : null,
         nombre_tipo_produccion: f.nombre_tipo_produccion,
+        id_producto: (f.id_producto != null && f.id_producto !== '') ? Number(f.id_producto) : null,
+        nombre_producto: f.nombre_producto,
         nombre_pais: f.nombre_pais,
         id_privincia: f.id_privincia || null,
         mapa_latitud: (f.mapa_latitud != null && f.mapa_latitud !== '') ? Number(f.mapa_latitud) : null,
@@ -251,6 +271,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
     this.criterio.set(nuevo);
     this.valorAsociado.set('');
     this.valorTipoProduccion.set('');
+    this.valorSubproducto.set('');
     this.valorPais.set('');
     this.valorProvincia.set('');
     this.valorEstado.set('');
@@ -323,6 +344,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
         ${f.nombre_propietario ? `👤 ${f.nombre_propietario}<br>` : ''}
         📐 ${f.tamano} Ha<br>
         ${f.nombre_tipo_produccion ? `🌾 ${f.nombre_tipo_produccion}<br>` : ''}
+        ${f.nombre_producto ? `🏷️ Subproducto: ${f.nombre_producto}<br>` : ''}
         ${ubicacionTexto !== '-' ? `🌎 ${ubicacionTexto}<br>` : ''}
         ${f.estado ? `📌 ${f.estado}<br>` : ''}
         <a href="${urlMaps}" target="_blank" rel="noopener">📍 Abrir en Google Maps</a>

@@ -20,6 +20,7 @@
           <option value="ninguno">-- Sin filtro --</option>
           <option value="asociado">Asociado</option>
           <option value="tipo_produccion">Tipo de Producción</option>
+          <option value="subproducto">Subproducto</option>
           <option value="pais">País</option>
           <option value="provincia">Provincia</option>
           <option value="estado">Estado</option>
@@ -40,6 +41,14 @@
         <select [ngModel]="valorTipoProduccion()" (ngModelChange)="valorTipoProduccion.set($event)">
           <option value="">-- Todos --</option>
           <option *ngFor="let t of tiposProduccionDisponibles()" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+
+      <div class="form-field" *ngIf="criterio() === 'subproducto'">
+        <label>Subproducto</label>
+        <select [ngModel]="valorSubproducto()" (ngModelChange)="valorSubproducto.set($event)">
+          <option value="">-- Todos --</option>
+          <option *ngFor="let s of subproductosDisponibles()" [value]="s">{{ s }}</option>
         </select>
       </div>
 
