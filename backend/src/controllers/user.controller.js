@@ -277,7 +277,7 @@ export const cambiarPassword = async (req, res, next) => {
 
     // Actualizar la contraseña, la pista y marcar que ya no debe cambiarla
     await query(
-      'UPDATE usuarios SET password = $1, pista = $2, debe_cambiar_password = false, invitacion_expira_en = NULL WHERE "idUsuario" = $3',
+      'UPDATE usuarios SET password = $1, pista = $2, debe_cambiar_password = false WHERE "idUsuario" = $3',
       [hashedPassword, pst || null, req.userId]
     );
 
@@ -450,7 +450,7 @@ export const resetPasswordAdmin = async (req, res, next) => {
     const hash = await bcrypt.hash(nuevaPassword, 10);
 
     await query(
-      'UPDATE public.usuarios SET password = $1, debe_cambiar_password = true, invitacion_expira_en = NULL WHERE "idUsuario" = $2',
+      'UPDATE public.usuarios SET password = $1, debe_cambiar_password = true WHERE "idUsuario" = $2',
       [hash, id]
     );
 
@@ -526,10 +526,10 @@ export const toggleAccesoUsuario = async (req, res, next) => {
 };
 
 /**
- * Enviar invitación por correo (solo admin/superadmin): genera una
- * contraseña temporal válida por 1 hora (invitacion_expira_en, verificado en
- * auth.controller.js login()) y envía el enlace de acceso, el usuario
- * (email) y esa contraseña temporal.
+ * Enviar invitación por correo (solo admin/superadmin): solo notifica al
+ * usuario con el enlace de acceso y su usuario (email). No toca su
+ * contraseña actual — para eso existe el botón de reset de contraseña
+ * aparte (resetPasswordAdmin).
  */
 export const enviarInvitacionUsuario = async (req, res, next) => {
   if (!esAdminOSuperadmin(req)) {
@@ -552,29 +552,19 @@ export const enviarInvitacionUsuario = async (req, res, next) => {
       return res.status(400).json({ message: 'El usuario no tiene un correo electrónico registrado.' });
     }
 
-    const nuevaPassword = generarPasswordSegura();
-    const expiraEn = new Date(Date.now() + 60 * 60 * 1000);
     const enlace = `${process.env.FRONTEND_URL || 'https://agro-steel-nine.vercel.app'}/login`;
 
-    // Se envía el correo ANTES de tocar la contraseña: si el envío falla, la
-    // cuenta no debe quedar con una contraseña nueva que nadie recibió.
     try {
       await enviarCorreo({
         destinatario: usuario.email,
         asunto: 'Invitación a AgroNet',
-        texto: `Hola ${usuario.nombre},\n\nSe te invitó a acceder al sistema AgroNet.\n\nEnlace: ${enlace}\nUsuario: ${usuario.email}\nContraseña temporal: ${nuevaPassword}\n\nEste acceso es válido por 1 hora. Deberás cambiar la contraseña al iniciar sesión.\n\nSi no fuiste tú quien solicitó esto, ignora este correo.`,
-        html: `<p>Hola ${escaparHtml(usuario.nombre)},</p><p>Se te invitó a acceder al sistema <strong>AgroNet</strong>.</p><p><a href="${enlace}">${enlace}</a></p><p>Usuario: <strong>${escaparHtml(usuario.email)}</strong><br>Contraseña temporal: <strong>${escaparHtml(nuevaPassword)}</strong></p><p>Este acceso es válido por 1 hora. Deberás cambiar la contraseña al iniciar sesión.</p><p>Si no fuiste tú quien solicitó esto, ignora este correo.</p>`
+        texto: `Hola ${usuario.nombre},\n\nSe te invitó a acceder al sistema AgroNet.\n\nEnlace: ${enlace}\nUsuario: ${usuario.email}\n\nUsa tu contraseña habitual para iniciar sesión. Si la olvidaste, usa la opción "Olvidé mi contraseña" en la pantalla de acceso.`,
+        html: `<p>Hola ${escaparHtml(usuario.nombre)},</p><p>Se te invitó a acceder al sistema <strong>AgroNet</strong>.</p><p><a href="${enlace}">${enlace}</a></p><p>Usuario: <strong>${escaparHtml(usuario.email)}</strong></p><p>Usa tu contraseña habitual para iniciar sesión. Si la olvidaste, usa la opción "Olvidé mi contraseña" en la pantalla de acceso.</p>`
       });
     } catch (correoError) {
       console.error('Error enviando invitación:', correoError.message);
-      return res.status(502).json({ message: 'No se pudo enviar el correo de invitación. La contraseña del usuario no fue modificada. Intenta nuevamente.' });
+      return res.status(502).json({ message: 'No se pudo enviar el correo de invitación. Intenta nuevamente.' });
     }
-
-    const hash = await bcrypt.hash(nuevaPassword, 10);
-    await query(
-      'UPDATE public.usuarios SET password = $1, debe_cambiar_password = true, invitacion_expira_en = $2 WHERE "idUsuario" = $3',
-      [hash, expiraEn, id]
-    );
 
     return res.status(200).json({ message: `Invitación enviada a ${usuario.email}.` });
   } catch (error) {

@@ -132,7 +132,7 @@ export const login = async (req, res, next) => {
 
     // Buscar al usuario en la base de datos (con idUsuario en camelCase)
     const result = await query(
-      'SELECT "idUsuario", nombre, email, password, rol, activo, debe_cambiar_password, invitacion_expira_en, two_factor_enabled, two_factor_secret FROM usuarios WHERE email = $1 AND activo = true',
+      'SELECT "idUsuario", nombre, email, password, rol, activo, debe_cambiar_password, two_factor_enabled, two_factor_secret FROM usuarios WHERE email = $1 AND activo = true',
       [email]
     );
 
@@ -146,12 +146,6 @@ export const login = async (req, res, next) => {
     const match = await bcrypt.compare(password, usuario.password);
     if (!match) {
       return res.status(401).json({ message: 'Credenciales inválidas.' });
-    }
-
-    // Contraseña temporal de una invitación/reseteo con vencimiento (1 hora):
-    // si ya expiró y no se usó a tiempo, se rechaza aunque la contraseña sea correcta.
-    if (usuario.debe_cambiar_password && usuario.invitacion_expira_en && new Date(usuario.invitacion_expira_en) < new Date()) {
-      return res.status(401).json({ message: 'Tu contraseña temporal expiró (era válida por 1 hora). Solicita una nueva invitación al administrador.' });
     }
 
     // Si el doble factor está activado, detener el login y solicitar OTP

@@ -343,11 +343,11 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
     this.openMenuItem.set(null);
   }
 
-  /** Genera una contraseña temporal (válida 1 hora) y la envía por correo junto con el enlace de acceso. */
+  /** Solo notifica por correo (enlace + usuario); no modifica la contraseña actual. */
   async enviarInvitacion(item: UserRoleItem): Promise<void> {
     this.closeMenu();
     if (!this.user?.idUsuario) return;
-    if (!confirm(`¿Enviar invitación de acceso a ${this.user.nombre} (${this.user.email})? Se generará una nueva contraseña temporal válida por 1 hora.`)) {
+    if (!confirm(`¿Enviar invitación de acceso a ${this.user.nombre} (${this.user.email})? Solo se le notificará por correo el enlace y su usuario; su contraseña actual no cambia.`)) {
       return;
     }
 
