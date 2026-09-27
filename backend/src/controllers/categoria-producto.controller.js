@@ -17,6 +17,22 @@ async function verificarPermiso(req, res, codigoPermiso) {
   return tiene;
 }
 
+// GET /api/categorias-producto/referencia - lista de solo lectura (sin permiso "ver" de Productos),
+// para selects de referencia en otras pantallas (ej. "Tipo de Producción" en Mis Fincas).
+export const getCategoriasReferencia = async (req, res, next) => {
+  try {
+    const result = await query(
+      `SELECT id, nombre, icono
+       FROM public.categorias
+       WHERE activo = true AND categoria_padre_id IS NOT NULL
+       ORDER BY nombre ASC`
+    );
+    return res.status(200).json(result.rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // GET /api/categorias-producto?padre_id= (si no se pasa, devuelve todas)
 export const getCategorias = async (req, res, next) => {
   const { padre_id } = req.query;

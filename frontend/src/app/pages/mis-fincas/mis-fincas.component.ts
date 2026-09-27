@@ -543,14 +543,18 @@ export class MisFincasComponent implements OnInit {
     this.cargarTiposProduccion();
   }
 
+  // "Tipo de Producción" sale del catálogo real de Productos (categorías hijas de "Productos"),
+  // no del catálogo independiente tipo_produccion (obsoleto). Usa el endpoint de referencia
+  // (sin el permiso "ver" de Productos) para que cualquier rol que edite fincas pueda listarlas.
   async cargarTiposProduccion(): Promise<void> {
     try {
-      const res = await fetch(`${this.apiBaseUrl}/tipo-produccion`, {
+      const res = await fetch(`${this.apiBaseUrl}/categorias-producto/referencia`, {
         headers: this.getAuthHeaders()
       });
       if (res.ok) {
-        const data = await res.json();
-        this.tiposProduccion.set(Array.isArray(data) ? data : []);
+        const data: { id: number; nombre: string }[] = await res.json();
+        const categorias = Array.isArray(data) ? data : [];
+        this.tiposProduccion.set(categorias.map(c => ({ id_tipo: c.id, nombre: c.nombre })));
       }
     } catch (e) {
       console.error('Error al cargar tipos de producción:', e);
