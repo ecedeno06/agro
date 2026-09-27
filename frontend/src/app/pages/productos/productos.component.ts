@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
 import { NavigationService } from '../../core/services/navigation.service';
 import { SessionService } from '../../core/services/session.service';
+import { SelectorFotoComponent } from '../../core/components/selector-foto/selector-foto.component';
 
 interface Categoria {
   id: number;
@@ -37,7 +38,7 @@ interface UnidadMedida {
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SelectorFotoComponent],
   templateUrl: './productos.component.html',
   styleUrls: ['./productos.component.scss']
 })

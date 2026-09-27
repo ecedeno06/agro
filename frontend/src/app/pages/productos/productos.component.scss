@@ -332,6 +332,50 @@
   }
 }
 
+.producto-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "nombre codigo"
+    "unidad imagen"
+    "descripcion imagen";
+  gap: 1.25rem;
+
+  .campo-nombre { grid-area: nombre; }
+  .campo-codigo { grid-area: codigo; }
+  .campo-unidad { grid-area: unidad; }
+  .campo-descripcion { grid-area: descripcion; }
+
+  .campo-imagen {
+    grid-area: imagen;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .campo-imagen-foto {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  textarea {
+    min-height: 6.5rem;
+    resize: vertical;
+    font-family: inherit;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "nombre"
+      "codigo"
+      "unidad"
+      "imagen"
+      "descripcion";
+  }
+}
+
 .checkbox-field {
   flex-direction: row !important;
   align-items: center;

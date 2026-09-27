@@ -227,29 +227,39 @@
       </div>
 
       <form (submit)="$event.preventDefault(); guardarProducto()" class="modal-form">
-        <div class="form-grid-2col">
-          <label class="form-field">
+        <div class="producto-form-grid">
+          <label class="form-field campo-nombre">
             <span>Nombre *</span>
             <input type="text" [ngModel]="formProductoNombre()" (ngModelChange)="formProductoNombre.set($event)" name="productoNombre" required [disabled]="loadingProductos()" />
           </label>
-          <label class="form-field">
+          <label class="form-field campo-codigo">
             <span>Código</span>
             <input type="text" [ngModel]="formProductoCodigo()" (ngModelChange)="formProductoCodigo.set($event)" name="productoCodigo" placeholder="Ej. CAR-014" [disabled]="loadingProductos()" style="text-transform: uppercase;" />
           </label>
-          <label class="form-field">
+          <label class="form-field campo-unidad">
             <span>Unidad de Medida</span>
             <select [ngModel]="formProductoUnidadId()" (ngModelChange)="formProductoUnidadId.set($event)" name="productoUnidad" [disabled]="loadingProductos()">
               <option [ngValue]="null">-- Sin especificar --</option>
               <option *ngFor="let u of unidadesMedida()" [ngValue]="u.id">{{ u.nombre }} ({{ u.abrev }})</option>
             </select>
           </label>
-          <label class="form-field">
-            <span>URL de Imagen</span>
-            <input type="text" [ngModel]="formProductoImagenUrl()" (ngModelChange)="formProductoImagenUrl.set($event)" name="productoImagen" placeholder="https://..." [disabled]="loadingProductos()" />
-          </label>
-          <label class="form-field" style="grid-column: 1 / -1;">
+          <div class="form-field campo-imagen">
+            <span>Foto</span>
+            <div class="campo-imagen-foto">
+              <app-selector-foto
+                [foto]="formProductoImagenUrl() || null"
+                [nombre]="formProductoNombre()"
+                titulo="Foto del producto"
+                [cuadrado]="true"
+                [tamano]="130"
+                (fotoCambiada)="formProductoImagenUrl.set($event)"
+                (fotoEliminada)="formProductoImagenUrl.set('')"
+              ></app-selector-foto>
+            </div>
+          </div>
+          <label class="form-field campo-descripcion">
             <span>Descripción</span>
-            <input type="text" [ngModel]="formProductoDescripcion()" (ngModelChange)="formProductoDescripcion.set($event)" name="productoDescripcion" [disabled]="loadingProductos()" />
+            <textarea [ngModel]="formProductoDescripcion()" (ngModelChange)="formProductoDescripcion.set($event)" name="productoDescripcion" rows="4" [disabled]="loadingProductos()"></textarea>
           </label>
         </div>
         <div class="modal-actions" style="margin-top: 1.25rem;">

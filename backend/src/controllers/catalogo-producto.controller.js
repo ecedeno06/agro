@@ -17,6 +17,24 @@ async function verificarPermiso(req, res, codigoPermiso) {
   return tiene;
 }
 
+const BASE64_IMAGEN_REGEX = /^data:image\/(jpeg|jpg|png|gif|webp);base64,/;
+const MAX_IMAGEN_BYTES = 2 * 1024 * 1024; // 2 MB
+
+// La imagen del producto es opcional; si viene, debe ser base64 (mismo patrón que el avatar de usuario).
+function validarImagenBase64(res, imagenUrl) {
+  if (!imagenUrl) return true;
+  if (!BASE64_IMAGEN_REGEX.test(imagenUrl)) {
+    res.status(400).json({ message: 'Formato de imagen inválido. Se esperaba una foto en base64.' });
+    return false;
+  }
+  const sizeBytes = Buffer.byteLength(imagenUrl.split(',')[1] || '', 'base64');
+  if (sizeBytes > MAX_IMAGEN_BYTES) {
+    res.status(400).json({ message: 'La imagen es demasiado grande. El límite es 2 MB.' });
+    return false;
+  }
+  return true;
+}
+
 // GET /api/catalogo-productos?categoria_id=
 export const getProductos = async (req, res, next) => {
   const { categoria_id } = req.query;
@@ -49,6 +67,7 @@ export const createProducto = async (req, res, next) => {
     if (!categoria_id || !nombre || !nombre.trim()) {
       return res.status(400).json({ message: 'Categoría y nombre son obligatorios.' });
     }
+    if (!validarImagenBase64(res, imagen_url)) return;
     const result = await query(
       `INSERT INTO public.catalogo_productos (categoria_id, unidad_medida_id, nombre, descripcion, codigo, imagen_url)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
@@ -78,6 +97,7 @@ export const updateProducto = async (req, res, next) => {
     if (!categoria_id || !nombre || !nombre.trim()) {
       return res.status(400).json({ message: 'Categoría y nombre son obligatorios.' });
     }
+    if (!validarImagenBase64(res, imagen_url)) return;
     const result = await query(
       `UPDATE public.catalogo_productos
        SET categoria_id = $1, unidad_medida_id = $2, nombre = $3, descripcion = $4,
