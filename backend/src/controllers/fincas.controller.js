@@ -80,6 +80,7 @@ export const getFincas = async (req, res, next) => {
   const userId = req.userId;
   const userRol = req.userRol;
   const rolId = req.userRolId;
+  const esParaMapa = req.query.contexto === 'mapa';
 
   try {
     const esAsociadoUser = await esAsociado(userId, userRol);
@@ -159,6 +160,15 @@ export const getFincas = async (req, res, next) => {
       queryParams.push(idCapitulo);
       conditions.push(
         `(f.id_propietario IN (${SUBQUERY_PROPIETARIOS_DEL_CAPITULO}$${queryParams.length}) OR f.id_propietario_legal IN (${SUBQUERY_PROPIETARIOS_DEL_CAPITULO}$${queryParams.length}))`
+      );
+    }
+
+    // Regla del Mapa de Fincas: el superadmin ve todo el ecosistema; el resto de
+    // roles, además del alcance de arriba, solo ve fincas con al menos una
+    // producción activa marcada "ver_mapa" = true.
+    if (esParaMapa && !esGlobal) {
+      conditions.push(
+        `EXISTS (SELECT 1 FROM public.finca_productos fpm WHERE fpm.finca_id = f.id_finca AND fpm.activo = true AND fpm.ver_mapa = true)`
       );
     }
 

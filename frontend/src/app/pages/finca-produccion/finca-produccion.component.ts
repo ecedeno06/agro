@@ -15,6 +15,7 @@ export interface FincaProductoItem {
   precio: number;
   stock: number;
   activo: boolean;
+  ver_mapa: boolean;
   creado_en?: string;
   actualizado_en?: string;
   nombre_categoria?: string;
@@ -73,6 +74,7 @@ export class FincaProduccionComponent implements OnInit, OnChanges {
   readonly formDesde = signal<string>('');
   readonly formHasta = signal<string>('');
   readonly formActivo = signal<boolean>(true);
+  readonly formVerMapa = signal<boolean>(false);
 
   ngOnInit(): void {
     this.cargarDatos();
@@ -171,6 +173,7 @@ export class FincaProduccionComponent implements OnInit, OnChanges {
     this.formDesde.set('');
     this.formHasta.set('');
     this.formActivo.set(true);
+    this.formVerMapa.set(false);
     this.subproductos.set([]);
     this.errorMsg.set('');
     this.showForm.set(true);
@@ -182,6 +185,7 @@ export class FincaProduccionComponent implements OnInit, OnChanges {
     this.formDesde.set(item.desde ? item.desde.substring(0, 10) : '');
     this.formHasta.set(item.hasta ? item.hasta.substring(0, 10) : '');
     this.formActivo.set(item.activo);
+    this.formVerMapa.set(!!item.ver_mapa);
     this.errorMsg.set('');
 
     const catId = item.categoria_producto ? Number(item.categoria_producto) : null;
@@ -238,7 +242,8 @@ export class FincaProduccionComponent implements OnInit, OnChanges {
         area_produccion: this.formAreaProduccion(),
         desde: this.formDesde() || null,
         hasta: this.formHasta() || null,
-        activo: this.formActivo()
+        activo: this.formActivo(),
+        ver_mapa: this.formVerMapa()
       };
 
       const res = await fetch(url, {

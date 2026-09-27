@@ -101,7 +101,8 @@ export const addFincaProducto = async (req, res, next) => {
     hasta,
     precio,
     stock,
-    activo
+    activo,
+    ver_mapa
   } = req.body;
 
   try {
@@ -130,8 +131,9 @@ export const addFincaProducto = async (req, res, next) => {
          hasta,
          precio,
          stock,
-         activo
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         activo,
+         ver_mapa
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
       [
         finca_id,
@@ -143,7 +145,8 @@ export const addFincaProducto = async (req, res, next) => {
         hasta || null,
         precio != null && precio !== '' ? Number(precio) : 0,
         stock != null && stock !== '' ? Number(stock) : 0,
-        activo !== false
+        activo !== false,
+        ver_mapa === true
       ]
     );
 
@@ -171,7 +174,8 @@ export const updateFincaProducto = async (req, res, next) => {
     hasta,
     precio,
     stock,
-    activo
+    activo,
+    ver_mapa
   } = req.body;
 
   try {
@@ -204,8 +208,9 @@ export const updateFincaProducto = async (req, res, next) => {
            precio = $7,
            stock = $8,
            activo = $9,
+           ver_mapa = $10,
            actualizado_en = NOW()
-       WHERE id = $10
+       WHERE id = $11
        RETURNING *`,
       [
         categoria_producto || null,
@@ -217,6 +222,7 @@ export const updateFincaProducto = async (req, res, next) => {
         precio != null && precio !== '' ? Number(precio) : 0,
         stock != null && stock !== '' ? Number(stock) : 0,
         activo !== false,
+        ver_mapa === true,
         id
       ]
     );

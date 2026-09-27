@@ -263,7 +263,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
     this.loading.set(true);
     this.errorMsg.set('');
     try {
-      const res = await fetch(`${this.apiBaseUrl}/fincas`, { headers: this.getAuthHeaders() });
+      const res = await fetch(`${this.apiBaseUrl}/fincas?contexto=mapa`, { headers: this.getAuthHeaders() });
       if (!res.ok) throw new Error('Error al cargar las fincas.');
       const data = await res.json();
 

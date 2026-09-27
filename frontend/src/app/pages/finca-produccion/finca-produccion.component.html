@@ -113,14 +113,27 @@
 
         <div class="form-field checkbox-field" style="align-self: flex-end; padding-bottom: 0.5rem;">
           <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--primary-color); font-weight: 600;">
-            <input 
-              type="checkbox" 
-              [ngModel]="formActivo()" 
-              (ngModelChange)="formActivo.set($event)" 
-              name="activo" 
+            <input
+              type="checkbox"
+              [ngModel]="formActivo()"
+              (ngModelChange)="formActivo.set($event)"
+              name="activo"
               [disabled]="loading()"
             />
             Producción Activa u Operativa
+          </label>
+        </div>
+
+        <div class="form-field checkbox-field" style="align-self: flex-end; padding-bottom: 0.5rem;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--primary-color); font-weight: 600;">
+            <input
+              type="checkbox"
+              [ngModel]="formVerMapa()"
+              (ngModelChange)="formVerMapa.set($event)"
+              name="ver_mapa"
+              [disabled]="loading()"
+            />
+            🗺️ Mostrar esta finca en el Mapa
           </label>
         </div>
 
@@ -183,6 +196,7 @@
               <span class="status-badge" [class.active]="item.activo">
                 {{ item.activo ? 'En Prod.' : 'Inactivo' }}
               </span>
+              <span *ngIf="item.ver_mapa" title="Visible en el Mapa de Fincas" style="margin-left: 0.35rem;">🗺️</span>
             </td>
             <td class="acciones-cell" *ngIf="!readOnly" (click)="$event.stopPropagation()">
               <div class="icon-actions">
