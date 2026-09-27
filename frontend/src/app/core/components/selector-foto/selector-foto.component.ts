@@ -26,6 +26,9 @@ export class SelectorFotoComponent implements OnDestroy {
   @Input() ocultarDisparador = false;
   @Input() cuadrado = false;
   @Input() tamano = 100;
+  /** Ancho/alto en px para un recuadro rectangular (ej. foto de producto). Si no se pasan, usa `tamano` para ambos (avatar cuadrado/circular). */
+  @Input() ancho?: number;
+  @Input() alto?: number;
   @Output() fotoCambiada = new EventEmitter<string>();
   @Output() fotoEliminada = new EventEmitter<void>();
 
@@ -37,6 +40,18 @@ export class SelectorFotoComponent implements OnDestroy {
 
   @ViewChild('videoFoto') videoFotoRef?: ElementRef<HTMLVideoElement>;
   @ViewChild('fileInputFoto') fileInputFotoRef?: ElementRef<HTMLInputElement>;
+
+  get anchoFinal(): number {
+    return this.ancho ?? this.tamano;
+  }
+
+  get altoFinal(): number {
+    return this.alto ?? this.tamano;
+  }
+
+  get fontSizeIniciales(): number {
+    return Math.min(this.anchoFinal, this.altoFinal) * 0.28;
+  }
 
   iniciales(): string {
     return (this.nombre || '')

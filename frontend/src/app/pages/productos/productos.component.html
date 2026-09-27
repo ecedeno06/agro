@@ -251,7 +251,8 @@
                 [nombre]="formProductoNombre()"
                 titulo="Foto del producto"
                 [cuadrado]="true"
-                [tamano]="130"
+                [ancho]="300"
+                [alto]="200"
                 (fotoCambiada)="formProductoImagenUrl.set($event)"
                 (fotoEliminada)="formProductoImagenUrl.set('')"
               ></app-selector-foto>

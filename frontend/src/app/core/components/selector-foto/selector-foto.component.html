@@ -4,18 +4,18 @@
   class="selector-foto-btn"
   [class.selector-foto-btn-static]="soloLectura"
   [title]="soloLectura ? nombre : titulo"
-  [style.width.px]="tamano"
-  [style.height.px]="tamano"
+  [style.width.px]="anchoFinal"
+  [style.height.px]="altoFinal"
   (click)="abrirSelector()"
 >
-  <img *ngIf="foto" [src]="foto" class="selector-foto-img" [alt]="titulo" [style.width.px]="tamano" [style.height.px]="tamano" />
+  <img *ngIf="foto" [src]="foto" class="selector-foto-img" [alt]="titulo" [style.width.px]="anchoFinal" [style.height.px]="altoFinal" />
   <div
     *ngIf="!foto"
     class="selector-foto-avatar"
     [class.selector-foto-avatar--cuadrado]="cuadrado"
-    [style.width.px]="tamano"
-    [style.height.px]="tamano"
-    [style.font-size.px]="tamano * 0.28"
+    [style.width.px]="anchoFinal"
+    [style.height.px]="altoFinal"
+    [style.font-size.px]="fontSizeIniciales"
   >{{ iniciales() }}</div>
   <span *ngIf="!soloLectura" class="selector-foto-camera">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
