@@ -537,6 +537,7 @@ export const enviarInvitacionUsuario = async (req, res, next) => {
   }
 
   const { id } = req.params;
+  const { rolCodigo, capitulo } = req.body;
 
   try {
     const usuarioRes = await query(
@@ -553,20 +554,23 @@ export const enviarInvitacionUsuario = async (req, res, next) => {
     }
 
     const enlace = `${process.env.FRONTEND_URL || 'https://agro-steel-nine.vercel.app'}/login`;
+    const contexto = capitulo
+      ? ` al capítulo "${capitulo}"${rolCodigo ? ` con el rol ${String(rolCodigo).toUpperCase()}` : ''}`
+      : '';
 
     try {
       await enviarCorreo({
         destinatario: usuario.email,
         asunto: 'Invitación a AgroNet',
-        texto: `Hola ${usuario.nombre},\n\nSe te invitó a acceder al sistema AgroNet.\n\nEnlace: ${enlace}\nUsuario: ${usuario.email}\n\nUsa tu contraseña habitual para iniciar sesión. Si la olvidaste, usa la opción "Olvidé mi contraseña" en la pantalla de acceso.`,
-        html: `<p>Hola ${escaparHtml(usuario.nombre)},</p><p>Se te invitó a acceder al sistema <strong>AgroNet</strong>.</p><p><a href="${enlace}">${enlace}</a></p><p>Usuario: <strong>${escaparHtml(usuario.email)}</strong></p><p>Usa tu contraseña habitual para iniciar sesión. Si la olvidaste, usa la opción "Olvidé mi contraseña" en la pantalla de acceso.</p>`
+        texto: `Hola ${usuario.nombre},\n\nSe te invitó a acceder al sistema AgroNet${contexto}.\n\nEnlace: ${enlace}\nUsuario: ${usuario.email}\n\nUsa tu contraseña habitual para iniciar sesión. Si la olvidaste, usa la opción "Olvidé mi contraseña" en la pantalla de acceso.`,
+        html: `<p>Hola ${escaparHtml(usuario.nombre)},</p><p>Se te invitó a acceder al sistema <strong>AgroNet</strong>${escaparHtml(contexto)}.</p><p><a href="${enlace}">${enlace}</a></p><p>Usuario: <strong>${escaparHtml(usuario.email)}</strong></p><p>Usa tu contraseña habitual para iniciar sesión. Si la olvidaste, usa la opción "Olvidé mi contraseña" en la pantalla de acceso.</p>`
       });
     } catch (correoError) {
       console.error('Error enviando invitación:', correoError.message);
       return res.status(502).json({ message: 'No se pudo enviar el correo de invitación. Intenta nuevamente.' });
     }
 
-    return res.status(200).json({ message: `Invitación enviada a ${usuario.email}.` });
+    return res.status(200).json({ message: `Invitación enviada a ${usuario.email}${contexto}.` });
   } catch (error) {
     next(error);
   }

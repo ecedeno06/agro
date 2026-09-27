@@ -347,7 +347,8 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
   async enviarInvitacion(item: UserRoleItem): Promise<void> {
     this.closeMenu();
     if (!this.user?.idUsuario) return;
-    if (!confirm(`¿Enviar invitación de acceso a ${this.user.nombre} (${this.user.email})? Solo se le notificará por correo el enlace y su usuario; su contraseña actual no cambia.`)) {
+    const contextoCapitulo = item.nombreCapitulo ? ` al capítulo "${item.nombreCapitulo}" (rol ${item.codigo.toUpperCase()})` : '';
+    if (!confirm(`¿Enviar invitación de acceso a ${this.user.nombre} (${this.user.email})${contextoCapitulo}? Solo se le notificará por correo el enlace y su usuario; su contraseña actual no cambia.`)) {
       return;
     }
 
@@ -357,7 +358,8 @@ export class UsuarioTabComponent implements OnInit, OnChanges, AfterViewInit, On
     try {
       const res = await fetch(`${this.apiBaseUrl}/usuarios/${this.user.idUsuario}/enviar-invitacion`, {
         method: 'POST',
-        headers: this.getAuthHeaders()
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ rolCodigo: item.codigo, capitulo: item.nombreCapitulo })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'No se pudo enviar la invitación.');
