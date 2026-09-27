@@ -132,7 +132,7 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
       return list.filter(f => {
         if (!f.nombre_producto) return false;
         const partes = f.nombre_producto
-          .split(',')
+          .split(', ')
           .map(s => s.replace(/\s*\([\d\.]+\s*Ha\)/gi, '').trim());
         return partes.includes(valor);
       });
