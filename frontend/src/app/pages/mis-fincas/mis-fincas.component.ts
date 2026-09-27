@@ -39,6 +39,8 @@ type Finca = {
   titulo_finca?: string;
   id_tipo_produccion?: number | null;
   nombre_tipo_produccion?: string;
+  id_producto?: number | null;
+  nombre_producto?: string;
 };
 
 import * as L from 'leaflet';
@@ -505,7 +507,8 @@ export class MisFincasComponent implements OnInit {
       folio: '',
       estado_legal: undefined,
       notas: '',
-      id_tipo_produccion: null
+      id_tipo_produccion: null,
+      id_producto: null
     };
   }
 
@@ -518,6 +521,7 @@ export class MisFincasComponent implements OnInit {
       this.selectedFinca.set(this.getEmptyFinca());
       this.activeDetailTab.set('editar');
       this.activeFormSubTab.set('general');
+      this.subCategorias.set([]);
       this.enfocarNombreInput();
     }
     this.mensajeError.set('');
@@ -530,6 +534,8 @@ export class MisFincasComponent implements OnInit {
   tiposEstadoLegal = signal<{ id: number; nombre: string; descripcion?: string }[]>([]);
   paises = signal<{ id: number; nombre: string; codigo_iso2: string; codigo_iso3: string }[]>([]);
   tiposProduccion = signal<{ id_tipo: number; nombre: string; descripcion?: string }[]>([]);
+  subCategorias = signal<{ id: number; nombre: string; codigo?: string }[]>([]);
+  loadingSubCategorias = signal(false);
 
   ngOnInit(): void {
     this.cargarUsuarioSesion();
@@ -559,6 +565,38 @@ export class MisFincasComponent implements OnInit {
     } catch (e) {
       console.error('Error al cargar tipos de producción:', e);
     }
+  }
+
+  // "Sub Categoria": el producto específico (catalogo_productos) dentro de la categoría
+  // elegida como "Tipo de Producción". Se recarga cada vez que esa categoría cambia.
+  async cargarSubCategorias(categoriaId: number | null): Promise<void> {
+    if (!categoriaId) {
+      this.subCategorias.set([]);
+      return;
+    }
+    this.loadingSubCategorias.set(true);
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/catalogo-productos/referencia?categoria_id=${categoriaId}`, {
+        headers: this.getAuthHeaders()
+      });
+      if (res.ok) {
+        const data = await res.json();
+        this.subCategorias.set(Array.isArray(data) ? data : []);
+      }
+    } catch (e) {
+      console.error('Error al cargar sub categorías:', e);
+    } finally {
+      this.loadingSubCategorias.set(false);
+    }
+  }
+
+  async onTipoProduccionChange(id: number | null): Promise<void> {
+    const finca = this.selectedFinca();
+    if (!finca) return;
+    finca.id_tipo_produccion = id;
+    finca.id_producto = null;
+    this.selectedFinca.set({ ...finca });
+    await this.cargarSubCategorias(id);
   }
 
   async cargarTiposTerreno(): Promise<void> {
@@ -694,7 +732,8 @@ export class MisFincasComponent implements OnInit {
       estado_legal: (finca.estado_legal != null && finca.estado_legal !== '') ? Number(finca.estado_legal) : undefined,
       id_propietario_legal: (finca.id_propietario_legal != null && finca.id_propietario_legal !== '') ? Number(finca.id_propietario_legal) : null,
       notas: finca.notas || '',
-      id_tipo_produccion: (finca.id_tipo_produccion != null && finca.id_tipo_produccion !== '') ? Number(finca.id_tipo_produccion) : null
+      id_tipo_produccion: (finca.id_tipo_produccion != null && finca.id_tipo_produccion !== '') ? Number(finca.id_tipo_produccion) : null,
+      id_producto: (finca.id_producto != null && finca.id_producto !== '') ? Number(finca.id_producto) : null
     };
   }
 
@@ -722,11 +761,13 @@ export class MisFincasComponent implements OnInit {
 
   seleccionarFinca(finca: Finca): void {
     this.modoFormulario.set('editar');
-    this.selectedFinca.set(this.normalizarFinca(finca));
+    const fincaNormalizada = this.normalizarFinca(finca);
+    this.selectedFinca.set(fincaNormalizada);
     this.activeDetailTab.set('editar');
     this.activeFormSubTab.set('general');
     this.mensajeExito.set('');
     this.mensajeError.set('');
+    this.cargarSubCategorias(fincaNormalizada.id_tipo_produccion ?? null);
 
     setTimeout(() => {
       const element = document.getElementById('detailSection');
@@ -789,7 +830,8 @@ export class MisFincasComponent implements OnInit {
       titulo_finca: (finca.titulo_finca || '').trim(),
       id_propietario_legal: ((finca.id_propietario_legal as any) != null && (finca.id_propietario_legal as any) !== '') ? Number(finca.id_propietario_legal) : null,
       notas: (finca.notas || '').trim(),
-      id_tipo_produccion: ((finca.id_tipo_produccion as any) != null && (finca.id_tipo_produccion as any) !== '') ? Number(finca.id_tipo_produccion) : null
+      id_tipo_produccion: ((finca.id_tipo_produccion as any) != null && (finca.id_tipo_produccion as any) !== '') ? Number(finca.id_tipo_produccion) : null,
+      id_producto: ((finca.id_producto as any) != null && (finca.id_producto as any) !== '') ? Number(finca.id_producto) : null
     };
 
     try {

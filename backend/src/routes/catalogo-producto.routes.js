@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getProductos,
+  getProductosReferencia,
   createProducto,
   updateProducto,
   toggleEstadoProducto
@@ -10,6 +11,7 @@ import authMiddleware from '../middlewares/auth.middleware.js';
 const router = Router();
 
 router.use(authMiddleware);
+router.get('/referencia', getProductosReferencia);
 router.get('/', getProductos);
 router.post('/', createProducto);
 router.put('/:id', updateProducto);

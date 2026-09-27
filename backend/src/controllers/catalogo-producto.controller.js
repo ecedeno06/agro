@@ -35,6 +35,27 @@ function validarImagenBase64(res, imagenUrl) {
   return true;
 }
 
+// GET /api/catalogo-productos/referencia?categoria_id= - lista de solo lectura (sin permiso
+// "ver" de Productos), para selects de referencia en otras pantallas (ej. "Sub Categoría" en Mis Fincas).
+export const getProductosReferencia = async (req, res, next) => {
+  const { categoria_id } = req.query;
+  try {
+    if (!categoria_id) {
+      return res.status(200).json([]);
+    }
+    const result = await query(
+      `SELECT id, nombre, codigo
+       FROM public.catalogo_productos
+       WHERE activo = true AND categoria_id = $1
+       ORDER BY nombre ASC`,
+      [categoria_id]
+    );
+    return res.status(200).json(result.rows);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // GET /api/catalogo-productos?categoria_id=
 export const getProductos = async (req, res, next) => {
   const { categoria_id } = req.query;
