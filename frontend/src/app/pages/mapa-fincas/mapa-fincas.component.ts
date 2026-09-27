@@ -185,12 +185,12 @@ export class MapaFincasComponent implements OnInit, AfterViewInit {
 
   valorParaFinca(f: FincaMapa): string {
     switch (this.criterio()) {
-      case 'asociado': return f.nombre_propietario || '-';
-      case 'tipo_produccion': return f.nombre_tipo_produccion || '-';
-      case 'subproducto': return f.nombre_producto || '-';
-      case 'pais': return f.nombre_pais || '-';
-      case 'provincia': return f.id_privincia || '-';
-      case 'estado': return f.estado || '-';
+      case 'asociado': return this.valorAsociado() || f.nombre_propietario || '-';
+      case 'tipo_produccion': return this.valorTipoProduccion() || f.nombre_tipo_produccion || '-';
+      case 'subproducto': return this.valorSubproducto() || f.nombre_producto || '-';
+      case 'pais': return this.valorPais() || f.nombre_pais || '-';
+      case 'provincia': return this.valorProvincia() || f.id_privincia || '-';
+      case 'estado': return this.valorEstado() || f.estado || '-';
       case 'tamano': return `${f.tamano} Ha`;
       default: return '-';
     }
